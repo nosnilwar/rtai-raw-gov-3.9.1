@@ -1,0 +1,1 @@
+cmd_/home/rsgoncalves/public_html/Trabalho_02_RTAI/pwmsignal_edf.ko := ld -m elf_i386 -r -m elf_i386  --build-id -o /home/rsgoncalves/public_html/Trabalho_02_RTAI/pwmsignal_edf.ko /home/rsgoncalves/public_html/Trabalho_02_RTAI/pwmsignal_edf.o /home/rsgoncalves/public_html/Trabalho_02_RTAI/pwmsignal_edf.mod.o

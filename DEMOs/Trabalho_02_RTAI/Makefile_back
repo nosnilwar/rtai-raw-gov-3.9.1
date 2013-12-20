@@ -1,0 +1,4 @@
+#Makefile para a compilacao de pwmsignal_userspace.c
+default:
+export PATH = $PATH:/usr/realtime/bin
+gcc -I /usr/realtime/include `rtai-config --lxrt-cflags` `rtai-config --lxrt-ldflags` -o pwmsignal_userspace pwmsignal_userspace.c

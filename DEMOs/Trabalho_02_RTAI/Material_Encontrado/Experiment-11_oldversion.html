@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type">
+<title>EDF &amp; RMA</title></head><body><h1 style="text-align: center;">Realtime Linux (RTAI) -
+Radboud University<br> Experiment #11<br>EDF &amp; RMA</h1><div style="text-align: center;">This material is based on the vxworks
+experiments of the Embry-Riddle Real-Time Laboratory</div><pre style="margin-left: 40px;">  </pre><hr size="3"> <h2>Introduction</h2>
+<p>Interrupt handling is important in real-time operating systems. The
+system becomes aware of external events via the interrupt mechanism and
+the response of a real-time systems depends on the speed of the
+system's response to interrupts and the speed of processing interrupt
+handlers.&nbsp;</p> <hr size="3"> <h2>Objectives</h2> <p>The
+following are the primary objectives of this experiment:</p> <ul><li>To
+demonstrate RTAI's implementation of interrupt service routines.</li></ul>
+<hr size="3"> <h1>Description</h1>In the API of RTAI linux we find
+the following function :<table style="margin-left: 40px;" class="mdTable" cellpadding="2" cellspacing="0" width="100%">
+<tbody><tr><td class="mdRow"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="md" nowrap="nowrap" valign="top">void
+<span style="font-weight: bold;">rt_busy_sleep</span> </td>
+<td class="md" valign="top">(&nbsp;</td>
+<td class="md" nowrap="nowrap" valign="top">int&nbsp;</td>
+<td class="mdname1" nowrap="nowrap" valign="top"><em>ns</em> </td>
+<td class="md" valign="top">&nbsp;)&nbsp;</td>
+<td class="md" nowrap="nowrap"></td></tr></tbody></table></td></tr></tbody></table><table style="margin-left: 40px;" border="0" cellpadding="0" cellspacing="5"><tbody><tr><td><br>&nbsp;
+</td><td><p>Delay/suspend execution for a while. </p><p>rt_busy_sleep
+delays the execution of the caller task without giving back the control
+to the scheduler. This function burns away CPU cycles in a busy wait
+loop so it should be used only for very short synchronization delays</p></td></tr></tbody></table><br>With
+this function we can easily make a dummy&nbsp; task which &nbsp;runs
+this busy_sleep time <span style="font-style: italic;">ns&nbsp;</span>nanoseconds
+for each time it is called. When making this task periodic &nbsp;we can
+use this periodic dummy task to simulate a real periodic task which is
+used in embedded systems. <br><br>So we simulate a real periodic
+task with the computation time&nbsp;C and period P by making a dummy
+task which runs periodicly with period P and for each period runs&nbsp;
+a rt_busy_sleep(C). <br><br>With these dummy tasks we can simulate
+a scheduling situation to see if it is feasible. In this excercise we
+look at&nbsp; Earliest Deadline First scheduling (EDF) and Rate
+Monotonic Scheduling (RMS). The EDF and RMS schedulers need global
+information about the task timings, so the procedures are a little bit
+more complex:<br><ul><li>&nbsp;EDF: this scheduler must know the
+start and termination times of all your tasks, so a task must call the
+function <br><pre style="margin-left: 40px;">void rt_task_set_resume_end_times(RTIME resume_time, RTIME end_time);</pre>at
+the end of every run of one cycle of the task.</li><li>&nbsp;RMS: the
+RMS scheduler is (re)initialized by the function<br><pre style="margin-left: 40px;"> void rt_spv_RMS(int cpuid)</pre> to be
+called after the operating system knows the timing information of all
+your tasks. That is, after you have made all of your tasks periodic at
+the beginning of your application, or after you create a periodic task
+dynamically, or after changing the period of a task. The cpuid
+parameter of the function <span style="font-family: monospace;">rt_spv_RMS()</span>
+is only used by the multi uni-processor scheduler.</li></ul><br>So
+RMS seems to be very simple to implement, however EDF somewhat more
+difficult. At our first look it is not really clean what is meant by
+resume_time and end_time. So if we look deeper in the documentation we
+find that there isn't any about this function however we are lucky to
+find an example of EDF usage :<br><br><pre>#include &lt;linux/module.h&gt;
+
+#include &lt;asm/io.h&gt;
+
+#include &lt;asm/rtai.h&gt;
+#include &lt;rtai_sched.h&gt;
+
+#define ONE_SHOT
+
+#define TICK_PERIOD 10000000
+
+#define STACK_SIZE 2000
+
+#define LOOPS 1000000000
+
+#define NTASKS 8
+
+static RT_TASK thread[NTASKS];
+
+static RTIME tick_period;
+
+static int cpu_used[NR_RT_CPUS];
+
+static void fun(long t)
+{
+    unsigned int loops = LOOPS;
+    while(loops--) {
+        cpu_used[hard_cpu_id()]++;
+        rt_printk("TASK %d %d\n", t, thread[t].priority);
+        if (t == (NTASKS - 1)) {
+            rt_printk("\n\n");
+            rt_task_wait_period();
+        } else {
+            rt_task_set_resume_end_times(-NTASKS*tick_period, -(t + 2)*tick_period);
+        }
+    }
+}
+
+
+int init_module(void)
+{
+    RTIME now;
+    int i;
+
+#ifdef ONE_SHOT
+    rt_set_oneshot_mode();
+#endif
+ 
+    for (i = 0; i &lt; NTASKS; i++) {
+        rt_task_init(&amp;thread[i], fun, i, STACK_SIZE, NTASKS - i - 1, 0, 0);
+    }
+    tick_period = start_rt_timer(nano2count(TICK_PERIOD));
+    now = rt_get_time() + NTASKS*tick_period;
+    for (i = 0; i &lt; NTASKS; i++) {
+        rt_task_make_periodic(&amp;thread[NTASKS - i - 1], now, NTASKS*tick_period);
+    }
+    return 0;
+}
+
+
+void cleanup_module(void)
+{
+    int i, cpuid;
+
+    stop_rt_timer();
+    for (i = 0; i &lt; NTASKS; i++) {
+        rt_task_delete(&amp;thread[i]);
+    }
+    printk("\n\nCPU USE SUMMARY\n");
+    for (cpuid = 0; cpuid &lt; NR_RT_CPUS; cpuid++) {
+        printk("# %d -&gt; %d\n", cpuid, cpu_used[cpuid]);
+    }
+    printk("END OF CPU USE SUMMARY\n\n");
+}</pre>The
+source of this program is available for download.<br>So is this is
+all info we have got. Now after looking in the source of RTAI &nbsp;I
+found the following definition of this function :<br><br><pre>void rt_task_set_resume_end_times(RTIME resume, RTIME end)
+{
+    RT_TASK *rt_current;
+    long flags;
+
+    flags = rt_global_save_flags_and_cli();
+    rt_current = RT_CURRENT;
+    rt_current-&gt;policy   = -1;
+    rt_current-&gt;priority =  0;
+    if (resume &gt; 0) {
+        rt_current-&gt;resume_time = resume;
+    } else {
+        rt_current-&gt;resume_time -= resume;
+    }
+    if (end &gt; 0) {
+        rt_current-&gt;period = end;
+    } else {
+        rt_current-&gt;period = rt_current-&gt;resume_time - end;
+    }
+    rt_current-&gt;state |= RT_SCHED_DELAYED;
+    rem_ready_current(rt_current);
+    enq_timed_task(rt_current);
+    rt_schedule();
+    rt_global_restore_flags(flags);
+}</pre>So
+in practical situations sometimes documentation is not available, than
+we have to use what we can get and try to understand how it works from
+that. If want to look further into the source of &nbsp;RTAI than you
+can find it under /usr/src/.<br><br>However finally after searching
+on the internet I found a document&nbsp;<span style="font-family: monospace;">README.SCHED_POLICY. </span>It seems
+to be only available in the old &nbsp;cvs repositories and not in the
+new repositories anymore. Why? It is unclear to me?<span style="font-family: monospace;"></span> However its information is
+still valuable :<br><br><pre>RoundRobin (RR) Scheduling
+==========================
+
+Beginning from release 24.1.6 RTAI schedulers offers the possibility of chosing
+between FirstInFirstOut (FIFO) and time slicing RoundRobin (RR) scheduling 
+policies, on a per task basis, the default being FIFO.
+
+The implementation of RR scheduling can be taken away by simply commenting out 
+the macro ALLOW_RR in RTAI schedulers. Since if it was not used RR causes a
+(very) small scheduling overhead, 3 do nothing "if"s at most, RTAI is 
+distributed with that macro defined and working. 
+So if it is too much for your, likely old and very very slow, CPU just comment
+out ALLOW_RR.
+
+The desired policy can be assigned on a per task basis and with a per task
+quantum time by calling:
+
+  rt_set_sched_policy(RT_TASK *task, int policy, int rr_quantum_ns), where :
+
+policy can be:
+
+  - RT_SCHED_FIFO (0) or  
+  - RT_SCHED_RR   (1).
+
+The above macros are defined in rtai_sched.h and, for use with LXRT, also
+in rtai_lxrt_user.h.
+
+rr_quantum_ns, the task proper RR quantum time in nanosecs, is not used if
+policy is RT_SCHED_FIFO, while for RT_SCHED_RR can be:
+
+- any value between 0 and 0x0FFFFFFF, i.e. up to 1/4th a second; naturally it 
+  makes no sense to use too low a value, it could crash your system; anyhow 
+  note that no action is taken to avoid any low a value, except when zero is 
+  used in which case the LINUX tick time is assigned by default.
+
+To frame why RR has been introduced it could be of interest to tell that
+the RR implementation in RTAI schedulers has been carried out because of
+the need to achieve fairness in a specific application in which a few hard
+real time equal (medium) priority tasks could, now and then, find
+themselves in the need of bursts of relatively long lasting calculations,
+during which any other peer was unfairly starving because of the FIFO
+policy. 
+
+Acceptable results were at first achieved in a cooperative way, i.e. by
+scattering voluntary yields within each task. Such a technique worked but
+was found to be annoying, since it required a relatively good extimation of
+the execution times of specific code phases, that could change either
+because of the current task status or because of the need of updating the
+code.
+
+Since implementing RR the way we have done solved the problem very well,
+simply and quickly, the related code has been made available in case it
+could help other RTAI users in similar situations.
+
+An example, rr, is available to test and experiment it. Please note that
+while the rr test has been verified with all the RTAI schedulers the
+production application that has actually used RR has been UP based.
+
+
+Rate Monotonic Scheduling (RMS)
+-------------------------------
+
+RTAI supports also, with your help, Rate Monotonic Scheduling (RMS).  Rate
+Monotonic Scheduling is a simple scheduling policy for real time periodic
+tasks that ends in assigning task priorities in the order of the highest
+task frequencies, i.e. the shortest periodic task gets the highest
+priority, then the next with the shortest period get the second highest
+priority, and so on.  So RMS could be easily implemented by yourself simply
+by assigning appropriate priorities, and nothing more should be required
+but the standard prioritized preemptive First In First Out (FIFO)
+schedulers found in RTAI.
+
+However there are instances, e.g. dynamic task creation of periodic tasks,
+that can make it annoying to book keep the required infos. Thus a trivial
+minimal support could be of help.
+
+As found in any textbook on OSes, if Ci is the time of execution of the ith
+task having period Ti, naturally it must be Ci &lt;= Ti, all the deadlines of
+n periodic tasks can be satisfied if:
+
+  sum_over_n_of(Ci/Ti) &lt;= n*(pow(2, 1/n) - 1)
+
+Note that the above equation gives just a sufficient condition so it is
+generally somewhat conservative. Morever it is also an upper bound
+condition for meeting deadlines according to the Earliest Deadline First
+(EDF) policy.  Then RMS can often be profitably used in place of EDF, as it
+affords very similar performances but is much more simple to implement.
+
+RTAI allows you to be sure to stay RMS by simply calling rt_spv_RMS(cpu)
+after you have made all of your tasks periodic at the beginning of your
+application, or after you create a periodic task dynamically, or after
+changing their period, freeing you from the burden of any book keeping.
+
+Since only Ti is available to an RTAI scheduler the check of the bound
+given by the above formula is left to you. In fact another advantage of RMS
+is that you need not to carry out any deep analysis of your tasks behavior
+as Ti is enough to enforce it, if possible. If it is not for sporadic cases
+it will go unoticed, otherwise it is likely you'll have to find a more
+powerful computer anyhow.  Note that the argument cpu in rt_spv_RMS is used
+only with the MUP scheduler.  The function does nothing but making sure
+priorities of periodic tasks are assigned accordingly to their periods.
+
+
+Earliest Deadline First (EDF)
+-----------------------------
+
+Another scheduling policy supported is Earliest Deadline First (EDF).  Such
+a policy schedules first the task that ends at the earliest time.
+Guarantees for meeting tasks objectives is in a form similar to the above,
+i.e.:
+
+  sum_over_n_of(Ci/Ti) &lt;= 1
+
+With this policy there is the need to know both the time at which the task
+must be resumed and the time at which it must end, clearly:
+
+  Ci = end_time.i - resume_time.i
+
+So more per task informations must be given. To use EDF a task must call
+the function:
+
+  void rt_task_set_resume_end(RTIME resume_time, RTIME end_time);
+
+at the end of each timed execution.
+
+Args are selfexplained by the related names, no specific periodicity is
+assumed.Nonetheless if the resume_time is negative it is assumed as being
+relative to its previous resume_time and, if negative, also end_time is
+taken as relative to the new resume_time, i.e.:
+
+  rt_task.resume_time -= resume_time;
+  rt_task.end_time = rt_task.resume_time - end_time;
+
+Thus a periodic EDF task should be easy to program anyhow.
+
+It is possible to mix up all the scheduling policies. SCHED_FIFO and RR
+tasks have no problems. It is up to the user to insure RMS behaves
+correctly by assigning lower priorities (higher numbers) to non periodic
+tasks.  Clearly there can be nonperiodic tasks of utmost importance that
+can have a priority higher than any periodic one. When EDF tasks come into
+the game a design choice has to be made for the case they mix up with tasks
+based on other policies. Ours has been to run EDF tasks as the highest
+priority ones, i.e. any EDF task will run ahead of any other non EDF task
+when its resume time expires.</pre><br>
+<hr size="3"> <h2>Experiments</h2>
+<h3>Experiment 11a.</h3>For the task given below simulate the schedules
+using &nbsp;RMS and EDF. &nbsp;<br>First start with RMS and implement
+it by simply assigning the appropriate priorities.<br><br><br>
+<table class="MsoTableGrid" style="border: medium none ; border-collapse: collapse;" border="1" cellpadding="0" cellspacing="0"> <tbody><tr style=""> <td style="border: 1pt solid windowtext; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">Task<o:p></o:p></span></p>
+</td> <td style="border-style: solid solid solid none; border-color: windowtext windowtext windowtext -moz-use-text-color; border-width: 1pt 1pt 1pt medium; padding: 0cm 5.4pt; width: 117pt;" width="156"> <p class="MsoNormal"><span style="" lang="DE">Computation
+time<o:p></o:p></span></p> </td> <td style="border-style: solid solid solid none; border-color: windowtext windowtext windowtext -moz-use-text-color; border-width: 1pt 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><span style="" lang="DE">Period<o:p></o:p></span></p>
+</td> </tr> <tr style=""> <td style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">τ1<o:p></o:p></span></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 117pt;" width="156"> <p class="MsoNormal"><span style="" lang="DE">C1 = <b style="">3</b><o:p></o:p></span></p> </td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><span style="" lang="DE">T1 = <b style="">6</b><o:p></o:p></span></p> </td> </tr> <tr style=""> <td style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">τ2<o:p></o:p></span></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 117pt;" width="156"> <p class="MsoNormal"><span style="" lang="DE">C2 = <b style="">2</b><o:p></o:p></span></p> </td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><span style="" lang="DE">T2 = <b style="">9</b><o:p></o:p></span></p> </td> </tr> <tr style=""> <td style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">τ3<o:p></o:p></span></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 117pt;" width="156"> <p class="MsoNormal"><span style="" lang="DE">C3 = <b style="">2</b><o:p></o:p></span></p> </td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><span style="" lang="DE">T3 = <b style="">11</b><o:p></o:p></span></p> </td> </tr>
+</tbody></table>&nbsp;<br><h3>Experiment 11b.</h3>For the task given
+below simulate the schedules using &nbsp;RMS and EDF. <br><br>
+<table class="MsoTableGrid" style="border: medium none ; border-collapse: collapse;" border="1" cellpadding="0" cellspacing="0"> <tbody><tr style=""> <td style="border: 1pt solid windowtext; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">Task<o:p></o:p></span></p>
+</td> <td style="border-style: solid solid solid none; border-color: windowtext windowtext windowtext -moz-use-text-color; border-width: 1pt 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><span style="" lang="DE">Priority<o:p></o:p></span></p>
+</td> <td style="border-style: solid solid solid none; border-color: windowtext windowtext windowtext -moz-use-text-color; border-width: 1pt 1pt 1pt medium; padding: 0cm 5.4pt; width: 108pt;" width="144"> <p class="MsoNormal"><span style="" lang="DE">Computation
+time<o:p></o:p></span></p> </td> <td style="border-style: solid solid solid none; border-color: windowtext windowtext windowtext -moz-use-text-color; border-width: 1pt 1pt 1pt medium; padding: 0cm 5.4pt; width: 54pt;" width="72"> <p class="MsoNormal"><span style="" lang="DE">Period<o:p></o:p></span></p>
+</td> </tr> <tr style=""> <td style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">τ1<o:p></o:p></span></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><b style=""><span style="" lang="DE">3<o:p></o:p></span></b></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 108pt;" width="144"> <p class="MsoNormal"><span style="" lang="DE">C1 = <b style="">2</b><o:p></o:p></span></p> </td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 54pt;" width="72"> <p class="MsoNormal"><span style="" lang="DE">T1 = <b style="">7</b><o:p></o:p></span></p> </td> </tr> <tr style=""> <td style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">τ2<o:p></o:p></span></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><b style=""><span style="" lang="DE">2<o:p></o:p></span></b></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 108pt;" width="144"> <p class="MsoNormal"><span style="" lang="DE">C2 = <b style="">4</b><o:p></o:p></span></p> </td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 54pt;" width="72"> <p class="MsoNormal"><span style="" lang="DE">T2 = <b style="">16</b><o:p></o:p></span></p> </td> </tr> <tr style=""> <td style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 86.4pt;" width="115"> <p class="MsoNormal"><span style="" lang="DE">τ3<o:p></o:p></span></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 63pt;" width="84"> <p class="MsoNormal"><b style=""><span style="" lang="DE">1<o:p></o:p></span></b></p>
+</td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 108pt;" width="144"> <p class="MsoNormal"><span style="" lang="DE">C3 = <b style="">7</b><o:p></o:p></span></p> </td> <td style="border-style: none solid solid none; border-color: -moz-use-text-color windowtext windowtext -moz-use-text-color; border-width: medium 1pt 1pt medium; padding: 0cm 5.4pt; width: 54pt;" width="72"> <p class="MsoNormal"><span style="" lang="DE">T3 = <b style="">31</b><o:p></o:p></span></p> </td> </tr>
+</tbody></table><h3>Experiment 11c.</h3>For the tasks given in 11b. how
+much can you increase C3 theoretically so that EDF scheduling is still
+possible?<br>Simulate EDF with these values. Is it also schedable in
+the simulation? If not, why not?
+<hr size="3"><br><br><br><br><br> <center> Last Updated: 1
+September 2006<br> <em>Created
+by: Harco Kuppens</em><br> <a href="mailto:eyassud@db.erau.edu">h.kuppens@cs.ru.nl</a>
+</center></body></html>

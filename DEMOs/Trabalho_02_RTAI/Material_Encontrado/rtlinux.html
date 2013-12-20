@@ -1,0 +1,432 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html><head>
+
+
+   <title>RT-Linux</title>
+   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-2">
+   <meta name="GENERATOR" content="Mozilla/3.04Gold (X11; I; Linux 2.0.33 i586) [Netscape]">
+   <meta name="Author" content="Grzegorz Całkowski">
+   <meta name="Keywords" content="Linux, kernel, scheduling, realtime">
+</head><body>
+
+<p><i><a href="http://linux.msstudio.com.pl/LabLinux/PROCESY/index.html" tppabs="http://rainbow.mimuw.edu.pl/SO/LabLinux/PROCESY/index.html">Do spisu treści tematu 3</a></i></p>
+
+<h1 align="center">3.3.5 RT-Linux</h1>
+
+<center><p>&nbsp;&nbsp;&nbsp;</p></center>
+
+<h2 align="center">Spis treści</h2>
+
+<ul>
+<li><a href="#wprowadzenie">Wprowadzenie</a></li>
+
+<li><a href="#przerwania">Emulacja przerwań</a></li>
+
+<li><a href="#zegar_systemowy">Zegar systemowy</a></li>
+
+<li><a href="#procesy">Procesy czasu rzeczywistego i szeregowanie</a></li>
+
+<li><a href="#ipc">Komunikacja między procesami</a></li>
+
+<li><a href="#podsumowanie">Podsumowanie</a></li>
+
+<li><a href="#biblografia">Bibliografia</a></li>
+</ul>
+
+<p>
+</p><hr width="100%"><p></p>
+
+<h2 align="center"><a name="wprowadzenie"></a>Wprowadzenie</h2>
+
+<p>Podstawową cechą komputerowego systemu czasu rzeczywistego jest zdolność
+do odpowiednio krótkiej reakcji na zdarzenia generowane przez urządzenia
+zewnętrzne. Typowym zastosowaniem takich systemów są pomiary, sterowanie
+urządzeniami przemysłowymi, itp. <br>
+<br>
+System operacyjny czasu rzeczywistego to system <u>gwarantujący</u> spełnianie
+wymogów czasowych związanych z wykonywanymi procesami.<br>
+<br>
+W jądrze Linuxa, począwszy od wersji 2.0.0, zaimplementowano tryby szeregowania
+dla procesów czasu rzeczywistego, zgodne ze specyfikacją POSIX.1b (Round-Robin
+oraz FIFO). Nie wystarcza to jednak, aby można było uznać Linux za system
+czasu rzeczywistego. W zadaniach takich Linux sie, po prostu, nie sprawdza.
+Wynika to przede wszystkim z: częstego wyłączania przerwań w celu ochrony
+krytycznych części kodu jądra, opóźnień w procedurach obsługi przerwań,
+nie dających się przewidzieć opóźnień związanych z pamięcią wirtualną,
+charakterystki szeregowania procesów i małej częstotliwości zegarów systemowych.
+Podstawową cechą Linuxa jest to, iż proces znajdujący się trybie jądra
+nie może zostać wywłaszczony przez inny proces. Upraszcza to znacząco implementację,
+gdyż nie trzeba przejmować się wielowejściowością (ang. <i>reentrant</i>)
+funkcji systemowych. Ponieważ wykonanie funkcji systemowej może trwać dość
+długo, opóźnia to wznowienie procesu<i> realtime </i>i, w efekcie, uniemożliwia
+odpowiednio szybką reakcję na zdarzenie zewnętrzne.</p>
+
+<p>Z uwagi na duże zapotrzebowanie na ogólnodostępny system operacyjny
+czasu rzeczywistego podjęto wysiłki nad modernizacją Linuxa. Projekt ten
+nosi nazwę <i>"A Linux-based Real-Time Operating System"</i>,
+w skrócie: <b>RT-Linux</b>. Dostępny jest tylko dla architektur oparych
+na procesorach Intela.</p>
+
+<p>Niniejszy opis dotyczy głównie algorytmów szeregowania udostępnianych
+przez RT-Linux. Krótko opiszę także inne modyfikacje jądra systemu.</p>
+
+<p>
+</p><hr width="100%"><p></p>
+
+<h2 align="center"><a name="przerwania"></a>Emulacja przerwań</h2>
+
+<p>Jednym ze wspomnianych problemów, uniemożliwiających szybką reakcję
+systemu, jest notoryczne wyłączanie przerwań w kodzie jądra, służące synchronizacji
+w krytycznych części kodu. Postanowiono <u>całkowicie</u> wyeliminować
+włączanie i wyłączanie przerwań. Okazało się to możliwe, dzięki bardzo
+sprytnej metodzie, polegającej na wprowadzeniu warstwy emulacji przechwytującej
+przerwania sprzętowe. Wszystkie wystąpienia instrukcji <tt>cli, sti, iret</tt>
+odpowiedzialnych, odpowiednio: za wyłączanie przerwań, ich włączanie oraz
+powrót z procedury obsługi przerwania zastąpiono makrodefinicjami: <tt>S_CLI,
+S_STI </tt>oraz <tt>S_IRET.</tt></p>
+
+<p>Jak to działa? Gdy w standardowym jądrze, w wyniku wykonania instrukcji
+<tt>cli</tt> przyjmowanie przerwań zostałoby zablokowane, w "emulatorze"
+ten fakt jest zapamiętywany przez ustawienie odpowiedniej flagi. Przerwania
+pozostają nadal włączone. Jeśli w sekcji krytycznej wystąpi przerwanie
+i flaga jest ustawiona - wykonanie procedury obsługi przerwania zostaje
+przełożone na później, aż do wykonania instrukcji <tt>sti</tt>.</p>
+
+<p>
+</p><hr width="100%"><p></p>
+
+<h2 align="center"><a name="zegar_systemowy"></a>Zegar systemowy</h2>
+
+<p>Zegar systemowy w standardowym Linuxie "tyka", jak na potrzeby
+systemów czasu rzeczywistego, stosunkowo wolno - 100 razy na sekundę. Znaczy
+to, że 100 razy na sekundę dochodzi do przerwania pracy procesora i przejścia
+do procedury obsługi przerwania zegarowego (funkcja timer_interrupt() w
+arch/i386/kernel/time.c). Przerwania tego typu mają miejsce w <u>stałych</u>
+odstępach czasu (tzw. <i>periodic clocks</i>). Uzyskanie odpowiednio wysokiej
+dokładności pracy zegara jest kompromisem na rzecz opóźnień związanych
+z ich obsługą - przerwania kosztują.</p>
+
+<p>W jądrze RT-Linuxa postanowiono wykorzystać specjalny układ zegara Intel
+8354 oraz wewnętrzne zegary procesora Pentium. Zegar taki może być zaprogramowany
+w taki sposób, że po zadanym czasie, określonym z dokładnością do 1 mikrosekundy,
+generowane jest przerwanie. Dzięki temu narzut związany z przerwaniami
+jest bardzo mały, gdyż do przerwania dochodzi tylko wtedy, gdy jest potrzebne,
+a nie ciągle, w stałych odstępach czasu. </p>
+
+<h2 align="center">
+<hr width="100%"></h2>
+
+<h2 align="center"><a name="procesy"></a>Procesy czasu rzeczywistego i szeregowanie</h2>
+
+<p>Jest to swoista rewolucja w jądrze Linuxa. Wprowadzono specjalną klasę
+procesów - <u>realtime tasks</u>. Procesy te cały czas wykonywane są w
+<u>trybie jądra</u>, współdzieląc z jądrem przestrzeń adresową. Pociąga
+to za sobą następujące skutki:&nbsp;&nbsp;&nbsp;</p>
+
+<ul>
+<li>Szeregowanie procesów pracujących na tym samym poziomie ochrony jest
+tańsze dzięki programowej, nie sprzętowej, realizacji. Zmiana kontekstu
+sprowadza się do zapamiętania rejestrów i ich ponownego załadowania. Odpada
+narzut związany ze zmianą trybu pracy procesora oraz z czyszczeniem rejestrów
+asoscjacyjnych procesora (chodzi o tzw. TLB, <i>translation lookaside buffer</i>,
+który musi być unieważniony w momencie zmiany rejestru bazowego układu
+zarządzającego pamięcią).<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li>Wspólna przestrzeń adresowa godzi w stabilność systemu. Błąd w programie
+wykonującym się jako proces realtime może doprowadzić do awarii systemu.<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li>Procesy realtime mogą komunikować się i współdzielić dane bezpośrednio.<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li>Rozmiar stosu procesów jest stały - określany w momencie tworzenia
+procesu.</li>
+</ul>
+
+<p>Do zaimplementowania procesów wykonujących się w trybie jądra skorzystano
+z cennej cechy Linuxa, polegającej na dynamicznym ładowaniu i usuwaniu
+tzw. modułów jądra.</p>
+
+<p>Co więcej, fragmenty kodu odpowiedzialne za szeregowanie procesów realtime
+mogą być także skonfigurowane jako moduły jądra. Umożliwia to użytkownikowi
+napisanie własnego schedulera i uruchomienie go "w locie", bez
+potrzeby rekompilacji jądra. <br>
+&nbsp;&nbsp;&nbsp;</p>
+
+<h3>Struktura <tt>rt_task_struct</tt></h3>
+
+<p>Z każdym z procesów realtime związana jest struktura <tt>rt_task_struct</tt>.
+Istotne jej pola to:</p>
+
+<ul>
+<li><b><tt>state</tt></b> - określa stan procesu. Możliwe stany to:<br>
+<br>
+<tt>RT_TASK_READY</tt> - proces jest gotowy do wykonania (znajduje się
+w kolejce procesów gotowych)<br>
+<br>
+<tt>RT_TASK_DORMANT </tt>- proces wstrzymany; może zostać wznowiony tylko
+przez inny proces<br>
+<br>
+<tt>RT_TASK_DELAYED</tt> - dla procesów "okresowych"; wznowienie
+procesu odłożone jest do chwili określonej przez pole <tt>resume_time</tt>
+<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li><b><tt>priority</tt></b> - wartość priorytetu procesu z zakresu 0...1000000<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</li>
+
+<li><b><tt>resume_time</tt></b> - dla procesów "okresowych";
+godzina "budzenia" procesu <br>
+&nbsp;&nbsp;&nbsp;&nbsp;</li>
+
+<li><b><tt>period </tt></b>- dla procesów "okresowych"; określa
+odstęp czasu między kolejnymi wznowieniami procesu</li>
+</ul>
+
+<h3><br>
+Zmienna <tt>rt_linux_task</tt></h3>
+
+<p>Struktura opisująca "proces" jądra. Jądro wraz ze wszystkimi
+"zwykłymi" procesami stanowi osobny proces (w odniesieniu do
+procesów realtime) i ma najniższy priorytet.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+<h3>Zmienna <tt>rt_tasks</tt></h3>
+
+<p>Wskaźnik na pierwszy proces realtime. Wszystkie procesy, włącznie z
+<tt>rt_linux_task</tt> powiązane są w jedną listę, bez względu na ich stan
+(nie tworzy się osobnej kolejki procesów gotowych).</p>
+
+<h3><br>
+<b>Priority-based Rate Monotonic Scheduling Algorithm</b></h3>
+
+<p>Jest to podstawowy algorytm szeregowania dostępny w RT-Linuxie. Każdy
+z procesów realtime ma przydzielony unikatowy priorytet (niższa wartość
+oznacza wyższy priorytet; unikatowość priorytetów nie jest sprawdzana!).
+Procesom nie przydziela się kwantu czasu na działanie - zakłada się, że
+procesy realtime same oddadzą procesor. Proces wywłaszczany jest tylko
+wtedy, gdy pojawia się gotowy proces o wyższym priorytecie. Proces realtime
+może być procesem "okresowym" - będzie wznawiany w równych odstępach
+czasu, o ile nie działa proces o wyższym priorytecie.</p>
+
+<p>Schemat algorytmu:</p>
+
+<ul>
+<pre>rt_schedule()
+{
+&nbsp;&nbsp;&nbsp;for (każdy gotowy proces realtime)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wybierz proces o najwyższym priorytecie;
+
+&nbsp;&nbsp;&nbsp;if (wybrano proces)
+&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (każdy wstrzymany proces realtime o wyższym priorytecie niż
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                  priorytet wybranego procesu)
+&nbsp;      &nbsp;  wybierz proces, który powinien być wznowiony najwcześniej;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (wybrano wstrzymany proces)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ustaw zegar na czas "budzenia" procesu &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   
+   }
+&nbsp;&nbsp;&nbsp;else
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wybierz "proces" jądra;
+
+   wznów wybrany proces;
+}</pre>
+
+<pre>wake_up()
+{
+&nbsp;&nbsp;&nbsp;dodaj proces do kolejki procesów gotowych;
+
+&nbsp;&nbsp;&nbsp;if (priorytet "budzonego"&nbsp;procesu &gt; priorytet procesu bieżącego)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rt_schedule();
+}
+&nbsp;&nbsp;&nbsp;&nbsp;</pre>
+</ul>
+
+<h3><b>Earliest Deadline First Algorithm (EDF)</b></h3>
+
+<p>Jest to jeszcze prostszy algorytm. Wszystkie procesy realtime mają taki
+sam priorytet, wyższy, oczywiście, niż priorytet procesu "jądra".
+Do struktury <tt>rt_task_struct </tt>dodano pole <b><tt>absolute_deadline</tt></b>,
+określające ostateczny czas wznowienia procesu.</p>
+
+<p>Schemat algorytmu:</p>
+
+<ul>
+<pre><tt>rt_schedule()
+{
+&nbsp;&nbsp;&nbsp;for (każdy gotowy proces realtime)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wybierz proces o najmniejszej wartości absolute_deadline;
+
+&nbsp;&nbsp;&nbsp;if (wybrano proces)
+&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for (każdy wstrzymany proces&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  wybierz proces, który powinien być wznowiony najwcześniej; </tt></pre>
+
+<pre><tt>&nbsp;&nbsp;&nbsp;    if (wybrano wstrzymany proces)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ustaw zegar na czas "budzenia" procesu
+&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;else
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wybierz "proces" jądra;</tt></pre>
+
+<pre><tt>&nbsp;&nbsp;&nbsp;wznów wybrany proces;
+}
+&nbsp;&nbsp;&nbsp;</tt></pre>
+</ul>
+
+<h3>Funkcje i stałe</h3>
+
+<ul>
+<li><tt>int rt_task_init(RT_TASK *task, void (*fn)(int data), int data,
+int stack_size, int priority); <br>
+<br>
+</tt>Utworzenie nowego procesu realtime. Znaczenie parametrów:<br>
+<tt>task - </tt>wskaźnik na strukturę <tt>rt_task_struct </tt>nowego procesu
+<br>
+<tt>fn - </tt>funkcja, która zostanie wywołana przez nowo utworzony proces<br>
+<tt>data</tt> - parametr przekazywany funkcji <tt>fn<br>
+stack_size</tt> - rozmiar stosu jaki będzie przydzielony procesowi<br>
+<tt>priority</tt> - priorytet procesu<br>
+</li>
+
+<li>&nbsp;<tt>int rt_task_make_periodic(RT_TASK *task, RTIME start_time, RTIME
+period)<br>
+<br>
+</tt>Przełączenie procesu w tryb "okresowy". Proces zostanie
+uruchomiony o czasie <tt>start_time</tt> i będzie wznawiany co <tt>period</tt>
+jednostek czasu<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rt_task_delete(RT_TASK *task)<br>
+<br>
+</tt>Usunięcie procesu.<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rt_task_wait(void)<br>
+<br>
+</tt>Wstrzymanie wykonywania bieżącego procesu.<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rt_task_suspend(RT_TASK *task)<br>
+<br>
+</tt>Wstrzymanie wykonywania wskazanego procesu. <br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rt_task_wakeup(RT_TASK *task)<br>
+<br>
+</tt>Wznowienie wskazanego procesu.<br>
+<tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt></li>
+
+<li><tt>void rt_use_fp(int flag)<br>
+</tt>&nbsp;<br>
+Ustawienie flagi (dla bieżącego procesu) mówiącej czy proces będzie używał
+koprocesora matematycznego. Ma to wpływ na zachowywany kontekst procesu.<br>
+<tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt></li>
+
+<li><tt>RTIME rt_get_time(void); <br>
+<br>
+</tt>Zwraca wartość wewnętrznego zegara RT-Linux. Zegar ten nie jest synchronizowany
+ze "standardowymi" zegarami jądra Linuxa. Czas wyrażany jest
+w wewnętrznych jednostkach równych "mniej więcej" 1 mikrosekundzie.
+(Stała <tt>RT_TICKS_PER_SEC </tt>określa liczbę tyknięć zegara w czasie
+sekundy, standardowo wynosi 1193180).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+</li>
+</ul>
+
+<p>
+</p><hr width="100%"><p></p>
+
+<h2 align="center"><a name="ipc"></a>Komunikacja między procesami</h2>
+
+<p>Z procesami realtime związane jest istotne ograniczenie. Proces taki
+nie może wywoływać żadnej ze standardowych funkcji systemowych jądra. Wynika
+to z tego, iż (większość) funkcji jądra nie jest wielowejściowa. Proces
+wykonujący funkcję jądra mógłby zostać wywłaszczony przez inny proces,
+który mógłby np. wywołać tę samą funkcję systemową. Dlatego wprowadzono
+specjalny mechanizm komunikacji, nazwany RT-FIFO, pomiędzy procesami realtime
+a procesem jądra oraz pomiędzy procesami realtime a zwykłymi procesami.
+Idea działania tego mechanizmu jest bardzo podobna do standardowych łącz
+FIFO.<br>
+<br>
+Bufory RT-FIFO tworzone są w przestrzeni pamięci jądra. Identyfikowane
+są przez "globalne" klucze, będące liczbami całkowitymi.<br>
+<br>
+Dostępne operacje na kolejkach RT-FIFO (dla procesów realtime):</p>
+
+<ul>
+<li><tt>int rtf_create(unsigned int fifo, int size</tt>) - utworzenie bufora
+RT-FIFO o numerze <tt>fifo</tt> i rozmiarze <tt>size<br>
+&nbsp;&nbsp;&nbsp;</tt></li>
+
+<li><tt>int rtf_destroy(unsigned int fifo)- </tt>zlikwidowanie bufora o
+zadanym numerze<br>
+&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rtf_resize(unsigned int fifo, int new_size)-</tt> zmiana wielkości
+bufora <br>
+&nbsp;&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rt_fifo_put(unsigned int fifo, char *buf, int count) - </tt>zapisanie
+<tt>count </tt>bajtów wskazywanych przez <tt>buf </tt>(funkcja zwraca -1,
+gdy bufor się przepełni, wpp zwraca wartość <tt>count</tt>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rt_fifo_get(unsigned int fifo, char *buf, int count) - </tt>odczytanie
+<tt>count</tt> bajtów z bufora pod adres wskazany przez <tt>buf</tt> (funkcja
+zwraca -1, gdy w bufor zawiera mniej niż <tt>count</tt> bajtów, wpp zwraca
+<tt>count</tt>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
+
+<li><tt>int rtf_create_handler(unsigned int fifo, int (*handler)(unsigned
+int fifo)) </tt>- Przypisanie funkcji obsługi do danego bufora. Przekazana
+funkcja będzie wywoływana każdorazowo, gdy "zwykły" proces dokona
+operacji odczytu/zapisu na buforze. Argumentem funkcji jest nr bufora.</li>
+</ul>
+
+<p><br>
+"Zwykłe" procesy z buforów RT-FIFO mogą korzystać standardowo,
+tak jak z każdych innych urządzeń znakowych. Dodane urządzenia odpowiadające
+buforom o kolejnych numerach to: <tt>/dev/rtf0, /dev/rtf1, </tt>itd.</p>
+
+<p>
+</p><hr width="100%"><p></p>
+
+<h2 align="center"><a name="podsumowanie"></a>Podsumowanie</h2>
+
+<p>Dzięki bardzo sprytym i stosunkowo niewielkim modyfikacjom udało się
+z "ospałego" systemu uczynić system czasu rzeczywistego. Jest
+to kolejny dowód, że Linux jest przemyślanym i dobrze zaprojektowanym systemem.
+Opisywana wersja RT-Linuxa, 0.5a, znajduje się w stadium alpha, ale mimo
+to wydaje się być stabilna (autorowi opisu nie udało się "rozłożyć"
+RT-Linuxa, chyba, że z własnej winy przez doprowadzanie do zagłodzenia).
+RT-Linux wprowadza nową jakość, czyniąc z Linuxa groźnego konkurenta dla
+komercyjnych systemów takich jak <a href="http://linux.msstudio.com.pl/tppmsgs/msgs0.htm#74" tppabs="http://www.qnx.com/">QNX</a>.<br>
+&nbsp;&nbsp;&nbsp;<br>
+Koncepcje wykorzystane w RT-Linuxie przypominają system operacyjny, prawie
+historycznego już, komputera Amiga - AmigaOS. Jest to wielozadaniowy system,
+w którym procesy szeregowane są typowym algorytmem Round-Robin. Dzięki
+temu, iż system ten nie udostępnia pamięci wirtualnej ani ochrony pamięci
+(wszystkie procesy, jak i jądro działają w tej samej przestrzeni adresowej)
+doskonale nadaje się do zadań czasu rzeczywistego, w których był bardzo
+często wykorzystywany.</p>
+
+<p>
+</p><hr width="100%"><p></p>
+
+<h2 align="center"><a name="biblografia"></a>Bibliografia</h2>
+
+<ol>
+<li>Pliki źródłowe RT-Linux 0.5a</li>
+
+<li>Michael Barabanov <i><a href="http://linux.msstudio.com.pl/tppmsgs/msgs0.htm#75" tppabs="http://luz.cs.nmt.edu/~rtlinux">A Linux-based
+Real-Time Operating System</a></i></li>
+
+<li>Ismael Ripoll <i>Earliest Deadline First Algorithm</i></li>
+</ol>
+
+<p>
+</p><hr width="100%"><i>Autor: Grzegorz Całkowski</i> 
+<hr width="100%"><p></p>
+
+</body></html>

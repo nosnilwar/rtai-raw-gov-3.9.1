@@ -1,0 +1,1 @@
+cmd_/home/rsgoncalves/public_html/Trabalho_02_RTAI/EDF/signal_edf_internet.ko := ld -m elf_i386 -r -m elf_i386  --build-id -o /home/rsgoncalves/public_html/Trabalho_02_RTAI/EDF/signal_edf_internet.ko /home/rsgoncalves/public_html/Trabalho_02_RTAI/EDF/signal_edf_internet.o /home/rsgoncalves/public_html/Trabalho_02_RTAI/EDF/signal_edf_internet.mod.o
