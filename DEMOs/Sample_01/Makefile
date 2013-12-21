@@ -3,10 +3,11 @@
 NOME_ARQUIVO = hello_world
 
 CCFLAGS = -I /usr/realtime/include
-LDFLAGS = -L /usr/realtime/lib -llxrt -lpthread -static
+LDFLAGS = -L /usr/realtime/lib -llxrt -lpthread -static -O2
 
 default:
-	gcc $(CCFLAGS) $(LDFLAGS) -o $(NOME_ARQUIVO) $(NOME_ARQUIVO).c
+	export PATH=$(PATH):/usr/realtime/include:/usr/realtime/bin:.
+	gcc $(LDFLAGS) $(CCFLAGS) -o $(NOME_ARQUIVO) $(NOME_ARQUIVO).c
 
 clean:
 	rm -rf *.o $(NOME_ARQUIVO)

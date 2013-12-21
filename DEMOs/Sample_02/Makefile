@@ -1,12 +1,13 @@
 # Makefile Default para a compilacao de arquivos.c usando o RTAI
 
-NOME_ARQUIVO = periodic_task
+NOME_ARQUIVO = sample_rtai
 
 CCFLAGS = -I /usr/realtime/include
-LDFLAGS = -L /usr/realtime/lib -llxrt -lpthread -static
+LDFLAGS = -L /usr/realtime/lib -llxrt -lpthread -O2
 
 default:
-	gcc $(CCFLAGS) $(LDFLAGS) -o $(NOME_ARQUIVO) $(NOME_ARQUIVO).c
+	export PATH=$(PATH):/usr/realtime/include:/usr/realtime/bin:.
+	gcc $(LDFLAGS) $(CCFLAGS) -o $(NOME_ARQUIVO) $(NOME_ARQUIVO).c
 
 clean:
 	rm -rf *.o $(NOME_ARQUIVO)
