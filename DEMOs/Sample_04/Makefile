@@ -23,7 +23,7 @@ $(TARGET): $(SRCS:.c=.o)
 -include $(SRCS:.c=.d)
 
 $(RUNINFO): Makefile
-	echo "$(TARGET):lxrt:./$(TARGET);popall:" > $(RUNINFO)
+	echo "$(TARGET):lxrt:./$(TARGET);popall:Control+C para cancelar a execucao! ;)" > $(RUNINFO)
 
 clean:
 	rm -f *~ *.bak *.o *.d

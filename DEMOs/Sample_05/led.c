@@ -1,42 +1,45 @@
-#include <sys/io.h>
-#include <rtai_posix.h>
+/* led1.c, an LXRT LED blinker */
+#include<pthread.h>
+#include<rtai.h>
+#include<rtai_lxrt.h>
+#include<sys/mman.h>
+#include<sys/io.h>
+// delay in nanoseconds
+#define TICKS 500000000
 
-static volatile int end=0;
-
-static void *blink_thread(void *port)
+int main(void)
 {
-	char data=0;
-	struct timespec delay;
-	struct timespec period;
+	RT_TASK *task;
+	int priority = 0, i;
+	int stack_size = 4096;
+	int msg_size = 0; // use default
 
-	rt_allow_nonroot_hrt();
-	pthread_setschedparam_np(1,SCHED_FIFO,0,0xff,PTHREAD_HARD_REAL_TIME_NP);
-	delay.tv_sec = delay.tv_nsec = 0;
-	period.tv_sec=1;
-	period.tv_nsec=0;
-	pthread_make_periodic_np(pthread_self(), &delay, &period);
+	// get enough privilege to
+	// access the I/O ports.
+	iopl(3);
+	task = rt_task_init_sched(nam2num("main"),priority, stack_size, msg_size);
+	if(task == 0) exit(1);
 
-	while(!end)
+	rt_set_oneshot_mode();
+	start_rt_timer(0);
+	mlockall(MCL_CURRENT|MCL_FUTURE);
+	rt_make_hard_real_time();
+
+	for(i = 0; i < 10; i++)
 	{
-		pthread_wait_period_np();
-		outb(data,*((int*)port));
-		data=data^0x01;
+		outb(0xff, 0x378);
+		rt_printk("1");
+		rt_sleep(nano2count(TICKS));
+
+		outb(0x0, 0x378);
+		rt_printk("0");
+		rt_sleep(nano2count(TICKS));
 	}
 
-	outb(0,*((int*)port));
-	pthread_soft_real_time_np();
-	return NULL;
-}
-
-int main(int argc,char *argv[])
-{
-	pthread_t blink_id;
-	const int ioport=0x378;
-
-	start_rt_timer(0);
-	pthread_create(&blink_id,NULL,blink_thread,(void *)&ioport);
-	sleep(60);
-	end=1;
+	// back to non-rt land!
+	rt_make_soft_real_time();
 	stop_rt_timer();
+	rt_task_delete(task);
+
 	return 0;
 }

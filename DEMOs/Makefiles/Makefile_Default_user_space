@@ -1,13 +1,33 @@
 # Makefile Default para a compilacao de arquivos.c usando o RTAI
 
-NOME_ARQUIVO = rt_hello
+TARGET='NOME_ARQUIVO'
+SRCS=$(TARGET).c
 
-CCFLAGS = -I /usr/realtime/include
-LDFLAGS = -L /usr/realtime/lib -llxrt -lpthread -static
+RUNINFO=.runinfo
 
-default:
-	#export PATH=$PATH:/usr/realtime/bin
-	gcc $(CCFLAGS) $(LDFLAGS) -o $(NOME_ARQUIVO) $(NOME_ARQUIVO).c
+FLAGS=-O2 -Wall -MMD
+INCLUDE=-I. -I$(HOME)/include -I/usr/realtime/include
+LIBDIR=-L$(HOME)/lib
+LIBS=
+
+CC=gcc
+CFLAGS=$(FLAGS) $(INCLUDE)
+LDFLAGS=$(LIBDIR) $(LIBS)
+
+all: $(TARGET) $(RUNINFO)
+
+$(TARGET): $(SRCS:.c=.o)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+-include $(SRCS:.c=.d)
+
+$(RUNINFO): Makefile
+	#target_name:module_dependencies:run_actions:init_comment > .runinfo
+	echo "$(TARGET):lxrt:./$(TARGET);popall:" > $(RUNINFO)
 
 clean:
-    rm -rf *.o $(NOME_ARQUIVO)
+	rm -f *~ *.bak *.o *.d
+	rm -f $(TARGET) $(RUNINFO)
