@@ -13,6 +13,7 @@ volatile static int end=0;
 
 static void *blink_thread(void *port)
 {
+	int cont=0;
 	char data=0;
 	rt_task_make_periodic(rt_whoami(),rt_get_time(),1000*rttick);
 	while(!end)
@@ -20,6 +21,9 @@ static void *blink_thread(void *port)
 		rt_task_wait_period();
 		outb(data,*((int*)port));
 		data=data^0x01;
+
+		rt_printk(KERN_INFO "MODULO LED: %d\n", cont);
+		cont++;
 	}
 	pthread_exit(0);
 	return NULL;

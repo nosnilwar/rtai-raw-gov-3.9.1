@@ -7,7 +7,7 @@
 #include <rtai_lxrt.h>
 #include <sys/io.h>
 
-#define TICK_TIME 2500000000ll
+#define TICK_TIME 500000000
 #define DELAY_TIME 3000000000ll
 #define CPUMAP 0x1
 

@@ -3,11 +3,13 @@ SRCS=$(TARGET:.ko=.c)
 
 RUNINFO=.runinfo
 
-CINCLUDE=-I/usr/realtime/include -I/usr/include/
+CINCLUDE=-I/usr/realtime/include
 
 KERNEL_SOURCE=/lib/modules/$(shell uname -r)/build
 PWD=$(shell pwd)
-EXTRA_CFLAGS := $(CINCLUDE)
+
+KBUILD_EXTRA_SYMBOLS := $(shell rtai-config --prefix)/modules/Module.symvers
+EXTRA_CFLAGS+=$(shell rtai-config --module-cflags) $(CINCLUDE)
 
 obj-m+=$(TARGET:.ko=.o)
 
@@ -17,7 +19,7 @@ $(TARGET): $(TARGET:.ko=.c)
 	$(MAKE) -C $(KERNEL_SOURCE) O=. SUBDIRS=$(PWD) modules
 
 $(RUNINFO): Makefile
-	echo "led:sched:push led;sleep 60;popall:" > $(RUNINFO)
+	echo "led:sched+sem:push led;sleep 60;popall:" > $(RUNINFO)
 	
 clean:
 	rm -f *~ *.bak *.o *.ko *.d *.mod.* *.order *.symvers .led.*

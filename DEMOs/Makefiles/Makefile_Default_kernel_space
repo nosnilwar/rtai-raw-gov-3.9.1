@@ -1,27 +1,26 @@
 # Makefile padrao para gerar os modulos no RTAI.
-
-TARGET=multiple_tasks.ko
+TARGET=led.ko
 SRCS=$(TARGET:.ko=.c)
 
 RUNINFO=.runinfo
 
-CINCLUDE=-I/usr/realtime/include -I/usr/include/
+CINCLUDE=-I/usr/realtime/include
 
 KERNEL_SOURCE=/lib/modules/$(shell uname -r)/build
 PWD=$(shell pwd)
-EXTRA_CFLAGS := $(CINCLUDE)
+
+KBUILD_EXTRA_SYMBOLS := $(shell rtai-config --prefix)/modules/Module.symvers
+EXTRA_CFLAGS+=$(shell rtai-config --module-cflags) $(CINCLUDE)
 
 obj-m+=$(TARGET:.ko=.o)
 
 default: $(TARGET) $(RUNINFO)
 
 $(TARGET): $(TARGET:.ko=.c)
-	#TODO: $(MAKE) -C $(KERNEL_SOURCE) O=. SUBDIRS=$(PWD) modules
-	$(MAKE) -C $(KERNEL_SOURCE) SUBDIRS=$(PWD) modules
-	
+	$(MAKE) -C $(KERNEL_SOURCE) O=. SUBDIRS=$(PWD) modules
+
 $(RUNINFO): Makefile
-	#target_name:module_dependencies+module2+module3:run_actions:init_comment > .runinfo
-	echo "multiple_tasks:sched:push multiple_tasks;sleep 60;popall:" > $(RUNINFO)
+	echo "led:sched:push led;sleep 60;popall:" > $(RUNINFO)
 	
 clean:
 	rm -f *~ *.bak *.o *.ko *.d *.mod.* *.order *.symvers .led.*
