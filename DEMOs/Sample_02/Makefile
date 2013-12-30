@@ -3,11 +3,13 @@ SRCS=$(TARGET:.ko=.c)
 
 RUNINFO=.runinfo
 
-CINCLUDE=-I/usr/realtime/include -I/usr/include/
+CINCLUDE=-I/usr/realtime/include
 
 KERNEL_SOURCE=/lib/modules/$(shell uname -r)/build
 PWD=$(shell pwd)
-EXTRA_CFLAGS := $(CINCLUDE)
+
+KBUILD_EXTRA_SYMBOLS := $(shell rtai-config --prefix)/modules/Module.symvers
+EXTRA_CFLAGS+=$(shell rtai-config --module-cflags) $(CINCLUDE)
 
 obj-m+=$(TARGET:.ko=.o)
 

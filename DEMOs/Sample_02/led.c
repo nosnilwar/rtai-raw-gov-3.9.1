@@ -12,11 +12,15 @@ static RT_TASK blink_task;
 
 static void blink_thread(long port)
 {
+	int cont=0;
 	char data=0;
 	for(;;) {
 		outb(data,port);
 		data=data^0x01;
+		rt_printk(KERN_INFO "MODULO LED: %d\n", cont);
 		rt_task_wait_period();
+
+		cont++;
 	}
 }
 
