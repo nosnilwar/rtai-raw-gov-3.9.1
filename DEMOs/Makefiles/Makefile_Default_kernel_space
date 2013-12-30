@@ -1,6 +1,6 @@
 # Makefile padrao para gerar os modulos no RTAI.
 
-TARGET=NOME_ARQUIVO.ko
+TARGET=multiple_tasks.ko
 SRCS=$(TARGET:.ko=.c)
 
 RUNINFO=.runinfo
@@ -16,11 +16,12 @@ obj-m+=$(TARGET:.ko=.o)
 default: $(TARGET) $(RUNINFO)
 
 $(TARGET): $(TARGET:.ko=.c)
-	$(MAKE) -C $(KERNEL_SOURCE) O=. SUBDIRS=$(PWD) modules
-
+	#TODO: $(MAKE) -C $(KERNEL_SOURCE) O=. SUBDIRS=$(PWD) modules
+	$(MAKE) -C $(KERNEL_SOURCE) SUBDIRS=$(PWD) modules
+	
 $(RUNINFO): Makefile
 	#target_name:module_dependencies+module2+module3:run_actions:init_comment > .runinfo
-	echo "led:sched:push led;sleep 60;popall:" > $(RUNINFO)
+	echo "multiple_tasks:sched:push multiple_tasks;sleep 60;popall:" > $(RUNINFO)
 	
 clean:
 	rm -f *~ *.bak *.o *.ko *.d *.mod.* *.order *.symvers .led.*
