@@ -28,7 +28,7 @@ int init_module(void)
 {
 	RTIME tick;
 
-	rt_set_oneshot_mode();
+	rt_set_oneshot_mode(); // Passa a ter com referencia os ciclos de frequencia do CPU e nao o tempo...
 	tick = start_rt_timer(nano2count(DESIRED_TICK));
 	rt_task_init(&blink_task, blink_thread, ioport, 2048, 1, 0, NULL);
 	rt_task_make_periodic(&blink_task, rt_get_time(), 1000*tick);

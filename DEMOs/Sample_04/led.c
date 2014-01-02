@@ -17,6 +17,24 @@ int main(int argc,char *argv[])
 	rt_set_oneshot_mode();
 	tick=start_rt_timer(nano2count(DESIRED_TICK));
 	maintsk=rt_task_init(nam2num("LED"),1,0,0);
+
+	/*
+	 * Give a Linux process, or pthread, hard real time execution capabilities allowing full kernel preemption.
+	 *
+	 *  rt_make_hard_real_time makes the soft Linux POSIX real time process, from which it is called, a hard real
+	 *  time LXRT process. It is important to remark that this function must be used only with soft Linux POSIX
+	 *  processes having their memory locked in memory. See Linux man pages. Only the process itself can use this
+	 *  functions, it is not possible to impose the related transition from another process.
+	 *
+	 *  Note that processes made hard real time should avoid making any Linux System call that can lead to a task
+	 *  switch as Linux cannot run anymore processes that are made hard real time. To interact with Linux you
+	 *  should couple the process that was made hard real time with a Linux buddy server, either standard or
+	 *  POSIX soft real time. To communicate and synchronize with the buddy you can use the wealth of available
+	 *  RTAI, and its schedulers, services.
+	 *
+	 *  After all it is pure nonsense to use a non hard real time Operating System, i.e. Linux, from within
+	 *  hard real time processes.
+	 */
 	rt_make_hard_real_time();
 	rt_task_make_periodic(maintsk,rt_get_time(),1000*tick);
 
@@ -29,8 +47,21 @@ int main(int argc,char *argv[])
 		printf("*Acendendo LED: %llu\n", rt_get_time_ns());
 	}
 
+	/**
+	 *  Return a hard real time Linux process, or pthread to the standard Linux behavior.
+	 *
+	 *  rt_make_soft_real_time returns to soft Linux POSIX real time a process, from which it is called,
+	 *  that was made hard real time by a call to rt_make_hard_real_time.
+	 *
+	 *  Only the process itself can use this functions, it is not possible to impose the related transition
+	 *  from another process.
+	 */
 	rt_make_soft_real_time();
 	rt_task_delete(maintsk);
+
+	/**
+	 * stop_rt_timer stops the timer. The timer mode is set to periodic.
+	 */
 	stop_rt_timer();
 	return 0;
 }

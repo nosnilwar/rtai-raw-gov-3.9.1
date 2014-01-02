@@ -62,6 +62,14 @@ void *signalIchi(void *arg)
 		printf("CANNOT INIT HANDLER TASK > Task 1 <\n");
 		exit(1);
 	}
+
+    /**
+     *  Allows a non root user to use the Linux POSIX soft real time process management and memory
+     *  lock functions, and allows it to do any input-output operation from user space.
+     *
+     *  Only the process itself can use this functions, it is not possible to impose the related
+     *  transition from another process.
+     */
 	rt_allow_nonroot_hrt();
 
         rt_make_hard_real_time();

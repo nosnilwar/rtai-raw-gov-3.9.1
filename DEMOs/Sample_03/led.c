@@ -15,6 +15,8 @@ static void *blink_thread(void *port)
 {
 	int cont=0;
 	char data=0;
+
+	// rt_whoami(): pega o ponteiro da tarefa corrente...
 	rt_task_make_periodic(rt_whoami(),rt_get_time(),1000*rttick);
 	while(!end)
 	{
@@ -32,7 +34,20 @@ static void *blink_thread(void *port)
 int init_module(void)
 {
 	pthread_t blink_id;
-	rt_set_oneshot_mode();
+
+	/**
+	 * rt_set_oneshot_mode sets the oneshot mode for the timer. It consists in a variable timing
+	 * based on the cpu clock frequency. This allows task to be timed arbitrarily. It must be called
+	 * before using any time related function, including conversions.
+	 *
+	 * rt_set_periodic_mode sets the periodic mode for the timer. It consists of a fixed frequency
+	 * timing of the tasks in multiple of the period set with a call to start_rt_timer. The resolution
+	 * is that of the 8254 frequency (1193180 hz). Any timing request not an integer multiple of the
+	 * period is satisfied at the closest period tick. It is the default mode when no call is made to
+	 * set the oneshot mode.
+	**/
+
+	rt_set_oneshot_mode(); // Seta os ciclos de frequencia do processador com TICKs, ao inves de usar o TIMER.
 	rttick=start_rt_timer(nano2count(DESIRED_TICK));
 	pthread_create(&blink_id,NULL,blink_thread,(void *)&ioport);
 	return 0;
