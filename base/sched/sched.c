@@ -210,14 +210,55 @@ static int tasks_per_cpu[NR_RT_CPUS] = { 0, };
 
 int get_min_tasks_cpuid(void)
 {
-	int i, cpuid, min;
-	min =  tasks_per_cpu[cpuid = 0];
-	for (i = 1; i < num_online_cpus(); i++) {
-		if (tasks_per_cpu[i] < min) {
-			min = tasks_per_cpu[cpuid = i];
-		}
+//	int i, cpuid, min;
+//	min =  tasks_per_cpu[cpuid = 0];
+//	for (i = 1; i < num_online_cpus(); i++) {
+//		if (tasks_per_cpu[i] < min) {
+//			min = tasks_per_cpu[cpuid = i];
+//		}
+//	}
+
+	//TODO: RAWLINSON - FORCA QUE AS TAREFAS DE TEMPO REAL SEJAM EXECUTADAS NO ÚLTIMO PROCESSADOR ONLINE...
+	if (num_online_cpus() <= 1)
+	{
+		 cpuid = 0;
 	}
+	else
+	{
+		cpuid = num_online_cpus() - 1;
+	}
+
 	return cpuid;
+
+	/**********************************************************
+	* RAWLINSON: COMENTARIOS ADICIONAIS SOBRE A FUNCAO -> rtai_cpuid()
+	***/
+
+	//OBSERVACAO: RAWLINSON (ARQUIVO: /linux-raw-gov-2.6.38/arch/x86/include/asm/ipipe.h) EH ESPECIFICO PARA O KERNEL 2.6.38.8
+	/*
+	 * The logical processor id and the current Linux task are read from the PDA,
+	 * so this is always safe, regardless of the underlying stack.
+	 */
+	//#define ipipe_processor_id()	raw_smp_processor_id() // => rtai_cpuid() =>
+
+	/**
+	 * (/linux-raw-gov-2.6.38/arch/x86/include/asm/smp.h)
+	 * #define raw_smp_processor_id() (percpu_read(cpu_number))
+	 *
+	 * =>
+	 */
+
+	/*
+	 * (/linux-raw-gov-2.6.38/arch/x86/include/asm/percpu.h)
+	 * percpu_read() makes gcc load the percpu variable every time it is
+	 * accessed while percpu_read_stable() allows the value to be cached.
+	 * percpu_read_stable() is more efficient and can be used if its value
+	 * is guaranteed to be valid across cpus.  The current users include
+	 * get_current() and get_thread_info() both of which are actually
+	 * per-thread variables implemented as per-cpu variables and thus
+	 * stable for the duration of the respective task.
+	 */
+	//#define percpu_read(var)		percpu_from_op("mov", var, "m" (var))
 }
 
 void put_current_on_cpu(int cpuid)
