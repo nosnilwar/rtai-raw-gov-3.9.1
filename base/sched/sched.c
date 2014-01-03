@@ -219,12 +219,15 @@ int get_min_tasks_cpuid(void)
 //	}
 
 	//TODO: RAWLINSON - FORCA QUE AS TAREFAS DE TEMPO REAL SEJAM EXECUTADAS NO ÚLTIMO PROCESSADOR ONLINE...
+	int cpuid;
+
 	if (num_online_cpus() <= 1)
 	{
-		 cpuid = 0;
+		cpuid = 0;
 	}
 	else
 	{
+		// Adiciona a tarefa no ultimo processador online...
 		cpuid = num_online_cpus() - 1;
 	}
 

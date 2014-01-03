@@ -52,7 +52,10 @@ void *upSignalA_Thread(void *arg)
 {
 	unsigned long Task_1A_name = nam2num("SRV_1");
 
+	//TODO:RAWLINSON
 	Task_1A = rt_task_init(Task_1A_name, 0, 0, 0);
+	//Task_1A = rt_task_init_schmod(Task_1A_name, 0, 0, 0, SCHED_FIFO, 0); // Colocando a tarefa em apenas um processador...
+
 	rt_task_make_periodic(Task_1A, rt_get_time() + sampling * 5, sampling * 10);
 
 	while (1) {
