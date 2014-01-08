@@ -16,7 +16,11 @@ int main(int argc,char *argv[])
 	rt_allow_nonroot_hrt();
 	rt_set_oneshot_mode();
 	tick=start_rt_timer(nano2count(DESIRED_TICK));
-	maintsk=rt_task_init(nam2num("LED"),1,0,0);
+	//maintsk=rt_task_init(nam2num("LED"),1,0,0);
+	if(!(maintsk = rt_task_init_schmod(nam2num("LED"),1,0,0,SCHED_FIFO,2))) {
+		printf("CANNOT INIT HANDLER TASK > Task 1 <\n");
+		exit(1);
+	}
 
 	/*
 	 * Give a Linux process, or pthread, hard real time execution capabilities allowing full kernel preemption.
@@ -38,13 +42,15 @@ int main(int argc,char *argv[])
 	rt_make_hard_real_time();
 	rt_task_make_periodic(maintsk,rt_get_time(),1000*tick);
 
-	for(i=0; i < 60; i++)
+	for(i=0; i < 100; i++)
 	{
 		rt_task_wait_period();
 		outb(data,IOPORT);
 		data=data^0x01;
 
 		printf("*Acendendo LED: %llu\n", rt_get_time_ns());
+
+		//while(1) printf("Rawlinson..kkkkkk :D  -> %llu\n", rt_get_time_ns()); // Consumindo Processador... hehehe :P
 	}
 
 	/**

@@ -1,27 +1,30 @@
-TARGET=sample.ko
-SRCS=$(TARGET:.ko=.c)
+TARGET=sample
+SRCS=$(TARGET).c
 
 RUNINFO=.runinfo
 
-CINCLUDE=-I/usr/realtime/include
+FLAGS=-O2 -Wall -MMD
+INCLUDE=-I. -I$(HOME)/include -I/usr/realtime/include
+LIBDIR=-L$(HOME)/lib
+LIBS=
 
-KERNEL_SOURCE=/lib/modules/$(shell uname -r)/build
-PWD=$(shell pwd)
+CC=gcc
+CFLAGS=$(FLAGS) $(INCLUDE)
+LDFLAGS=$(LIBDIR) $(LIBS)
 
-KBUILD_EXTRA_SYMBOLS := $(shell rtai-config --prefix)/modules/Module.symvers
-EXTRA_CFLAGS+=$(shell rtai-config --module-cflags) $(CINCLUDE)
+all: $(TARGET) $(RUNINFO)
 
-obj-m+=$(TARGET:.ko=.o)
+$(TARGET): $(SRCS:.c=.o)
+	$(CC) -o $@ $^ -lpthread $(LDFLAGS) 
 
-default: $(TARGET) $(RUNINFO)
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(TARGET): $(TARGET:.ko=.c)
-	$(MAKE) -C $(KERNEL_SOURCE) O=. SUBDIRS=$(PWD) modules
+-include $(SRCS:.c=.d)
 
 $(RUNINFO): Makefile
-	echo "sample:sched+sem:push sample;sleep 60;popall:" > $(RUNINFO)
-	
+	echo "$(TARGET):lxrt+sem:./$(TARGET);popall:Control+C para cancelar a execucao! ;)" > $(RUNINFO)
+
 clean:
-	rm -f *~ *.bak *.o *.ko *.d *.mod.* *.order *.symvers .sample.*
-	rm -rf .tmp_versions
+	rm -f *~ *.bak *.o *.d
 	rm -f $(TARGET) $(RUNINFO)

@@ -56,12 +56,12 @@ void *signalIchi(void *arg)
 
 	struct tm *newtime, *timeNow;
 
-	//Task_1 = rt_task_init(Task_1_name, 0, 0, 0);
+	Task_1 = rt_task_init(Task_1_name, 0, 0, 0);
 
-        if(!(Task_1 = rt_task_init_schmod(Task_1_name,2,0,0,SCHED_FIFO,0))) {
-		printf("CANNOT INIT HANDLER TASK > Task 1 <\n");
-		exit(1);
-	}
+//	if(!(Task_1 = rt_task_init_schmod(Task_1_name,2,0,0,SCHED_FIFO,1))) {
+//		printf("CANNOT INIT HANDLER TASK > Task 1 <\n");
+//		exit(1);
+//	}
 
     /**
      *  Allows a non root user to use the Linux POSIX soft real time process management and memory
@@ -122,12 +122,12 @@ void *signalNi(void *arg)
 	struct tm *newtime;
 	int count = 0;
 
-	//Task_2 = rt_task_init(Task_2_name, 0, 0, 0);
+	Task_2 = rt_task_init(Task_2_name, 0, 0, 0);
 
-        if(!(Task_2 = rt_task_init_schmod(Task_2_name,1,0,0,SCHED_FIFO,0))) {
-		printf("CANNOT INIT HANDLER TASK > Task 2 <\n");
-		exit(1);
-	}
+//	if(!(Task_2 = rt_task_init_schmod(Task_2_name,1,0,0,SCHED_FIFO,1))) {
+//		printf("CANNOT INIT HANDLER TASK > Task 2 <\n");
+//		exit(1);
+//	}
 	rt_allow_nonroot_hrt();
 
         rt_make_hard_real_time();
@@ -182,12 +182,12 @@ void *signalSan(void *arg)
 	int count = 0;
 	struct tm *newtime;
 
-	//Task_3 = rt_task_init(Task_3_name, 0, 0, 0);
+	Task_3 = rt_task_init(Task_3_name, 0, 0, 0);
 
-        if(!(Task_3 = rt_task_init_schmod(Task_3_name,3,0,0,SCHED_FIFO,0))) {
-		printf("CANNOT INIT HANDLER TASK > Task 3 <\n");
-		exit(1);
-	}
+//	if(!(Task_3 = rt_task_init_schmod(Task_3_name,3,0,0,SCHED_FIFO,1))) {
+//		printf("CANNOT INIT HANDLER TASK > Task 3 <\n");
+//		exit(1);
+//	}
 	rt_allow_nonroot_hrt();
 
         rt_make_hard_real_time();
