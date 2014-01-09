@@ -9,7 +9,7 @@
 
 #define TICK_TIME 500000000
 #define DELAY_TIME 3000000000ll
-#define CPUMAP 0x1
+#define CPUMAP 2
 
 typedef struct {
 	char id;
