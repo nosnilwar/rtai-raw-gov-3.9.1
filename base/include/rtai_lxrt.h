@@ -334,7 +334,19 @@
 #define SEM_RT_POLL 		       228
 #define RT_POLL_NETRPC		       229
 
-#define MAX_LXRT_FUN		       230
+//TODO: RAWLINSON - DEFINICAO DOS IDs DAS FUNCOES DEFINIDAS NA API.C DO ESCALONADOR...
+#define CFG_INIT_INFO			   230
+#define CFG_SET_TSK_WCEC		   231
+#define CFG_GET_TSK_WCEC		   232
+#define CFG_SET_RWCEC			   233
+#define CFG_GET_RWCEC			   234
+#define CFG_SET_CPU_FREQUENCY	   235
+#define CFG_GET_CPU_FREQUENCY	   236
+#define CFG_SET_CPU_VOLTAGE		   237
+#define CFG_GET_CPU_VOLTAGE	 	   238
+//TODO: RAWLINSON - FIM DAS DEFINICOES...
+
+#define MAX_LXRT_FUN		       239
 
 // not recovered yet 
 // Qblk's 
@@ -1461,6 +1473,62 @@ RTAI_PROTO(int, rt_set_period, (RT_TASK *rt_task, RTIME new_period))
 	struct { RT_TASK *rt_task; RTIME new_period; } arg = { rt_task, new_period };
 	return rtai_lxrt(BIDX, SIZARG, SET_PERIOD, &arg).i[LOW];
 }
+
+//TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+RTAI_PROTO(int, rt_cfg_init_info, (RT_TASK *rt_task, unsigned long tsk_wcec, unsigned int cpu_frequency, unsigned int cpu_voltage))
+{
+	struct { RT_TASK *rt_task; unsigned long tsk_wcec, cpu_frequency, cpu_voltage; } arg = { rt_task, tsk_wcec, cpu_frequency, cpu_voltage };
+	return rtai_lxrt(BIDX, SIZARG, CFG_INIT_INFO, &arg).i[LOW];
+}
+
+RTAI_PROTO(int, rt_cfg_set_tsk_wcec, (RT_TASK *rt_task, unsigned long tsk_wcec))
+{
+	struct { RT_TASK *rt_task; unsigned long tsk_wcec; } arg = { rt_task, tsk_wcec };
+	return rtai_lxrt(BIDX, SIZARG, CFG_SET_TSK_WCEC, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned long, rt_cfg_get_tsk_wcec, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, CFG_GET_TSK_WCEC, &arg).i[LOW];
+}
+
+RTAI_PROTO(int, rt_cfg_set_rwcec, (RT_TASK *rt_task, unsigned long rwcec))
+{
+	struct { RT_TASK *rt_task; unsigned long rwcec; } arg = { rt_task, rwcec };
+	return rtai_lxrt(BIDX, SIZARG, CFG_SET_RWCEC, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned long, rt_cfg_get_rwcec, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, CFG_GET_RWCEC, &arg).i[LOW];
+}
+
+RTAI_PROTO(int, rt_cfg_set_cpu_frequency, (RT_TASK *rt_task, unsigned int cpu_frequency))
+{
+	struct { RT_TASK *rt_task; unsigned int cpu_frequency; } arg = { rt_task, cpu_frequency };
+	return rtai_lxrt(BIDX, SIZARG, CFG_SET_CPU_FREQUENCY, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned int, rt_cfg_get_cpu_frequency, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, CFG_GET_CPU_FREQUENCY, &arg).i[LOW];
+}
+
+RTAI_PROTO(int, rt_cfg_set_cpu_voltage, (RT_TASK *rt_task, unsigned int cpu_voltage))
+{
+	struct { RT_TASK *rt_task; unsigned int cpu_voltage; } arg = { rt_task, cpu_voltage };
+	return rtai_lxrt(BIDX, SIZARG, CFG_SET_CPU_VOLTAGE, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned int, rt_cfg_get_cpu_voltage, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, CFG_GET_CPU_VOLTAGE, &arg).i[LOW];
+}
+//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 RTAI_PROTO(void, rt_spv_RMS, (int cpuid))
 {

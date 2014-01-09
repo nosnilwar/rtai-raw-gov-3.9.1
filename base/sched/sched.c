@@ -2845,6 +2845,19 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 1, rt_enable_signal },		    RT_SIGNAL_ENABLE },
 	{ { 1, rt_disable_signal },		    RT_SIGNAL_DISABLE },
 	{ { 1, rt_trigger_signal }, 		    RT_SIGNAL_TRIGGER },
+
+	//TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+	{ { 0, rt_cfg_init_info },				CFG_INIT_INFO },
+	{ { 0, rt_cfg_set_tsk_wcec },			CFG_SET_TSK_WCEC },
+	{ { 0, rt_cfg_get_tsk_wcec },			CFG_GET_TSK_WCEC },
+	{ { 0, rt_cfg_set_rwcec },				CFG_SET_RWCEC },
+	{ { 0, rt_cfg_get_rwcec },				CFG_GET_RWCEC },
+	{ { 0, rt_cfg_set_cpu_frequency },		CFG_SET_CPU_FREQUENCY },
+	{ { 0, rt_cfg_get_cpu_frequency },		CFG_GET_CPU_FREQUENCY },
+	{ { 0, rt_cfg_set_cpu_voltage },		CFG_SET_CPU_VOLTAGE },
+	{ { 0, rt_cfg_get_cpu_voltage },		CFG_GET_CPU_VOLTAGE },
+	//TODO:RAWLINSON - FIM DAS DEFINICOES...
+
 	{ { 0, 0 },			            000 }
 };
 

@@ -909,6 +909,136 @@ RTAI_SYSCALL_MODE int rt_set_period(RT_TASK *task, RTIME new_period)
 	return 0;
 }
 
+//TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency, unsigned int cpu_voltage)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->tsk_wcec = tsk_wcec;
+	task->rwcec = tsk_wcec;
+	task->cpu_frequency = cpu_frequency;
+	task->cpu_voltage = cpu_voltage;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_tsk_wcec(struct rt_task_struct *task, unsigned long tsk_wcec)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->tsk_wcec = tsk_wcec;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned long rt_cfg_get_tsk_wcec(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned long tsk_wcec;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	tsk_wcec = task->tsk_wcec;
+	rt_global_restore_flags(flags);
+
+	return tsk_wcec;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned long rwcec)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->rwcec = rwcec;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned long rt_cfg_get_rwcec(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned long rwcec;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	rwcec = task->rwcec;
+	rt_global_restore_flags(flags);
+
+	return rwcec;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsigned int cpu_frequency)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->cpu_frequency = cpu_frequency;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned int cpu_frequency;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	cpu_frequency = task->cpu_frequency;
+	rt_global_restore_flags(flags);
+
+	return cpu_frequency;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_voltage(struct rt_task_struct *task, unsigned int cpu_voltage)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->cpu_voltage = cpu_voltage;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned int cpu_voltage;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	cpu_voltage = task->cpu_voltage;
+	rt_global_restore_flags(flags);
+
+	return cpu_voltage;
+}
+//TODO:RAWLINSON - FIM DAS DEFINICOES...
+
 /**
  * @anchor next_period
  * @brief Get the time a periodic task will be resumed after calling
@@ -2232,6 +2362,18 @@ EXPORT_SYMBOL(reset_rt_fun_entries);
 EXPORT_SYMBOL(set_rt_fun_ext_index);
 EXPORT_SYMBOL(reset_rt_fun_ext_index);
 EXPORT_SYMBOL(max_slots);
+
+//TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+EXPORT_SYMBOL(rt_cfg_init_info);
+EXPORT_SYMBOL(rt_cfg_set_tsk_wcec);
+EXPORT_SYMBOL(rt_cfg_get_tsk_wcec);
+EXPORT_SYMBOL(rt_cfg_set_rwcec);
+EXPORT_SYMBOL(rt_cfg_get_rwcec);
+EXPORT_SYMBOL(rt_cfg_set_cpu_frequency);
+EXPORT_SYMBOL(rt_cfg_get_cpu_frequency);
+EXPORT_SYMBOL(rt_cfg_set_cpu_voltage);
+EXPORT_SYMBOL(rt_cfg_get_cpu_voltage);
+//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #ifdef CONFIG_SMP
 #endif /* CONFIG_SMP */

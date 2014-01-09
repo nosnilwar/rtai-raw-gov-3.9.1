@@ -51,6 +51,25 @@ int main(int argc,char *argv[])
 		printf("*Acendendo LED: %llu\n", rt_get_time_ns());
 
 		//while(1) printf("Rawlinson..kkkkkk :D  -> %llu\n", rt_get_time_ns()); // Consumindo Processador... hehehe :P
+
+		rt_cfg_init_info(maintsk, 1001, 2002, 3003);
+
+		printf("debug rawlinson -> 1001: %lu\n", rt_cfg_get_tsk_wcec(maintsk));
+		printf("debug rawlinson -> 1001: %lu\n", rt_cfg_get_rwcec(maintsk));
+		printf("debug rawlinson -> 2002: %d\n", rt_cfg_get_cpu_frequency(maintsk));
+		printf("debug rawlinson -> 3003: %d\n", rt_cfg_get_cpu_voltage(maintsk));
+
+//		rt_cfg_set_tsk_wcec(maintsk, 10001);
+//		printf("debug rawlinson -> 10001: %llu\n", rt_cfg_get_tsk_wcec(maintsk));
+//
+//		rt_cfg_set_rwcec(maintsk, 20002);
+//		printf("debug rawlinson -> 20002: %llu\n", rt_cfg_get_rwcec(maintsk));
+//
+//		rt_cfg_set_cpu_frequency(maintsk, 30003);
+//		printf("debug rawlinson -> 30003: %d\n", rt_cfg_get_cpu_frequency(maintsk));
+//
+//		rt_cfg_set_cpu_voltage(maintsk, 40004);
+//		printf("debug rawlinson -> 40004: %d\n", rt_cfg_get_cpu_voltage(maintsk));
 	}
 
 	/**

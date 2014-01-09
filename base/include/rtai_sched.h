@@ -237,6 +237,15 @@ typedef struct rt_task_struct {
 #endif
 	struct rt_queue resq;
 	unsigned long resumsg;
+
+	/* TODO:RAWLINSON - VARIAVEIS DE CONTROLE E GERENCIAMENTO DO RAW GOVERNOR */
+	unsigned long tsk_wcec; // WCEC - Worst Case Execution Cycles - of the task
+//	unsigned long last_sec; // SEC - Saving Execution Cycle
+	unsigned long rwcec; // RWCEC - Remaining Worst Case Execution Cycle
+
+	unsigned int cpu_frequency;
+	unsigned int cpu_voltage;
+	/* TODO:RAWLINSON - FIM DAS DEFINICOES...*/
 } RT_TASK __attribute__ ((__aligned__ (L1_CACHE_BYTES)));
 
 #else /* __cplusplus */
@@ -416,6 +425,26 @@ RTAI_SYSCALL_MODE int rt_set_period(struct rt_task_struct *task,
 		  RTIME new_period);
 
 int rt_task_wait_period(void);
+
+//TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency, unsigned int cpu_voltage);
+
+RTAI_SYSCALL_MODE int rt_cfg_set_tsk_wcec(struct rt_task_struct *task, unsigned long tsk_wcec);
+
+RTAI_SYSCALL_MODE unsigned long rt_cfg_get_tsk_wcec(struct rt_task_struct *task);
+
+RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned long rwcec);
+
+RTAI_SYSCALL_MODE unsigned long rt_cfg_get_rwcec(struct rt_task_struct *task);
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsigned int cpu_frequency);
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency(struct rt_task_struct *task);
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_voltage(struct rt_task_struct *task, unsigned int cpu_voltage);
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *task);
+//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 void rt_schedule(void);
 
