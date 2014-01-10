@@ -970,6 +970,8 @@ void rt_schedule(void)
 	RT_TASK *rt_current, *task, *new_task;
 	int cpuid;
 
+	rt_printk("DEBUG:RAWLINSON -> PROCESSADOR: %d\n", rtai_cpuid());
+
 	rt_current = rt_smp_current[cpuid = rtai_cpuid()];
 
 	RR_YIELD();

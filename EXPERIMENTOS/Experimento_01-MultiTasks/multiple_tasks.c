@@ -18,7 +18,7 @@
 #include <rtai_lxrt.h>
 
 /* Definindo MACROS */
-#define CPU_ALLOWED 2
+#define CPU_ALLOWED 1
 #define TICK 500000000 //0.5 seconds
 
 /* Definindo variaveis goblais*/
@@ -69,6 +69,11 @@ void *init_task_2(void *arg)
 		printf("[ERRO] Não foi possível criar a tarefa 2.\n");
 		exit(1);
 	}
+
+	rt_allow_nonroot_hrt();
+
+	rt_make_hard_real_time();
+
 	rt_task_make_periodic(Task_2, rt_get_time() + sampling, sampling * 10);
 
 	while (1) {
@@ -88,6 +93,11 @@ void *init_task_3(void *arg)
 		printf("[ERRO] Não foi possível criar a tarefa 3.\n");
 		exit(1);
 	}
+
+	rt_allow_nonroot_hrt();
+
+	rt_make_hard_real_time();
+
 	rt_task_make_periodic(Task_3, rt_get_time() + sampling * 11, sampling * 10);
 
 	while (1) {
@@ -108,6 +118,11 @@ void *init_task_4(void *arg)
 		printf("[ERRO] Não foi possível criar a tarefa 1.\n");
 		exit(1);
 	}
+
+	rt_allow_nonroot_hrt();
+
+	rt_make_hard_real_time();
+
 	rt_task_make_periodic(Task_4, rt_get_time() + sampling * 16, sampling * 10);
 
 	while (1) {
@@ -126,8 +141,6 @@ int create_tasks(void)
 	pthread_t *threadControle_Task_3;
 	pthread_t *threadControle_Task_2;
 	pthread_t *threadControle_Task_4;
-
-	rt_make_hard_real_time();
 
 	rt_set_periodic_mode();
 
@@ -197,12 +210,14 @@ int create_tasks(void)
 
 void delete_tasks(void)
 {
-  rt_task_delete(Task_1);
-  rt_task_delete(Task_2);
-  rt_task_delete(Task_3);
-  rt_task_delete(Task_4);
+	rt_make_soft_real_time();
 
-  printf("\nFim do Escalonamento\n");
+	rt_task_delete(Task_1);
+	rt_task_delete(Task_2);
+	rt_task_delete(Task_3);
+	rt_task_delete(Task_4);
+
+	printf("\nFim do Escalonamento\n");
 }
 
 int main(void) {

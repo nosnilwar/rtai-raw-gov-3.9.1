@@ -3,6 +3,7 @@
 
 #define DESIRED_TICK 1000000
 #define IOPORT 0x378
+#define CPU_ALLOWED 0xFF
 
 int main(int argc,char *argv[])
 {
@@ -17,7 +18,7 @@ int main(int argc,char *argv[])
 	rt_set_oneshot_mode();
 	tick=start_rt_timer(nano2count(DESIRED_TICK));
 	//maintsk=rt_task_init(nam2num("LED"),1,0,0);
-	if(!(maintsk = rt_task_init_schmod(nam2num("LED"),1,0,0,SCHED_FIFO,2))) {
+	if(!(maintsk = rt_task_init_schmod(nam2num("LED"),1,0,0,SCHED_FIFO,CPU_ALLOWED))) {
 		printf("CANNOT INIT HANDLER TASK > Task 1 <\n");
 		exit(1);
 	}
