@@ -1,0 +1,41 @@
+Earliest Deadline First (EDF)
+-----------------------------
+
+Another scheduling policy supported is Earliest Deadline First (EDF).  Such
+a policy schedules first the task that ends at the earliest time.
+Guarantees for meeting tasks objectives is in a form similar to the above,
+i.e.:
+
+  sum_over_n_of(Ci/Ti) <= 1
+
+With this policy there is the need to know both the time at which the task
+must be resumed and the time at which it must end, clearly:
+
+  Ci = end_time.i - resume_time.i
+
+So more per task informations must be given. To use EDF a task must call
+the function:
+
+  void rt_task_set_resume_end(RTIME resume_time, RTIME end_time);
+
+at the end of each timed execution.
+
+Args are selfexplained by the related names, no specific periodicity is
+assumed.Nonetheless if the resume_time is negative it is assumed as being
+relative to its previous resume_time and, if negative, also end_time is
+taken as relative to the new resume_time, i.e.:
+
+  rt_task.resume_time -= resume_time;
+  rt_task.end_time = rt_task.resume_time - end_time;
+
+Thus a periodic EDF task should be easy to program anyhow.
+
+It is possible to mix up all the scheduling policies. SCHED_FIFO and RR
+tasks have no problems. It is up to the user to insure RMS behaves
+correctly by assigning lower priorities (higher numbers) to non periodic
+tasks.  Clearly there can be nonperiodic tasks of utmost importance that
+can have a priority higher than any periodic one. When EDF tasks come into
+the game a design choice has to be made for the case they mix up with tasks
+based on other policies. Ours has been to run EDF tasks as the highest
+priority ones, i.e. any EDF task will run ahead of any other non EDF task
+when its resume time expires.
