@@ -1541,9 +1541,20 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 		period = 0;
 		rt_set_oneshot_mode();
 	}
-	for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++) {
-		setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
-		setup_data[cpuid].count = count2nano(period);
+
+	//TODO:RAWLINSON
+	for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++)
+	{
+		if(cpuid > 0)
+		{
+			setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
+			setup_data[cpuid].count = count2nano(CLOCKS_PER_SEC);
+		}
+		else
+		{
+			setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
+			setup_data[cpuid].count = count2nano(period);
+		}
 	}
 	start_rt_apic_timers(setup_data, rtai_cpuid());
 	rt_gettimeorig(NULL);
