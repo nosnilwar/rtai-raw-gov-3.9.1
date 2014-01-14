@@ -920,8 +920,12 @@ RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned lon
 	flags = rt_global_save_flags_and_cli();
 	task->tsk_wcec = tsk_wcec;
 	task->rwcec = tsk_wcec;
-	task->cpu_frequency = cpu_frequency;
+	task->cpu_frequency = cpu_frequency; // em KHz
 	task->cpu_voltage = cpu_voltage;
+
+	//aplicando a frequencia no processador...
+	//per_cpu(task->runnable_on_cpus, task->cpu_frequency);
+
 	rt_global_restore_flags(flags);
 	return 0;
 }

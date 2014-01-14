@@ -43,6 +43,10 @@ ACKNOWLEDGMENTS:
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
 
+//TODO:RAWLINSON - INCLUINDO BIBLIOTECAS NECESSARIAS PARA INICIALIZAR O RAW GOVERNOR...
+#include <linux/cpumask.h>
+#include <linux/cpufreq.h>
+
 #define __KERNEL_SYSCALLS__
 #include <linux/unistd.h>
 
@@ -2145,12 +2149,22 @@ static void kthread_fun(int cpuid)
 	clr_rtext(task);
 }
 
+//TODO:RAWLINSON - FUNCAO RESPONSAVEL POR CALCULAR A FREQUENCIA DE PROCESSAMENTO DAS TAREFAS QUE FORAM INTERROMPIDAS...
+static void rt_cfg_manage_cpu(struct task_struct *task)
+{
+	struct rt_task_struct * rt_task;
+
+	rt_task = pid2rttask(task->pid);
+	rt_printk("DEBUG:RAWLINSON -> WAKE UP -> PID: %d |%lu|%lu|%d|%d|\n", rt_task->lnxtsk->pid, rt_task->tsk_wcec, rt_task->rwcec, rt_task->cpu_frequency, rt_task->cpu_voltage);
+}
+
 #define WAKE_UP_TASKs(klist) \
 do { \
 	struct klist_t *p = &klist[cpuid]; \
 	struct task_struct *task; \
 	while (p->out != p->in) { \
 		task = p->task[p->out++ & (MAX_WAKEUP_SRQ - 1)]; \
+		rt_cfg_manage_cpu(task); \
 		set_task_state(task, TASK_UNINTERRUPTIBLE); \
 		wake_up_process(task); \
 	} \
@@ -2878,6 +2892,24 @@ static int lxrt_init(void)
 {
 	void init_fun_ext(void);
 	int cpuid;
+
+	//TODO:RAWLINSON - APLICANDO O RAW GOVERNOR NO CPUID DO RTAI...
+	unsigned int ret = -EINVAL;
+	char str_raw_governor[16] = "raw";
+	struct cpufreq_policy *policy;
+	struct cpufreq_policy new_policy;
+
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	printk("*******DEBUG:RAWLINSON ANTES - cpufreq_raw_set for cpu %u - %u - %s\n", policy->cpu, policy->cur, policy->governor->name);
+	ret = cpufreq_get_policy(&new_policy, policy->cpu);
+	if(!ret) // SE NAO DEU NENHUM PROBLEMA...
+	{
+		//cpufreq_parse_governor(str_raw_governor, &new_policy.policy, &new_policy.governor);
+		store_scaling_governor(policy, str_raw_governor, 1);
+	}
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	printk("*******DEBUG:RAWLINSON DEPOIS - cpufreq_raw_set for cpu %u - %u - %s\n", policy->cpu, policy->cur, policy->governor->name);
+	//TODO:RAWLINSON - FIM
 
 	init_fun_ext();
 

@@ -204,6 +204,7 @@ int create_tasks(void)
 	}
 
 	tick_period = start_rt_timer(nano2count(TICK_PERIOD));
+	printf("TICK_PERIOD =======> %llu\n", tick_period);
 
 	delay_timeline_sched = tick_period * 10;
 	timeline_sched = rt_get_time() + delay_timeline_sched;
