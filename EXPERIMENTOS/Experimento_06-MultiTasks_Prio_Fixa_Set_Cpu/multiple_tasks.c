@@ -135,7 +135,7 @@ void *init_task(void *arg)
 	//rt_change_prio(arrayTasks[idTask], idTask);
 	rt_task_make_periodic(arrayTasks[idTask], Tinicio, Tperiodo);
 
-	rt_cfg_init_info(arrayTasks[idTask], 1001, 1800000, 3003);
+	rt_cfg_init_info(arrayTasks[idTask], 1001, 800000, 3003);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTask], idTask, Tperiodo);
 

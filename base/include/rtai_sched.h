@@ -237,15 +237,6 @@ typedef struct rt_task_struct {
 #endif
 	struct rt_queue resq;
 	unsigned long resumsg;
-
-	/* TODO:RAWLINSON - VARIAVEIS DE CONTROLE E GERENCIAMENTO DO RAW GOVERNOR */
-	unsigned long tsk_wcec; // WCEC - Worst Case Execution Cycles - of the task
-//	unsigned long last_sec; // SEC - Saving Execution Cycle
-	unsigned long rwcec; // RWCEC - Remaining Worst Case Execution Cycle
-
-	unsigned int cpu_frequency;
-	unsigned int cpu_voltage;
-	/* TODO:RAWLINSON - FIM DAS DEFINICOES...*/
 } RT_TASK __attribute__ ((__aligned__ (L1_CACHE_BYTES)));
 
 #else /* __cplusplus */
