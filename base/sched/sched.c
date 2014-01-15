@@ -1364,16 +1364,14 @@ void rt_set_periodic_mode(void)
 	}
 }
 
-
 void rt_set_oneshot_mode(void)
-{ 
+{
 	int cpuid;
 	stop_rt_timer();
 	for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++) {
 		oneshot_timer = 1;
 	}
 }
-
 
 #if defined(CONFIG_RTAI_RTC_FREQ) && CONFIG_RTAI_RTC_FREQ >= 2
 
@@ -2149,14 +2147,167 @@ static void kthread_fun(int cpuid)
 	clr_rtext(task);
 }
 
-//TODO:RAWLINSON - FUNCAO RESPONSAVEL POR CALCULAR A FREQUENCIA DE PROCESSAMENTO DAS TAREFAS QUE FORAM INTERROMPIDAS...
+
+//TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency, unsigned int cpu_voltage)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->tsk_wcec = tsk_wcec;
+	task->rwcec = tsk_wcec;
+	rt_global_restore_flags(flags);
+
+	//aplicando a frequencia e voltagem no processador...
+	rt_cfg_set_cpu_frequency(task, cpu_frequency); // em KHz
+	rt_cfg_set_cpu_voltage(task, cpu_voltage);
+
+	return 0;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_tsk_wcec(struct rt_task_struct *task, unsigned long tsk_wcec)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->tsk_wcec = tsk_wcec;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned long rt_cfg_get_tsk_wcec(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned long tsk_wcec;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	tsk_wcec = task->tsk_wcec;
+	rt_global_restore_flags(flags);
+
+	return tsk_wcec;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned long rwcec)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->rwcec = rwcec;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned long rt_cfg_get_rwcec(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned long rwcec;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	rwcec = task->rwcec;
+	rt_global_restore_flags(flags);
+
+	return rwcec;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsigned int cpu_frequency)
+{
+	unsigned long flags;
+
+	//TODO:RAWLINSON - APLICANDO O RAW GOVERNOR NO CPUID DO RTAI...
+	struct cpufreq_policy *policy;
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	if(policy)
+	{
+		//cpufreq_driver_target(policy, cpu_frequency, CPUFREQ_RELATION_H); // Alternativa para definir a frequencia no processador...
+		if(policy->governor && policy->governor->store_setspeed)
+		{
+			policy->governor->store_setspeed(policy, cpu_frequency);
+		}
+	}
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	printk("*******DEBUG:RAWLINSON - RAW GOVERNOR - rt_cfg_set_cpu_frequency(%u) for cpu %u - %u - %s\n", cpu_frequency, policy->cpu, policy->cur, policy->governor->name);
+	//TODO:RAWLINSON - FIM
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+
+	flags = rt_global_save_flags_and_cli();
+	task->cpu_frequency = cpu_frequency;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned int cpu_frequency;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	cpu_frequency = task->cpu_frequency;
+	rt_global_restore_flags(flags);
+
+	return cpu_frequency;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_voltage(struct rt_task_struct *task, unsigned int cpu_voltage)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	task->cpu_voltage = cpu_voltage;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned int cpu_voltage;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	cpu_voltage = task->cpu_voltage;
+	rt_global_restore_flags(flags);
+
+	return cpu_voltage;
+}
+
+// FUNCAO RESPONSAVEL POR CALCULAR A FREQUENCIA DE PROCESSAMENTO DAS TAREFAS QUE FORAM INTERROMPIDAS...
 static void rt_cfg_manage_cpu(struct task_struct *task)
 {
 	struct rt_task_struct * rt_task;
+	unsigned int cpu_frequency = 800000;
 
 	rt_task = pid2rttask(task->pid);
 	rt_printk("DEBUG:RAWLINSON -> WAKE UP -> PID: %d |%lu|%lu|%d|%d|\n", rt_task->lnxtsk->pid, rt_task->tsk_wcec, rt_task->rwcec, rt_task->cpu_frequency, rt_task->cpu_voltage);
+
+	rt_cfg_set_cpu_frequency(rt_task, cpu_frequency);
 }
+//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #define WAKE_UP_TASKs(klist) \
 do { \
@@ -2164,7 +2315,6 @@ do { \
 	struct task_struct *task; \
 	while (p->out != p->in) { \
 		task = p->task[p->out++ & (MAX_WAKEUP_SRQ - 1)]; \
-		rt_cfg_manage_cpu(task); \
 		set_task_state(task, TASK_UNINTERRUPTIBLE); \
 		wake_up_process(task); \
 	} \
@@ -2894,21 +3044,14 @@ static int lxrt_init(void)
 	int cpuid;
 
 	//TODO:RAWLINSON - APLICANDO O RAW GOVERNOR NO CPUID DO RTAI...
-	unsigned int ret = -EINVAL;
 	char str_raw_governor[16] = "raw";
 	struct cpufreq_policy *policy;
-	struct cpufreq_policy new_policy;
-
 	policy = cpufreq_cpu_get(CPUID_RTAI);
-	printk("*******DEBUG:RAWLINSON ANTES - cpufreq_raw_set for cpu %u - %u - %s\n", policy->cpu, policy->cur, policy->governor->name);
-	ret = cpufreq_get_policy(&new_policy, policy->cpu);
-	if(!ret) // SE NAO DEU NENHUM PROBLEMA...
+	if(policy)
 	{
-		//cpufreq_parse_governor(str_raw_governor, &new_policy.policy, &new_policy.governor);
 		store_scaling_governor(policy, str_raw_governor, 1);
 	}
-	policy = cpufreq_cpu_get(CPUID_RTAI);
-	printk("*******DEBUG:RAWLINSON DEPOIS - cpufreq_raw_set for cpu %u - %u - %s\n", policy->cpu, policy->cur, policy->governor->name);
+	printk("*******DEBUG:RAWLINSON - RAW GOVERNOR - store_scaling_governor for cpu %u - %u - %s\n", policy->cpu, policy->cur, policy->governor->name);
 	//TODO:RAWLINSON - FIM
 
 	init_fun_ext();
@@ -2962,6 +3105,19 @@ static void lxrt_exit(void)
 	RT_TASK *rt_task;
 	struct task_struct *kthread;
 	int cpuid;
+
+	//TODO:RAWLINSON - APLICANDO O RAW GOVERNOR NO CPUID DO RTAI...
+	char str_governor[16] = "ondemand";
+	struct cpufreq_policy *policy;
+
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	if(policy)
+	{
+		store_scaling_governor(policy, str_governor, 1);
+	}
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	printk("*******DEBUG:RAWLINSON - GOVERNOR - cpufreq_set for cpu %u - %u - %s\n", policy->cpu, policy->cur, policy->governor->name);
+	//TODO:RAWLINSON - FIM
 
 #ifdef CONFIG_PROC_FS
 	rtai_proc_lxrt_unregister();
