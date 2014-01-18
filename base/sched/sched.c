@@ -2235,6 +2235,10 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsi
 	}
 
 	flags = rt_global_save_flags_and_cli();
+	if(task->lnxtsk->cpu_frequency > 0)
+	{
+		task->lnxtsk->last_cpu_frequency = task->lnxtsk->cpu_frequency;
+	}
 	task->lnxtsk->cpu_frequency = cpu_frequency;
 	task->lnxtsk->flagReturnPreemption = 0;
 	rt_global_restore_flags(flags);
@@ -2242,14 +2246,13 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsi
 	policy = cpufreq_cpu_get(CPUID_RTAI);
 	if(policy)
 	{
-		//cpufreq_driver_target(policy, cpu_frequency, CPUFREQ_RELATION_H); // Alternativa para definir a frequencia no processador...
-		if(policy->governor && policy->governor->store_setspeed)
+		if(policy->governor && policy->governor->set_frequency)
 		{
-			policy->governor->store_setspeed(policy, cpu_frequency);
+			policy->governor->set_frequency(policy, task->lnxtsk, cpu_frequency);
 		}
 	}
 	policy = cpufreq_cpu_get(CPUID_RTAI);
-	printk("*******DEBUG:RAWLINSON - RAW GOVERNOR - rt_cfg_set_cpu_frequency(%u) for cpu %u - %u - %s -> (%d)\n", cpu_frequency, policy->cpu, policy->cur, policy->governor->name, task->lnxtsk->flagReturnPreemption);
+	printk("*******DEBUG:RAWLINSON - RAW GOVERNOR - rt_cfg_set_cpu_frequency(%u) for cpu %u - %u - %s -> (%d) -> PID (%d)\n", cpu_frequency, policy->cpu, policy->cur, policy->governor->name, task->lnxtsk->flagReturnPreemption, task->lnxtsk->pid);
 
 	return 0;
 }
@@ -2277,6 +2280,10 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_voltage(struct rt_task_struct *task, unsign
 		return -EINVAL;
 	}
 	flags = rt_global_save_flags_and_cli();
+	if(task->lnxtsk->cpu_voltage > 0)
+	{
+		task->lnxtsk->last_cpu_voltage = task->lnxtsk->cpu_voltage;
+	}
 	task->lnxtsk->cpu_voltage = cpu_voltage;
 	task->lnxtsk->flagReturnPreemption = 0;
 	rt_global_restore_flags(flags);
@@ -2302,6 +2309,7 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *tas
 void rt_cfg_manage_wake_up_cpu(struct task_struct *task)
 {
 	unsigned long flags;
+	struct cpufreq_policy *policy;
 	struct rt_task_struct * rt_task;
 
 	rt_task = pid2rttask(task->pid);
@@ -2311,7 +2319,14 @@ void rt_cfg_manage_wake_up_cpu(struct task_struct *task)
 	rt_task->lnxtsk->flagReturnPreemption = 1;
 	rt_global_restore_flags(flags);
 
-	rt_printk("DEBUG:RAWLINSON -> WAKE UP -> PID: %d |%lu|%lu|%d|%d|%d|\n", rt_task->lnxtsk->pid, rt_task->lnxtsk->tsk_wcec, rt_task->lnxtsk->rwcec, rt_task->lnxtsk->cpu_frequency, rt_task->lnxtsk->cpu_voltage, rt_task->lnxtsk->flagReturnPreemption);
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	if(policy)
+	{
+		if(policy->governor && policy->governor->set_signaled_task)
+		{
+			policy->governor->set_signaled_task(policy, task);
+		}
+	}
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 

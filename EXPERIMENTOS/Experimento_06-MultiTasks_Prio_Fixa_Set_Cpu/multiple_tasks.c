@@ -147,7 +147,7 @@ void *init_task(void *arg)
 		inicioExecucao = rt_get_cpu_time_ns();
 		printf("%s[TASK %d] Processando...  0%% => %s", arrayTextoCorIdTask[idTask], idTask, asctime(newtime));
 
-		rt_cfg_set_cpu_frequency(arrayTasks[idTask], 1800000);
+		//rt_cfg_set_cpu_frequency(arrayTasks[idTask], 1800000);
 		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
 
 		printf("%s[TASK %d] Processando... 25%%\n", arrayTextoCorIdTask[idTask], idTask);
@@ -160,7 +160,7 @@ void *init_task(void *arg)
 
 		printf("%s[TASK %d] Processando... 75%%\n", arrayTextoCorIdTask[idTask], idTask);
 
-		rt_cfg_set_cpu_frequency(arrayTasks[idTask], 3000000);
+		//rt_cfg_set_cpu_frequency(arrayTasks[idTask], 3000000);
 		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
 
 		time(&aclock); // Pega tempo em segundos.
