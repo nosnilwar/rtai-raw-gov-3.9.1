@@ -2,7 +2,7 @@
  * Development of this (watchdog) module was sponsored by Alcatel, Strasbourg
  * as part of general debugging enhancements to RTAI.
  *
- * Copyright (©) 2001 Ian Soanes <ians@lineo.com>, All rights reserved
+ * Copyright (ï¿½) 2001 Ian Soanes <ians@lineo.com>, All rights reserved
  *
  * Rechecked and updated 2009: Kenneth Jacker   <khj@cs.appstate.edu>
  *                             Paolo Mantegazza <mantegazza@aero.polimi.it>

@@ -135,30 +135,34 @@ void *init_task(void *arg)
 	//rt_change_prio(arrayTasks[idTask], idTask);
 	rt_task_make_periodic(arrayTasks[idTask], Tinicio, Tperiodo);
 
-	rt_cfg_init_info(arrayTasks[idTask], 1001, 800000, 3003);
-
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTask], idTask, Tperiodo);
 
 	while (1)
 	{
+		rt_cfg_init_info(arrayTasks[idTask], 100, 800000, 3003); // Lugar correto...
+
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);
 
 		inicioExecucao = rt_get_cpu_time_ns();
 		printf("%s[TASK %d] Processando...  0%% => %s", arrayTextoCorIdTask[idTask], idTask, asctime(newtime));
+		rt_cfg_set_rwcec(arrayTasks[idTask], 100);
 
 		//rt_cfg_set_cpu_frequency(arrayTasks[idTask], 1800000);
 		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
 
 		printf("%s[TASK %d] Processando... 25%%\n", arrayTextoCorIdTask[idTask], idTask);
+		rt_cfg_set_rwcec(arrayTasks[idTask], 75);
 
 		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
 
 		printf("%s[TASK %d] Processando... 50%%\n", arrayTextoCorIdTask[idTask], idTask);
+		rt_cfg_set_rwcec(arrayTasks[idTask], 50);
 
 		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
 
 		printf("%s[TASK %d] Processando... 75%%\n", arrayTextoCorIdTask[idTask], idTask);
+		rt_cfg_set_rwcec(arrayTasks[idTask], 25);
 
 		//rt_cfg_set_cpu_frequency(arrayTasks[idTask], 3000000);
 		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
@@ -170,6 +174,8 @@ void *init_task(void *arg)
 		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 		printf("%s[TASK %d] Processando... 100%% =======> Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, tempo_processamento_tarefa, asctime(newtime));
 
+		// Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
+		rt_cfg_set_rwcec(arrayTasks[idTask], 0);
 
 		rt_task_wait_period(); // **** WAIT
 

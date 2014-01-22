@@ -656,7 +656,7 @@ void rt_do_force_soft(RT_TASK *rt_task)
 	rt_global_cli();
 	if (rt_task->state != RT_SCHED_READY) {
 		rt_task->state &= ~RT_SCHED_READY;
-            	enq_ready_task(rt_task);
+		enq_ready_task(rt_task);
 		RT_SCHEDULE(rt_task, rtai_cpuid());
 	}
 	rt_global_sti();
@@ -978,6 +978,7 @@ void rt_schedule(void)
 	rt_current = rt_smp_current[cpuid = rtai_cpuid()];
 
 	RR_YIELD();
+
 	if (oneshot_running) {
 		int prio, fire_shot;
 
@@ -1051,7 +1052,6 @@ sched_soft:
 				}
 			}
 #endif
-
 			hal_test_and_fast_flush_pipeline(cpuid);
 			NON_RTAI_SCHEDULE(cpuid);
 			rt_global_cli();
@@ -1203,7 +1203,7 @@ int clr_rtext(RT_TASK *task)
                 while ((q = q->next) != &(task->ret_queue)) {
 			rem_timed_task(q->task);
                        	if ((q->task)->state != RT_SCHED_READY && ((q->task)->state &= ~(RT_SCHED_RETURN | RT_SCHED_DELAYED)) == RT_SCHED_READY) {
-				enq_ready_task(q->task);
+                       		enq_ready_task(q->task);
 			}       
 			(q->task)->blocked_on = RTP_OBJREM;
                	}
@@ -1548,15 +1548,15 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	//TODO:RAWLINSON
 	for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++)
 	{
-		if(cpuid > 0)
+		if(cpuid == CPUID_RTAI)
 		{
 			setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
-			setup_data[cpuid].count = count2nano(CLOCKS_PER_SEC);
+			setup_data[cpuid].count = count2nano(period);
 		}
 		else
 		{
 			setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
-			setup_data[cpuid].count = count2nano(period);
+			setup_data[cpuid].count = count2nano(CLOCKS_PER_SEC);
 		}
 	}
 	start_rt_apic_timers(setup_data, rtai_cpuid());
@@ -1945,6 +1945,7 @@ void rt_deregister_watchdog(RT_TASK *wd, int cpuid)
 
 static RT_TRAP_HANDLER lxrt_old_trap_handler;
 
+//TODO:RAWLINSON - FUNCAO POSSUI A TASK Q ESTA EM EXECUCAO
 static inline void _rt_schedule_soft_tail(RT_TASK *rt_task, int cpuid)
 {
 	rt_global_cli();
@@ -2154,12 +2155,15 @@ RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned lon
 {
 	unsigned long flags;
 
+	rt_printk("DEBUG:RAWLINSON - INCIANDOOOO &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& - PID(%d) - STATE(%d)\n", task->lnxtsk->pid, task->state);
+
 	if (task->magic != RT_TASK_MAGIC) {
 		return -EINVAL;
 	}
 	flags = rt_global_save_flags_and_cli();
 	task->lnxtsk->tsk_wcec = tsk_wcec;
 	task->lnxtsk->rwcec = tsk_wcec;
+	task->lnxtsk->state_task_period = TASK_PERIOD_RUNNING;
 	rt_global_restore_flags(flags);
 
 	//aplicando a frequencia e voltagem no processador...
@@ -2178,6 +2182,14 @@ RTAI_SYSCALL_MODE int rt_cfg_set_tsk_wcec(struct rt_task_struct *task, unsigned 
 	}
 	flags = rt_global_save_flags_and_cli();
 	task->lnxtsk->tsk_wcec = tsk_wcec;
+	if(task->lnxtsk->tsk_wcec <= 0)
+	{
+		task->lnxtsk->state_task_period = TASK_PERIOD_FINISHED;
+	}
+	else
+	{
+		task->lnxtsk->state_task_period = TASK_PERIOD_RUNNING;
+	}
 	rt_global_restore_flags(flags);
 	return 0;
 }
@@ -2206,7 +2218,17 @@ RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned lon
 	}
 	flags = rt_global_save_flags_and_cli();
 	task->lnxtsk->rwcec = rwcec;
+	if(task->lnxtsk->rwcec <= 0)
+	{
+		task->lnxtsk->state_task_period = TASK_PERIOD_FINISHED;
+	}
+	else
+	{
+		task->lnxtsk->state_task_period = TASK_PERIOD_RUNNING;
+	}
 	rt_global_restore_flags(flags);
+
+	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %lu %% - STATE(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->state_task_period);
 	return 0;
 }
 
@@ -2251,8 +2273,6 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsi
 			policy->governor->set_frequency(policy, task->lnxtsk, cpu_frequency);
 		}
 	}
-	policy = cpufreq_cpu_get(CPUID_RTAI);
-	printk("*******DEBUG:RAWLINSON - RAW GOVERNOR - rt_cfg_set_cpu_frequency(%u) for cpu %u - %u - %s -> (%d) -> PID (%d)\n", cpu_frequency, policy->cpu, policy->cur, policy->governor->name, task->lnxtsk->flagReturnPreemption, task->lnxtsk->pid);
 
 	return 0;
 }
@@ -2304,30 +2324,6 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *tas
 
 	return cpu_voltage;
 }
-
-// FUNCAO RESPONSAVEL POR CALCULAR A FREQUENCIA DE PROCESSAMENTO DAS TAREFAS QUE FORAM INTERROMPIDAS...
-void rt_cfg_manage_wake_up_cpu(struct task_struct *task)
-{
-	unsigned long flags;
-	struct cpufreq_policy *policy;
-	struct rt_task_struct * rt_task;
-
-	rt_task = pid2rttask(task->pid);
-
-	// Informando para o RAW GOVERNOR que esta tarefa acabou de voltar de preempcao...
-	flags = rt_global_save_flags_and_cli();
-	rt_task->lnxtsk->flagReturnPreemption = 1;
-	rt_global_restore_flags(flags);
-
-	policy = cpufreq_cpu_get(CPUID_RTAI);
-	if(policy)
-	{
-		if(policy->governor && policy->governor->set_signaled_task)
-		{
-			policy->governor->set_signaled_task(policy, task);
-		}
-	}
-}
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #define WAKE_UP_TASKs(klist) \
@@ -2338,7 +2334,6 @@ do { \
 		task = p->task[p->out++ & (MAX_WAKEUP_SRQ - 1)]; \
 		set_task_state(task, TASK_UNINTERRUPTIBLE); \
 		wake_up_process(task); \
-		rt_cfg_manage_wake_up_cpu(task); \
 	} \
 } while (0)
 
