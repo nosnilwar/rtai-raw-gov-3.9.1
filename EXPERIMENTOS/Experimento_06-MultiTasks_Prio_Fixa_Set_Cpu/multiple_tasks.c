@@ -127,8 +127,6 @@ void *init_task(void *arg)
 
 	rt_allow_nonroot_hrt();
 
-	//rt_make_hard_real_time();
-
 	Tinicio = timeline_sched;
 	Tperiodo = tick_period * (6 + 2*idTask);
 
@@ -187,7 +185,6 @@ void *init_task(void *arg)
 		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_preto);
 	}
-
 }
 
 int create_tasks(void)

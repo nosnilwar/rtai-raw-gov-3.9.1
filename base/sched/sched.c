@@ -89,6 +89,9 @@ struct klist_t wake_up_srq[NR_RT_CPUS];
 
 /* +++++++++++++++ END OF WHAT MUST BE AVAILABLE EVERYWHERE +++++++++++++++++ */
 
+//TODO:RAWLINSON...
+unsigned long long contUpdateTimerRawGovernor = 0;
+
 extern struct { volatile int locked, rqsted; } rt_scheduling[];
 
 static unsigned long rt_smp_linux_cr0[NR_RT_CPUS];
@@ -310,6 +313,15 @@ int set_rtext(RT_TASK *task, int priority, int uses_fpu, void(*signal)(void), un
 	rt_linux_task.prev->next = task;
 	task->prev = rt_linux_task.prev;
 	rt_linux_task.prev = task;
+
+	//TODO:RAWLINSON...
+	if(task->lnxtsk)
+	{
+		task->lnxtsk->period = task->period;
+		task->lnxtsk->resume_time = task->resume_time;
+		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+	}
+
 	rt_global_restore_flags(flags);
 
 	task->resq.prev = task->resq.next = &task->resq;
@@ -487,6 +499,15 @@ RTAI_SYSCALL_MODE void rt_set_runnable_on_cpuid(RT_TASK *task, unsigned int cpui
                         task->periodic_resume_time = llimd(task->periodic_resume_time, tuned.cpu_freq, TIMER_FREQ);
 			break;
 	}
+
+	//TODO:RAWLINSON...
+	if(task->lnxtsk)
+	{
+		task->lnxtsk->period = task->period;
+		task->lnxtsk->resume_time = task->resume_time;
+		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+	}
+
 	if (!((task->prev)->next = task->next)) {
 		rt_smp_linux_task[task->runnable_on_cpus].prev = task->prev;
 	} else {
@@ -563,6 +584,15 @@ if (CONFIG_RTAI_ALLOW_RR && rt_current->policy > 0) { \
 	} else { \
 		rt_current->rr_remaining = rt_current->yield_time - rt_times.tick_time; \
 	} \
+	if(rt_current->lnxtsk) /*TODO:RAWLINSON... */  \
+	{ \
+		rt_current->lnxtsk->period = rt_current->period; \
+		rt_current->lnxtsk->resume_time = rt_current->resume_time; \
+		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time; \
+		rt_current->lnxtsk->yield_time = rt_current->yield_time; \
+		rt_current->lnxtsk->rr_quantum = rt_current->rr_quantum; \
+		rt_current->lnxtsk->rr_remaining = rt_current->rr_remaining; \
+	} \
 } 
 
 #define TASK_TO_SCHEDULE() \
@@ -570,6 +600,15 @@ do { \
 	new_task = rt_linux_task.rnext; \
 	if (CONFIG_RTAI_ALLOW_RR && new_task->policy > 0) { \
 		new_task->yield_time = rt_times.tick_time + new_task->rr_remaining; \
+	} \
+	if(new_task->lnxtsk) /* TODO:RAWLINSON... */ \
+	{ \
+		new_task->lnxtsk->period = new_task->period; \
+		new_task->lnxtsk->resume_time = new_task->resume_time; \
+		new_task->lnxtsk->periodic_resume_time = new_task->periodic_resume_time; \
+		new_task->lnxtsk->yield_time = new_task->yield_time; \
+		new_task->lnxtsk->rr_quantum = new_task->rr_quantum; \
+		new_task->lnxtsk->rr_remaining = new_task->rr_remaining; \
 	} \
 	new_task->running = 1; \
 } while (0)
@@ -583,7 +622,7 @@ do { \
 			rt_times.intr_time = new_task->yield_time; \
 			fire_shot = 1; \
 		} \
-        } \
+	} \
 } while (0)
 
 #define LOCK_LINUX(cpuid) \
@@ -916,6 +955,10 @@ static void rt_schedule_on_schedule_ipi(void)
 		int prio, fire_shot;
 
 		rt_time_h = rtai_rdtsc() + rt_half_tick;
+
+		//TODO:RAWLINSON...
+		update_timer_raw_gorvernor(rt_time_h);
+
 		wake_up_timed_tasks(cpuid);
 		TASK_TO_SCHEDULE();
 
@@ -983,6 +1026,10 @@ void rt_schedule(void)
 		int prio, fire_shot;
 
 		rt_time_h = rtai_rdtsc() + rt_half_tick;
+
+		//TODO:RAWLINSON...
+		update_timer_raw_gorvernor(rt_time_h);
+
 		wake_up_timed_tasks(cpuid);
 		TASK_TO_SCHEDULE();
 
@@ -1263,6 +1310,10 @@ redo_timer_handler:
 
 	rt_times.tick_time = oneshot_timer ? rtai_rdtsc() : rt_times.intr_time;
 	rt_time_h = rt_times.tick_time + rt_half_tick;
+
+	//TODO:RAWLINSON - ATUALIZAR O TIMER DO RAW GOVERNOR PARA O PROCESSADOR CORRENTE...
+	update_timer_raw_gorvernor(rt_time_h);
+
 	SET_PEND_LINUX_TIMER_SHOT();
 
 	sched_get_global_lock(cpuid);
@@ -1390,6 +1441,9 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 		rt_smp_times[cpuid].periodic_tick = 1;
 		tuned.timers_tol[cpuid] = rt_half_tick = 0;
 		rt_time_h = 0;
+
+		//TODO:RAWLINSON...
+		update_timer_raw_gorvernor(rt_time_h);
 	}
 	linux_times = rt_smp_times;
 	rt_request_irq(RTAI_APIC_TIMER_IPI, (void *)rt_timer_handler, NULL, 0);
@@ -1410,6 +1464,9 @@ void stop_rt_timer(void)
 		for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++) {
 			rt_time_h = RT_TIME_END;
 			oneshot_running = 0;
+
+			//TODO:RAWLINSON...
+			update_timer_raw_gorvernor(rt_time_h);
 		}
 	}
 }
@@ -1427,6 +1484,10 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	rt_smp_times[cpuid].periodic_tick = 1;
 	tuned.timers_tol[0] = rt_half_tick = 0;
 	rt_time_h = 0;
+
+	//TODO:RAWLINSON...
+	update_timer_raw_gorvernor(rt_time_h);
+
 	linux_times = rt_smp_times;
 	rt_request_rtc(CONFIG_RTAI_RTC_FREQ, (void *)rt_timer_handler);
 	rt_sched_timed = 1;
@@ -1436,11 +1497,16 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 
 void stop_rt_timer(void)
 {
+	int const cpuid = 0;
+
 	if (rt_sched_timed) {
 		rt_sched_timed = 0;
 		rt_release_rtc();
 		rt_time_h = RT_TIME_END;
 		rt_smp_oneshot_timer[0] = 0;
+
+		//TODO:RAWLINSON...
+		update_timer_raw_gorvernor(rt_time_h);
 	}
 }
 
@@ -1529,6 +1595,9 @@ RTAI_SYSCALL_MODE void start_rt_apic_timers(struct apic_timer_setup_data *setup_
 		}
 		rt_time_h = rt_times.tick_time + rt_half_tick;
 		timer_shot_fired = 1;
+
+		//TODO:RAWLINSON...
+		update_timer_raw_gorvernor(rt_time_h);
 	}
 	rt_sched_timed = 1;
 	linux_times = rt_smp_times + (rcvr_jiffies_cpuid < NR_RT_CPUS ? rcvr_jiffies_cpuid : 0);
@@ -1574,6 +1643,9 @@ void stop_rt_timer(void)
 		for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++) {
 			rt_time_h = RT_TIME_END;
 			oneshot_running = 0;
+
+			//TODO:RAWLINSON...
+			update_timer_raw_gorvernor(rt_time_h);
 		}
 	}
 }
@@ -1609,12 +1681,16 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	rt_smp_times[cpuid].intr_time     = rt_times.intr_time;
 	rt_smp_times[cpuid].linux_time    = rt_times.linux_time;
 	rt_smp_times[cpuid].periodic_tick = rt_times.periodic_tick;
-        rt_time_h = rt_times.tick_time + rt_half_tick;
+	rt_time_h = rt_times.tick_time + rt_half_tick;
+
+	//TODO:RAWLINSON...
+	update_timer_raw_gorvernor(rt_time_h);
+
 	linux_times = rt_smp_times;
-        rt_global_restore_flags(flags);
+	rt_global_restore_flags(flags);
 	REQUEST_RECOVER_JIFFIES();
 	rt_gettimeorig(NULL);
-        return period;
+	return period;
 
 #undef cpuid
 #define rt_times (rt_smp_times[cpuid])
@@ -1646,12 +1722,17 @@ RTAI_SYSCALL_MODE void start_rt_apic_timers(struct apic_timer_setup_data *setup_
 
 void stop_rt_timer(void)
 {
+	int const cpuid = 0;
+
 	if (rt_sched_timed) {
 		rt_sched_timed = 0;
 		RELEASE_RECOVER_JIFFIES();
 		rt_free_timer();
 		rt_time_h = RT_TIME_END;
 		rt_smp_oneshot_timer[0] = 0;
+
+		//TODO:RAWLINSON...
+		update_timer_raw_gorvernor(rt_time_h);
 	}
 }
 
@@ -2324,6 +2405,24 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *tas
 
 	return cpu_voltage;
 }
+
+RTAI_SYSCALL_MODE int update_timer_raw_gorvernor(RTIME tick_time)
+{
+	struct cpufreq_policy *policy;
+
+	if((contUpdateTimerRawGovernor % CPUFREQ_UPDATE_RATE_TIMER) == 0)
+	{
+		policy = cpufreq_cpu_get(CPUID_RTAI);
+		if(policy && policy->governor)//TODO: && strnicmp(policy->governor->name, CPUFREQ_CONST_RAW_GOVERNOR_NAME, CPUFREQ_NAME_LEN))
+		{
+			if(policy->governor->update_rt_smp_time_h)
+				policy->governor->update_rt_smp_time_h(tick_time);
+		}
+	}
+
+	contUpdateTimerRawGovernor = contUpdateTimerRawGovernor + 1;
+	return 0;
+}
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #define WAKE_UP_TASKs(klist) \
@@ -2457,7 +2556,7 @@ void give_back_to_linux(RT_TASK *rt_task, int keeprio)
 	rt_task->state = 0;
 	pend_wake_up_hts(lnxtsk = rt_task->lnxtsk, rt_task->runnable_on_cpus);
 #ifdef TASK_NOWAKEUP
-	set_task_state(lnxtsk, lnxtsk->state & ~TASK_NOWAKEUP);
+	set_task_state(lnxtsk, (lnxtsk->state & ~TASK_NOWAKEUP));
 #endif
 	rt_schedule();
 	if (!(rt_task->is_hard = keeprio)) {
@@ -2598,7 +2697,7 @@ static inline void rt_signal_wake_up(RT_TASK *task)
 #ifdef TASK_NOWAKEUP
 		struct task_struct *lnxtsk;
 		if ((lnxtsk = task->lnxtsk)->state & TASK_HARDREALTIME) {
-			set_task_state(lnxtsk, lnxtsk->state | TASK_NOWAKEUP);
+			set_task_state(lnxtsk, (lnxtsk->state | TASK_NOWAKEUP));
 		}
 #endif
 		task->unblocked = 1;
@@ -3049,6 +3148,7 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 0, rt_cfg_get_cpu_frequency },		CFG_GET_CPU_FREQUENCY },
 	{ { 0, rt_cfg_set_cpu_voltage },		CFG_SET_CPU_VOLTAGE },
 	{ { 0, rt_cfg_get_cpu_voltage },		CFG_GET_CPU_VOLTAGE },
+	{ { 0, update_timer_raw_gorvernor },	CFG_UPDATE_TIMER_RAW_GOVERNOR },
 	//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 	{ { 0, 0 },			            000 }

@@ -48,18 +48,18 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 
 #define ONE_SHOT
 
-#define TICK_PERIOD 500000000
+#define TICK_PERIOD 500500000 //Tempo em nano segundos...
 
 #define STACK_SIZE 2000
 
-#define LOOPS 1000000000
+#define NTASKS 1
 
-#define NTASKS 4
+char arrayTextoCorIdTask[NTASKS][8] = {"\033[31m"};//, "\033[32m"};//, "\033[34m", "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
 
 RT_TASK *arrayTasks[NTASKS];
 pthread_t *arrayThreads[NTASKS];
 
-RTIME tick_period;
+RTIME tick_period, timeline_sched, delay_timeline_sched;
 
 struct thread_param {
     int idTask;
@@ -111,52 +111,86 @@ void consumirProcessamento(unsigned int cpu_frequency, double tempo) // Frequenc
 void *init_task(void *arg)
 {
 	int idTask = ((struct thread_param*) arg)->idTask;
-    unsigned int loops = LOOPS;
-    RTIME now;
 
-    double tempoProcessamento = 0.0;
-	unsigned int cpu_frequency = 800000;
+	// Variaveis para realizar os calculos de tempo...
+	struct tm *newtime;
+	time_t aclock;
 
-	//TODO:RAWLINSON
-	if(!(arrayTasks[idTask] = rt_task_init_schmod(idTask,(NTASKS - idTask - 1),STACK_SIZE,0,SCHED_FIFO, CPU_ALLOWED))) {
+	RTIME inicioExecucao = 0;
+	RTIME terminoExecucao = 0;
+	RTIME terminoPeriodo = 0;
+	RTIME Tperiodo, Tinicio;
+	float tempo_processamento_tarefa;
+	float periodo_tarefa;
+	int prioridade = idTask + 1;
+
+	double tempoProcessamento = 0.0;
+	unsigned int cpu_frequency;
+
+	if(!(arrayTasks[idTask] = rt_task_init_schmod(idTask, prioridade, STACK_SIZE, 0, SCHED_FIFO, CPU_ALLOWED)))
+	{
 		printf("[ERRO] Não foi possível criar a tarefa 1.\n");
 		exit(1);
 	}
 
 	rt_allow_nonroot_hrt();
 
-	rt_make_hard_real_time();
+	Tinicio = timeline_sched;
 
-	now = rt_get_time() + NTASKS*tick_period;
-    rt_task_make_periodic(arrayTasks[idTask], now, (NTASKS+idTask)*tick_period);
+	switch (idTask) {
+		case 0:
+			Tperiodo = tick_period * 6; // 3 segundos
+		break;
 
-    while(loops--)
-    {
-    	printf("%sTASK %d\n", texto_verde, idTask);
-        printf("%s", texto_preto);
+		case 1:
+			Tperiodo = tick_period * 8; // 4 segundos
+		break;
 
-        consumirProcessamento(cpu_frequency, tempoProcessamento = 10.0); //CODIGO PARA CONSUMIR PROCESSAMENTO...FREQ EM HZ E TEMPO EM SEGUNDOS...
-        if (idTask == (NTASKS - 1))
-        {
-            rt_printk("TASK %d\n", idTask);
-            rt_task_wait_period();
-        }
-        else
-        {
-            rt_task_set_resume_end_times(-(NTASKS+idTask)*tick_period, -(idTask + 1)*tick_period);
-        }
-    }
+		default:
+			printf("[ERRO] A Tarefa %d nao possui periodo definido.\n", idTask);
+			exit(1);
+		break;
+	}
+
+	//rt_change_prio(arrayTasks[idTask], idTask);
+	rt_task_make_periodic(arrayTasks[idTask], Tinicio, Tperiodo);
+
+	printf("[TASK %d] Criada com Sucesso  =======> %llu\n", idTask, Tperiodo);
+
+	while (1)
+	{
+		cpu_frequency = 2300000;
+		rt_cfg_init_info(arrayTasks[idTask], 100, cpu_frequency, 3003); // Lugar correto...
+
+		time(&aclock); // Pega tempo em segundos.
+		newtime = localtime(&aclock);
+
+		printf("%s[TASK %d] Processando...  0%% => %s", arrayTextoCorIdTask[idTask], idTask, asctime(newtime));
+
+		inicioExecucao = rt_get_cpu_time_ns();
+		cpu_frequency = 1800000;
+		rt_cfg_set_cpu_frequency(arrayTasks[idTask], cpu_frequency);
+		consumirProcessamento(cpu_frequency, tempoProcessamento = 1.0); //CODIGO PARA CONSUMIR PROCESSAMENTO...FREQ EM HZ E TEMPO EM SEGUNDOS...
+
+		cpu_frequency = 800000;
+		rt_cfg_set_cpu_frequency(arrayTasks[idTask], cpu_frequency);
+		consumirProcessamento(cpu_frequency, tempoProcessamento = 1.0); //CODIGO PARA CONSUMIR PROCESSAMENTO...FREQ EM HZ E TEMPO EM SEGUNDOS...
+		terminoExecucao = rt_get_cpu_time_ns();
+
+		time(&aclock); // Pega tempo em segundos.
+		newtime = localtime(&aclock);
+
+		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		printf("%s[TASK %d] Processando... 100%% =======> Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, tempo_processamento_tarefa, asctime(newtime));
+
+		rt_task_wait_period(); // **** WAIT
+	}
 }
 
 int create_tasks(void)
 {
-	RTIME now;
 	int i;
 	struct thread_param *arrayThreadParams[NTASKS];
-
-	#ifdef ONE_SHOT
-		rt_set_oneshot_mode();
-	#endif
 
 	rt_set_periodic_mode();
 
@@ -175,7 +209,10 @@ int create_tasks(void)
 	}
 
 	tick_period = start_rt_timer(nano2count(TICK_PERIOD));
-	now = rt_get_time() + NTASKS*tick_period;
+	printf("TICK_PERIOD =======> %llu\n", tick_period);
+
+	delay_timeline_sched = tick_period * 10;
+	timeline_sched = rt_get_time() + delay_timeline_sched;
 
 	for (i = 0; i < NTASKS; i++) {
 		if((arrayThreadParams[i] = malloc(sizeof(*arrayThreadParams[i]))) == NULL)

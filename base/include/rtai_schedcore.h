@@ -436,6 +436,14 @@ static inline void rem_ready_current(RT_TASK *rt_current)
 //	rt_current->unblocked = 0;
 	(rt_current->rprev)->rnext = rt_current->rnext;
 	(rt_current->rnext)->rprev = rt_current->rprev;
+
+	//TODO:RAWLINSON...
+	if(rt_current->lnxtsk)
+	{
+		rt_current->lnxtsk->period = rt_current->period;
+		rt_current->lnxtsk->resume_time = rt_current->resume_time;
+		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
+	}
 }
 
 #ifdef CONFIG_RTAI_LONG_TIMED_LIST
@@ -466,6 +474,20 @@ static inline void enq_timed_task(RT_TASK *timed_task)
 	rb_insert_color(&timed_task->rbn, &taskh->rbr);
 	task->tprev = (timed_task->tprev = task->tprev)->tnext = timed_task;
 	timed_task->tnext = task;
+
+	//TODO:RAWLINSON...
+	if(timed_task->lnxtsk)
+	{
+		timed_task->lnxtsk->period = timed_task->period;
+		timed_task->lnxtsk->resume_time = timed_task->resume_time;
+		timed_task->lnxtsk->periodic_resume_time = timed_task->periodic_resume_time;
+	}
+	if(task->lnxtsk)
+	{
+		task->lnxtsk->period = task->period;
+		task->lnxtsk->resume_time = task->resume_time;
+		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+	}
 }
 
 #define	rb_erase_task(task, cpuid) \
