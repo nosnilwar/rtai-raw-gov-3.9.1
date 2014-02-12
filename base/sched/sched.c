@@ -90,7 +90,7 @@ struct klist_t wake_up_srq[NR_RT_CPUS];
 /* +++++++++++++++ END OF WHAT MUST BE AVAILABLE EVERYWHERE +++++++++++++++++ */
 
 //TODO:RAWLINSON...
-unsigned long long contUpdateTimerRawGovernor = 0;
+unsigned long long contUpdateTimerGovernor = 0;
 
 extern struct { volatile int locked, rqsted; } rt_scheduling[];
 
@@ -957,7 +957,7 @@ static void rt_schedule_on_schedule_ipi(void)
 		rt_time_h = rtai_rdtsc() + rt_half_tick;
 
 		//TODO:RAWLINSON...
-		update_timer_raw_gorvernor(rt_time_h);
+		update_governor_timer(rt_time_h);
 
 		wake_up_timed_tasks(cpuid);
 		TASK_TO_SCHEDULE();
@@ -1028,7 +1028,7 @@ void rt_schedule(void)
 		rt_time_h = rtai_rdtsc() + rt_half_tick;
 
 		//TODO:RAWLINSON...
-		update_timer_raw_gorvernor(rt_time_h);
+		update_governor_timer(rt_time_h);
 
 		wake_up_timed_tasks(cpuid);
 		TASK_TO_SCHEDULE();
@@ -1312,7 +1312,7 @@ redo_timer_handler:
 	rt_time_h = rt_times.tick_time + rt_half_tick;
 
 	//TODO:RAWLINSON - ATUALIZAR O TIMER DO RAW GOVERNOR PARA O PROCESSADOR CORRENTE...
-	update_timer_raw_gorvernor(rt_time_h);
+	update_governor_timer(rt_time_h);
 
 	SET_PEND_LINUX_TIMER_SHOT();
 
@@ -1443,7 +1443,7 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 		rt_time_h = 0;
 
 		//TODO:RAWLINSON...
-		update_timer_raw_gorvernor(rt_time_h);
+		update_governor_timer(rt_time_h);
 	}
 	linux_times = rt_smp_times;
 	rt_request_irq(RTAI_APIC_TIMER_IPI, (void *)rt_timer_handler, NULL, 0);
@@ -1466,7 +1466,7 @@ void stop_rt_timer(void)
 			oneshot_running = 0;
 
 			//TODO:RAWLINSON...
-			update_timer_raw_gorvernor(rt_time_h);
+			update_governor_timer(rt_time_h);
 		}
 	}
 }
@@ -1486,7 +1486,7 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	rt_time_h = 0;
 
 	//TODO:RAWLINSON...
-	update_timer_raw_gorvernor(rt_time_h);
+	update_governor_timer(rt_time_h);
 
 	linux_times = rt_smp_times;
 	rt_request_rtc(CONFIG_RTAI_RTC_FREQ, (void *)rt_timer_handler);
@@ -1506,7 +1506,7 @@ void stop_rt_timer(void)
 		rt_smp_oneshot_timer[0] = 0;
 
 		//TODO:RAWLINSON...
-		update_timer_raw_gorvernor(rt_time_h);
+		update_governor_timer(rt_time_h);
 	}
 }
 
@@ -1597,7 +1597,7 @@ RTAI_SYSCALL_MODE void start_rt_apic_timers(struct apic_timer_setup_data *setup_
 		timer_shot_fired = 1;
 
 		//TODO:RAWLINSON...
-		update_timer_raw_gorvernor(rt_time_h);
+		update_governor_timer(rt_time_h);
 	}
 	rt_sched_timed = 1;
 	linux_times = rt_smp_times + (rcvr_jiffies_cpuid < NR_RT_CPUS ? rcvr_jiffies_cpuid : 0);
@@ -1645,7 +1645,7 @@ void stop_rt_timer(void)
 			oneshot_running = 0;
 
 			//TODO:RAWLINSON...
-			update_timer_raw_gorvernor(rt_time_h);
+			update_governor_timer(rt_time_h);
 		}
 	}
 }
@@ -1684,7 +1684,7 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	rt_time_h = rt_times.tick_time + rt_half_tick;
 
 	//TODO:RAWLINSON...
-	update_timer_raw_gorvernor(rt_time_h);
+	update_governor_timer(rt_time_h);
 
 	linux_times = rt_smp_times;
 	rt_global_restore_flags(flags);
@@ -1732,7 +1732,7 @@ void stop_rt_timer(void)
 		rt_smp_oneshot_timer[0] = 0;
 
 		//TODO:RAWLINSON...
-		update_timer_raw_gorvernor(rt_time_h);
+		update_governor_timer(rt_time_h);
 	}
 }
 
@@ -2406,22 +2406,35 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *tas
 	return cpu_voltage;
 }
 
-RTAI_SYSCALL_MODE int update_timer_raw_gorvernor(RTIME tick_time)
+RTAI_SYSCALL_MODE int update_governor_timer(RTIME tick_time)
 {
-	struct cpufreq_policy *policy;
-
-	if((contUpdateTimerRawGovernor % CPUFREQ_UPDATE_RATE_TIMER) == 0)
+	if((contUpdateTimerGovernor % CPUFREQ_UPDATE_RATE_TIMER) == 0)
 	{
+		struct cpufreq_policy *policy;
 		policy = cpufreq_cpu_get(CPUID_RTAI);
-		if(policy && policy->governor)//TODO: && strnicmp(policy->governor->name, CPUFREQ_CONST_RAW_GOVERNOR_NAME, CPUFREQ_NAME_LEN))
+		if(policy && policy->governor && policy->governor->update_rt_smp_time_h)
 		{
-			if(policy->governor->update_rt_smp_time_h)
-				policy->governor->update_rt_smp_time_h(tick_time);
+			policy->governor->update_rt_smp_time_h(tick_time);
 		}
 	}
 
-	contUpdateTimerRawGovernor = contUpdateTimerRawGovernor + 1;
+	contUpdateTimerGovernor = contUpdateTimerGovernor + 1;
 	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt_task)
+{
+	unsigned long flags;
+	unsigned long long periodic_resume_time;
+
+	if (rt_task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	periodic_resume_time = rt_task->lnxtsk->periodic_resume_time;
+	rt_global_restore_flags(flags);
+
+	return periodic_resume_time;
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
@@ -3139,16 +3152,17 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 1, rt_trigger_signal }, 		    RT_SIGNAL_TRIGGER },
 
 	//TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
-	{ { 0, rt_cfg_init_info },				CFG_INIT_INFO },
-	{ { 0, rt_cfg_set_tsk_wcec },			CFG_SET_TSK_WCEC },
-	{ { 0, rt_cfg_get_tsk_wcec },			CFG_GET_TSK_WCEC },
-	{ { 0, rt_cfg_set_rwcec },				CFG_SET_RWCEC },
-	{ { 0, rt_cfg_get_rwcec },				CFG_GET_RWCEC },
-	{ { 0, rt_cfg_set_cpu_frequency },		CFG_SET_CPU_FREQUENCY },
-	{ { 0, rt_cfg_get_cpu_frequency },		CFG_GET_CPU_FREQUENCY },
-	{ { 0, rt_cfg_set_cpu_voltage },		CFG_SET_CPU_VOLTAGE },
-	{ { 0, rt_cfg_get_cpu_voltage },		CFG_GET_CPU_VOLTAGE },
-	{ { 0, update_timer_raw_gorvernor },	CFG_UPDATE_TIMER_RAW_GOVERNOR },
+	{ { 0, rt_cfg_init_info },					CFG_INIT_INFO },
+	{ { 0, rt_cfg_set_tsk_wcec },				CFG_SET_TSK_WCEC },
+	{ { 0, rt_cfg_get_tsk_wcec },				CFG_GET_TSK_WCEC },
+	{ { 0, rt_cfg_set_rwcec },					CFG_SET_RWCEC },
+	{ { 0, rt_cfg_get_rwcec },					CFG_GET_RWCEC },
+	{ { 0, rt_cfg_set_cpu_frequency },			CFG_SET_CPU_FREQUENCY },
+	{ { 0, rt_cfg_get_cpu_frequency },			CFG_GET_CPU_FREQUENCY },
+	{ { 0, rt_cfg_set_cpu_voltage },			CFG_SET_CPU_VOLTAGE },
+	{ { 0, rt_cfg_get_cpu_voltage },			CFG_GET_CPU_VOLTAGE },
+	{ { 0, update_governor_timer },				CFG_UPDATE_TIMER_GOVERNOR },
+	{ { 0, rt_cfg_get_periodic_resume_time },	CFG_GET_PERIODIC_RESUME_TIME },
 	//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 	{ { 0, 0 },			            000 }

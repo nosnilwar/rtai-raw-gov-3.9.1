@@ -436,7 +436,9 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_voltage(struct rt_task_struct *task, unsign
 
 RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *task);
 
-RTAI_SYSCALL_MODE int update_timer_raw_gorvernor(RTIME tick_time);
+RTAI_SYSCALL_MODE int update_governor_timer(RTIME tick_time);
+
+RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt_task);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 void rt_schedule(void);

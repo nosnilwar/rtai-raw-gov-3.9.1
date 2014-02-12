@@ -344,10 +344,11 @@
 #define CFG_GET_CPU_FREQUENCY	   		236
 #define CFG_SET_CPU_VOLTAGE		   		237
 #define CFG_GET_CPU_VOLTAGE	 	   		238
-#define CFG_UPDATE_TIMER_RAW_GOVERNOR	239
+#define CFG_UPDATE_TIMER_GOVERNOR		239
+#define CFG_GET_PERIODIC_RESUME_TIME	240
 //TODO: RAWLINSON - FIM DAS DEFINICOES...
 
-#define MAX_LXRT_FUN		       240
+#define MAX_LXRT_FUN		       		241
 
 // not recovered yet 
 // Qblk's 
@@ -1530,10 +1531,16 @@ RTAI_PROTO(unsigned int, rt_cfg_get_cpu_voltage, (RT_TASK *rt_task))
 	return rtai_lxrt(BIDX, SIZARG, CFG_GET_CPU_VOLTAGE, &arg).i[LOW];
 }
 
-RTAI_PROTO(int, update_timer_raw_gorvernor, (RTIME tick_time))
+RTAI_PROTO(int, update_governor_timer, (RTIME tick_time))
 {
 	struct { RTIME tick_time; } arg = { tick_time };
-	return rtai_lxrt(BIDX, SIZARG, CFG_UPDATE_TIMER_RAW_GOVERNOR, &arg).i[LOW];
+	return rtai_lxrt(BIDX, SIZARG, CFG_UPDATE_TIMER_GOVERNOR, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned long long, rt_cfg_get_periodic_resume_time, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, CFG_GET_PERIODIC_RESUME_TIME, &arg).i[LOW];
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
