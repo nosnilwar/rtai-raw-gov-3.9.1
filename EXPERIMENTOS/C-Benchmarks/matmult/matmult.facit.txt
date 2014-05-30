@@ -1,0 +1,6 @@
+The program matmult contains 7 loops, 4 of them are context sensitive.
+The number of iterations of the loops in the program is not input dependent. The global matrix is initalized with random numbers, but the loops iterates a constant number of times.
+
+When it is run as is, the result is
+
+Maximum no. of iterations per invocation for main_Test_Initialize1_L1 is 20, sum is 20Maximum no. of iterations per invocation for main_Test_Initialize1_L1_L1 is 20, sum is 400Maximum no. of iterations per invocation for main_Test_Initialize2_L1 is 20, sum is 20Maximum no. of iterations per invocation for main_Test_Initialize2_L1_L1 is 20, sum is 400No. of iterations for main_Test_Multiply_L1 = 20Maximum no. of iterations per invocation for main_Test_Multiply_L1_L1 is 20, sum is 400Maximum no. of iterations per invocation for main_Test_Multiply_L1_L1_L1 is 20, sum is 8000

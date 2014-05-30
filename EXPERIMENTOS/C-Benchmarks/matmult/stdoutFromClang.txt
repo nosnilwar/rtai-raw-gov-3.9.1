@@ -1,0 +1,4 @@
+upload/1230564309/matmult.c:52:1: warning: return type of 'main' is not 'int' [-Wmain-return-type]
+void main()
+^
+1 warning generated.

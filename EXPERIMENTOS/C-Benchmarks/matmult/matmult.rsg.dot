@@ -1,0 +1,235 @@
+digraph "" {
+   size="11.4,7.8";
+   rankdir=TB;
+   center=1;
+   rotate=0;
+   {
+   node [shape=plaintext, fontsize=11];
+   "Reduced scope graph for matmult.alf\nMon May 26 21:00:55 2014\n\n   Scopes with solid line = function scopes\n   Scopes with dotted line = loop scopes\n   Each node is a basic block\n   Blue node = header\n   Red edge = backedge (ring at arrow head)\n   Green edge = exit/entry edge\n   Blue edge = recursive call edge\n"   }
+   subgraph "cluster_main" {
+      label= "scope: main\n function: main"
+   graph[style=line] 
+      /* Nodes */
+      node [width=0.3 fixedsize=true shape=circle fontsize=10]
+      /* Nodes and edges */
+      "main_8"[label="main::entry::2"]
+      "main_7"[label="main::entry::1"]
+      "main_6"[label="main::entry"] [color="lightblue"]
+      /* Internal edges */
+      subgraph "cluster_main_InitSeed1" {
+         label= "scope: main_InitSeed1\n function: InitSeed"
+      graph[style=line] 
+         /* Nodes */
+         node [width=0.3 fixedsize=true shape=circle fontsize=10]
+         /* Nodes and edges */
+         "main_InitSeed1_9"[label="InitSeed::entry"] [color="lightblue"]
+         /* Internal edges */
+      }
+      subgraph "cluster_main_Test1" {
+         label= "scope: main_Test1\n function: Test"
+      graph[style=line] 
+         /* Nodes */
+         node [width=0.3 fixedsize=true shape=circle fontsize=10]
+         /* Nodes and edges */
+         "main_Test1_14"[label="Test::entry::3"]
+         "main_Test1_11"[label="Test::entry"] [color="lightblue"]
+         "main_Test1_12"[label="Test::entry::1"]
+         "main_Test1_13"[label="Test::entry::2"]
+         /* Internal edges */
+         subgraph "cluster_main_Test1_Initialize1" {
+            label= "scope: main_Test1_Initialize1\n function: Initialize"
+         graph[style=line] 
+            /* Nodes */
+            node [width=0.3 fixedsize=true shape=circle fontsize=10]
+            /* Nodes and edges */
+            "main_Test1_Initialize1_15"[label="Initialize::entry"] [color="lightblue"]
+            "main_Test1_Initialize1_31"[label="Initialize::for_end8"]
+            /* Internal edges */
+            subgraph "cluster_main_Test1_Initialize1_L1" {
+               label= "scope: main_Test1_Initialize1_L1"
+            graph[style=dotted] 
+               /* Nodes */
+               node [width=0.3 fixedsize=true shape=circle fontsize=10]
+               /* Nodes and edges */
+               "main_Test1_Initialize1_L1_17"[label="Initialize::for_cond"] [color="lightblue"]
+               "main_Test1_Initialize1_L1_27"[label="Initialize::for_end"]
+               "main_Test1_Initialize1_L1_18"[label="Initialize::for_body"]
+               /* Internal edges */
+               "main_Test1_Initialize1_L1_17"->"main_Test1_Initialize1_L1_18" [color="black"]
+               "main_Test1_Initialize1_L1_27"->"main_Test1_Initialize1_L1_17" [color="red" arrowhead=normalodot]
+               subgraph "cluster_main_Test1_Initialize1_L1_L1" {
+                  label= "scope: main_Test1_Initialize1_L1_L1"
+               graph[style=dotted] 
+                  /* Nodes */
+                  node [width=0.3 fixedsize=true shape=circle fontsize=10]
+                  /* Nodes and edges */
+                  "main_Test1_Initialize1_L1_L1_22"[label="Initialize::for_body3::4"]
+                  "main_Test1_Initialize1_L1_L1_20"[label="Initialize::for_cond1"] [color="lightblue"]
+                  "main_Test1_Initialize1_L1_L1_21"[label="Initialize::for_body3"]
+                  /* Internal edges */
+                  "main_Test1_Initialize1_L1_L1_20"->"main_Test1_Initialize1_L1_L1_21" [color="black"]
+                  "main_Test1_Initialize1_L1_L1_22"->"main_Test1_Initialize1_L1_L1_20" [color="red" arrowhead=normalodot]
+                  subgraph "cluster_main_Test1_Initialize1_L1_L1_RandomInteger1" {
+                     label= "scope: main_Test1_Initialize1_L1_L1_RandomInteger1\n function: RandomInteger"
+                  graph[style=line] 
+                     /* Nodes */
+                     node [width=0.3 fixedsize=true shape=circle fontsize=10]
+                     /* Nodes and edges */
+                     "main_Test1_Initialize1_L1_L1_RandomInteger1_60"[label="RandomInteger::entry"] [color="lightblue"]
+                     /* Internal edges */
+                  }
+               }
+            }
+         }
+         subgraph "cluster_main_Test1_Initialize2" {
+            label= "scope: main_Test1_Initialize2\n function: Initialize"
+         graph[style=line] 
+            /* Nodes */
+            node [width=0.3 fixedsize=true shape=circle fontsize=10]
+            /* Nodes and edges */
+            "main_Test1_Initialize2_15"[label="Initialize::entry"] [color="lightblue"]
+            "main_Test1_Initialize2_31"[label="Initialize::for_end8"]
+            /* Internal edges */
+            subgraph "cluster_main_Test1_Initialize2_L1" {
+               label= "scope: main_Test1_Initialize2_L1"
+            graph[style=dotted] 
+               /* Nodes */
+               node [width=0.3 fixedsize=true shape=circle fontsize=10]
+               /* Nodes and edges */
+               "main_Test1_Initialize2_L1_17"[label="Initialize::for_cond"] [color="lightblue"]
+               "main_Test1_Initialize2_L1_27"[label="Initialize::for_end"]
+               "main_Test1_Initialize2_L1_18"[label="Initialize::for_body"]
+               /* Internal edges */
+               "main_Test1_Initialize2_L1_17"->"main_Test1_Initialize2_L1_18" [color="black"]
+               "main_Test1_Initialize2_L1_27"->"main_Test1_Initialize2_L1_17" [color="red" arrowhead=normalodot]
+               subgraph "cluster_main_Test1_Initialize2_L1_L1" {
+                  label= "scope: main_Test1_Initialize2_L1_L1"
+               graph[style=dotted] 
+                  /* Nodes */
+                  node [width=0.3 fixedsize=true shape=circle fontsize=10]
+                  /* Nodes and edges */
+                  "main_Test1_Initialize2_L1_L1_22"[label="Initialize::for_body3::4"]
+                  "main_Test1_Initialize2_L1_L1_20"[label="Initialize::for_cond1"] [color="lightblue"]
+                  "main_Test1_Initialize2_L1_L1_21"[label="Initialize::for_body3"]
+                  /* Internal edges */
+                  "main_Test1_Initialize2_L1_L1_20"->"main_Test1_Initialize2_L1_L1_21" [color="black"]
+                  "main_Test1_Initialize2_L1_L1_22"->"main_Test1_Initialize2_L1_L1_20" [color="red" arrowhead=normalodot]
+                  subgraph "cluster_main_Test1_Initialize2_L1_L1_RandomInteger2" {
+                     label= "scope: main_Test1_Initialize2_L1_L1_RandomInteger2\n function: RandomInteger"
+                  graph[style=line] 
+                     /* Nodes */
+                     node [width=0.3 fixedsize=true shape=circle fontsize=10]
+                     /* Nodes and edges */
+                     "main_Test1_Initialize2_L1_L1_RandomInteger2_60"[label="RandomInteger::entry"] [color="lightblue"]
+                     /* Internal edges */
+                  }
+               }
+            }
+         }
+         subgraph "cluster_main_Test1_Multiply1" {
+            label= "scope: main_Test1_Multiply1\n function: Multiply"
+         graph[style=line] 
+            /* Nodes */
+            node [width=0.3 fixedsize=true shape=circle fontsize=10]
+            /* Nodes and edges */
+            "main_Test1_Multiply1_32"[label="Multiply::entry"] [color="lightblue"]
+            "main_Test1_Multiply1_59"[label="Multiply::for_end26"]
+            /* Internal edges */
+            subgraph "cluster_main_Test1_Multiply1_L1" {
+               label= "scope: main_Test1_Multiply1_L1"
+            graph[style=dotted] 
+               /* Nodes */
+               node [width=0.3 fixedsize=true shape=circle fontsize=10]
+               /* Nodes and edges */
+               "main_Test1_Multiply1_L1_34"[label="Multiply::for_cond"] [color="lightblue"]
+               "main_Test1_Multiply1_L1_35"[label="Multiply::for_body"]
+               "main_Test1_Multiply1_L1_55"[label="Multiply::for_end23"]
+               /* Internal edges */
+               "main_Test1_Multiply1_L1_34"->"main_Test1_Multiply1_L1_35" [color="black"]
+               "main_Test1_Multiply1_L1_55"->"main_Test1_Multiply1_L1_34" [color="red" arrowhead=normalodot]
+               subgraph "cluster_main_Test1_Multiply1_L1_L1" {
+                  label= "scope: main_Test1_Multiply1_L1_L1"
+               graph[style=dotted] 
+                  /* Nodes */
+                  node [width=0.3 fixedsize=true shape=circle fontsize=10]
+                  /* Nodes and edges */
+                  "main_Test1_Multiply1_L1_L1_38"[label="Multiply::for_body3"]
+                  "main_Test1_Multiply1_L1_L1_37"[label="Multiply::for_cond1"] [color="lightblue"]
+                  "main_Test1_Multiply1_L1_L1_51"[label="Multiply::for_end"]
+                  /* Internal edges */
+                  "main_Test1_Multiply1_L1_L1_37"->"main_Test1_Multiply1_L1_L1_38" [color="black"]
+                  "main_Test1_Multiply1_L1_L1_51"->"main_Test1_Multiply1_L1_L1_37" [color="red" arrowhead=normalodot]
+                  subgraph "cluster_main_Test1_Multiply1_L1_L1_L1" {
+                     label= "scope: main_Test1_Multiply1_L1_L1_L1"
+                  graph[style=dotted] 
+                     /* Nodes */
+                     node [width=0.3 fixedsize=true shape=circle fontsize=10]
+                     /* Nodes and edges */
+                     "main_Test1_Multiply1_L1_L1_L1_41"[label="Multiply::for_cond6"] [color="lightblue"]
+                     "main_Test1_Multiply1_L1_L1_L1_42"[label="Multiply::for_body8"]
+                     /* Internal edges */
+                     "main_Test1_Multiply1_L1_L1_L1_41"->"main_Test1_Multiply1_L1_L1_L1_42" [color="black"]
+                     "main_Test1_Multiply1_L1_L1_L1_42"->"main_Test1_Multiply1_L1_L1_L1_41" [color="red" arrowhead=normalodot]
+                  }
+               }
+            }
+         }
+      }
+   }
+   /* Exit edge from main*/
+      "main_6"->"main_InitSeed1_9" [color="green"]
+   /* Exit edge from main*/
+      "main_7"->"main_Test1_11" [color="green"]
+      /* Exit edge from main_InitSeed1*/
+         "main_InitSeed1_9"->"main_7" [color="green"]
+      /* Exit edge from main_Test1*/
+         "main_Test1_14"->"main_8" [color="green"]
+      /* Exit edge from main_Test1*/
+         "main_Test1_11"->"main_Test1_Initialize1_15" [color="green"]
+      /* Exit edge from main_Test1*/
+         "main_Test1_12"->"main_Test1_Initialize2_15" [color="green"]
+      /* Exit edge from main_Test1*/
+         "main_Test1_13"->"main_Test1_Multiply1_32" [color="green"]
+         /* Exit edge from main_Test1_Initialize1*/
+            "main_Test1_Initialize1_31"->"main_Test1_12" [color="green"]
+         /* Exit edge from main_Test1_Initialize1*/
+            "main_Test1_Initialize1_15"->"main_Test1_Initialize1_L1_17" [color="green"]
+            /* Exit edge from main_Test1_Initialize1_L1*/
+               "main_Test1_Initialize1_L1_18"->"main_Test1_Initialize1_L1_L1_20" [color="green"]
+            /* Exit edge from main_Test1_Initialize1_L1*/
+               "main_Test1_Initialize1_L1_17"->"main_Test1_Initialize1_31" [color="green"]
+               /* Exit edge from main_Test1_Initialize1_L1_L1*/
+                  "main_Test1_Initialize1_L1_L1_20"->"main_Test1_Initialize1_L1_27" [color="green"]
+               /* Exit edge from main_Test1_Initialize1_L1_L1*/
+                  "main_Test1_Initialize1_L1_L1_21"->"main_Test1_Initialize1_L1_L1_RandomInteger1_60" [color="green"]
+                  /* Exit edge from main_Test1_Initialize1_L1_L1_RandomInteger1*/
+                     "main_Test1_Initialize1_L1_L1_RandomInteger1_60"->"main_Test1_Initialize1_L1_L1_22" [color="green"]
+         /* Exit edge from main_Test1_Initialize2*/
+            "main_Test1_Initialize2_31"->"main_Test1_13" [color="green"]
+         /* Exit edge from main_Test1_Initialize2*/
+            "main_Test1_Initialize2_15"->"main_Test1_Initialize2_L1_17" [color="green"]
+            /* Exit edge from main_Test1_Initialize2_L1*/
+               "main_Test1_Initialize2_L1_18"->"main_Test1_Initialize2_L1_L1_20" [color="green"]
+            /* Exit edge from main_Test1_Initialize2_L1*/
+               "main_Test1_Initialize2_L1_17"->"main_Test1_Initialize2_31" [color="green"]
+               /* Exit edge from main_Test1_Initialize2_L1_L1*/
+                  "main_Test1_Initialize2_L1_L1_20"->"main_Test1_Initialize2_L1_27" [color="green"]
+               /* Exit edge from main_Test1_Initialize2_L1_L1*/
+                  "main_Test1_Initialize2_L1_L1_21"->"main_Test1_Initialize2_L1_L1_RandomInteger2_60" [color="green"]
+                  /* Exit edge from main_Test1_Initialize2_L1_L1_RandomInteger2*/
+                     "main_Test1_Initialize2_L1_L1_RandomInteger2_60"->"main_Test1_Initialize2_L1_L1_22" [color="green"]
+         /* Exit edge from main_Test1_Multiply1*/
+            "main_Test1_Multiply1_59"->"main_Test1_14" [color="green"]
+         /* Exit edge from main_Test1_Multiply1*/
+            "main_Test1_Multiply1_32"->"main_Test1_Multiply1_L1_34" [color="green"]
+            /* Exit edge from main_Test1_Multiply1_L1*/
+               "main_Test1_Multiply1_L1_35"->"main_Test1_Multiply1_L1_L1_37" [color="green"]
+            /* Exit edge from main_Test1_Multiply1_L1*/
+               "main_Test1_Multiply1_L1_34"->"main_Test1_Multiply1_59" [color="green"]
+               /* Exit edge from main_Test1_Multiply1_L1_L1*/
+                  "main_Test1_Multiply1_L1_L1_38"->"main_Test1_Multiply1_L1_L1_L1_41" [color="green"]
+               /* Exit edge from main_Test1_Multiply1_L1_L1*/
+                  "main_Test1_Multiply1_L1_L1_37"->"main_Test1_Multiply1_L1_55" [color="green"]
+                  /* Exit edge from main_Test1_Multiply1_L1_L1_L1*/
+                     "main_Test1_Multiply1_L1_L1_L1_41"->"main_Test1_Multiply1_L1_L1_51" [color="green"]
+}

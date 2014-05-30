@@ -1,0 +1,54 @@
+digraph "" {
+   size="11.4,7.8";
+   rankdir=TB;
+   center=1;
+   rotate=0;
+   {
+      node [shape=plaintext, fontsize=12];
+      "Scope hierarchy for\nmatmult.alf\n Mon May 26 21:00:55 2014\n\n      Scopes with solid line = function scope\n      Scopes with dotted line = loop scope\n"
+   }
+   0 [label="main" shape=box
+    style=line   ]
+      1 [label="main_InitSeed1" shape=box
+       style=line      ]
+      2 [label="main_Test1" shape=box
+       style=line      ]
+         3 [label="main_Test1_Initialize1" shape=box
+          style=line         ]
+            4 [label="main_Test1_Initialize1_L1" shape=box
+             style=dotted            ]
+               5 [label="main_Test1_Initialize1_L1_L1" shape=box
+                style=dotted               ]
+                  6 [label="main_Test1_Initialize1_L1_L1_RandomInteger1" shape=box
+                   style=line                  ]
+         7 [label="main_Test1_Initialize2" shape=box
+          style=line         ]
+            8 [label="main_Test1_Initialize2_L1" shape=box
+             style=dotted            ]
+               9 [label="main_Test1_Initialize2_L1_L1" shape=box
+                style=dotted               ]
+                  10 [label="main_Test1_Initialize2_L1_L1_RandomInteger2" shape=box
+                   style=line                  ]
+         11 [label="main_Test1_Multiply1" shape=box
+          style=line         ]
+            12 [label="main_Test1_Multiply1_L1" shape=box
+             style=dotted            ]
+               13 [label="main_Test1_Multiply1_L1_L1" shape=box
+                style=dotted               ]
+                  14 [label="main_Test1_Multiply1_L1_L1_L1" shape=box
+                   style=dotted                  ]
+   0 -> 1
+   0 -> 2
+   2 -> 3
+   3 -> 4
+   4 -> 5
+   5 -> 6
+   2 -> 7
+   7 -> 8
+   8 -> 9
+   9 -> 10
+   2 -> 11
+   11 -> 12
+   12 -> 13
+   13 -> 14
+}

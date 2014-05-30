@@ -1,0 +1,4 @@
+The program cover contains 3 loops, not context sensitive.The number of iterations of the loops in the program is input dependent (the structure Array). When run as given in the source code, the no. of iterations are the following:
+
+No. of iterations for main_Initialize_L1 = 100No. of iterations for main_BubbleSort_L1 = 99Maximum no. of iterations per invocation for main_BubbleSort_L1_L1 is 99, sum is 5048
+This is also the worst case, since WORSTCASE is set, we will have an descending array so that the maximum number of iterations are necessary.

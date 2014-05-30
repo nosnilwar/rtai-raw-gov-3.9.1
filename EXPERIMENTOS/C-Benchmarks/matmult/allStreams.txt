@@ -1,0 +1,9 @@
+SWEET version 2014-03-27
+Executing command 'input-files'.
+Executing command 'check-statically'.
+Executing command 'domain'.
+Executing command 'dot-print'.
+Executing command 'function-information'.
+  Prints reduced AST to: main.alf
+Executing command 'abstract-execution'.
+Executing command 'flow-facts'.

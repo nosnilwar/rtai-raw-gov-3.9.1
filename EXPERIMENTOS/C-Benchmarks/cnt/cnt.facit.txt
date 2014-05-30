@@ -1,0 +1,2 @@
+The program adpcm contains 4 loops, none of them are context sensitive.The number of iterations of the loops in the program is not input dependent. When run as given in the source code, the no. of iterations are the following:
+No. of iterations for main_Test_Initialize_L1 = 10Maximum no. of iterations per invocation for main_Test_Initialize_L1_L1 is 10, sum is 100No. of iterations for main_Test_Sum_L1 = 10Maximum no. of iterations per invocation for main_Test_Sum_L1_L1 is 10, sum is 100

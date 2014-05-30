@@ -1,0 +1,35 @@
+// RAPITA flow facts generated without mapping file
+
+// Loop body bounds
+#pragma RPT [Multiply::for.cond6] loop_max_iter(40) ; 
+// ** pragma RPT [Multiply::for.cond6] loop_min_iter(40) ; 
+#pragma RPT [Initialize::for.cond1] loop_max_iter(40) ; 
+// ** pragma RPT [Initialize::for.cond1] loop_min_iter(40) ; 
+#pragma RPT [Initialize::for.cond] loop_max_iter(40) ; 
+// ** pragma RPT [Initialize::for.cond] loop_min_iter(40) ; 
+#pragma RPT [Multiply::for.cond1] loop_max_iter(40) ; 
+// ** pragma RPT [Multiply::for.cond1] loop_min_iter(40) ; 
+#pragma RPT [Multiply::for.cond] loop_max_iter(40) ; 
+// ** pragma RPT [Multiply::for.cond] loop_min_iter(40) ; 
+
+// Local worst-case frequency in loops
+#pragma RPT ["Multiply::for.body3"] wfreq(40) ; 
+#pragma RPT ["Initialize::for.body3"] wfreq(40) ; 
+#pragma RPT ["Initialize::for.body"] wfreq(40) ; 
+#pragma RPT ["Multiply::for.body"] wfreq(40) ; 
+#pragma RPT ["Multiply::for.body8"] wfreq(40) ; 
+
+// Local node at least one of
+#pragma RPT lwp_at_least_one_of ("Multiply::for.body3") ;
+#pragma RPT lwp_at_least_one_of ("Initialize::for.body3") ;
+#pragma RPT lwp_at_least_one_of ("Initialize::for.body") ;
+#pragma RPT lwp_at_least_one_of ("Multiply::for.body") ;
+#pragma RPT lwp_at_least_one_of ("Multiply::for.body8") ;
+
+// Global node at least one of
+#pragma RPT wp_at_least_one_of (Multiply::for.body3) ;
+#pragma RPT wp_at_least_one_of (Initialize::for.body3) ;
+#pragma RPT wp_at_least_one_of (Initialize::for.body) ;
+#pragma RPT wp_at_least_one_of (Multiply::for.body) ;
+#pragma RPT wp_at_least_one_of (Multiply::for.body8) ;
+

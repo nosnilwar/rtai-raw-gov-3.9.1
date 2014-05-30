@@ -52,9 +52,9 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 
 #define STACK_SIZE 2000
 
-#define NTASKS 2
+#define NTASKS 1
 
-char arrayTextoCorIdTask[NTASKS][8] = {"\033[31m", "\033[32m"};//, "\033[34m", "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
+char arrayTextoCorIdTask[NTASKS][8] = {"\033[31m"};//, "\033[32m"};//, "\033[34m", "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
 
 RT_TASK *arrayTasks[NTASKS];
 pthread_t *arrayThreads[NTASKS];
@@ -65,47 +65,12 @@ struct thread_param {
     int idTask;
 };
 
-void consumirProcessamento(int idTask)
-{
-	clock_t start, end;
-	double runTime;
-	int i, num = 1, primes = 0;
-	long cont;
-	long qtdLoops;
-
-	switch (idTask) {
-		case 1:
-			qtdLoops = 145;
-		break;
-		default:
-			qtdLoops = 73;
-		break;
-	}
-
-	start = clock();
-	for(cont=0;cont<qtdLoops;cont++)
-	{
-		num = 0;
-		while (num <= 1000) {
-			i = 2;
-			while (i <= num) {
-				if(num % i == 0)
-					break;
-				i++;
-			}
-			if (i == num)
-				primes++;
-			num++;
-		}
-	}
-	end = clock();
-	runTime = (end - start) / (double) CLOCKS_PER_SEC;
-	//printf("%s[TASK %d] This machine calculated all %d prime numbers under 1000 in %g seconds\n", arrayTextoCorIdTask[idTask], idTask, primes, runTime);
-}
-
-void *init_task(void *arg)
+void *init_task_matmult(void *arg)
 {
 	int idTask = ((struct thread_param*) arg)->idTask;
+	RTIME taskDeadline = 0;
+	RTIME tick_timer_atual = 0;
+	RTIME tick_timer_restante = 0;
 
 	// Variaveis para realizar os calculos de tempo...
 	struct tm *newtime;
@@ -114,23 +79,27 @@ void *init_task(void *arg)
 	RTIME inicioExecucao = 0;
 	RTIME terminoExecucao = 0;
 	RTIME terminoPeriodo = 0;
-	RTIME Tperiodo, Tinicio;
+	RTIME Tperiodo;
+	RTIME Tinicio;
 	float tempo_processamento_tarefa;
 	float periodo_tarefa;
 	int prioridade = idTask + 1;
 
+	double tempoProcessamento = 0.0;
+	unsigned int cpu_frequency;
+
 	if(!(arrayTasks[idTask] = rt_task_init_schmod(idTask, prioridade, STACK_SIZE, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
-		printf("[ERRO] Não foi possível criar a tarefa 1.\n");
+		printf("[ERRO] Não foi possível criar a tarefa MatMult.\n");
 		exit(1);
 	}
 
 	rt_allow_nonroot_hrt();
 
 	Tinicio = timeline_sched;
-	Tperiodo = tick_period * (6 + 2*idTask);
+	Tperiodo = tick_period * 6; // 3 segundos (PERIODO == DEADLINE)
 
-	//rt_change_prio(arrayTasks[idTask], idTask);
+	rt_change_prio(arrayTasks[idTask], prioridade);
 	rt_task_make_periodic(arrayTasks[idTask], Tinicio, Tperiodo);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTask], idTask, Tperiodo);
@@ -144,26 +113,7 @@ void *init_task(void *arg)
 
 		inicioExecucao = rt_get_cpu_time_ns();
 		printf("%s[TASK %d] Processando...  0%% => %s", arrayTextoCorIdTask[idTask], idTask, asctime(newtime));
-		rt_cfg_set_rwcec(arrayTasks[idTask], 100);
-
-		rt_cfg_set_cpu_frequency(arrayTasks[idTask], 1800000);
-		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
-
-		printf("%s[TASK %d] Processando... 25%%\n", arrayTextoCorIdTask[idTask], idTask);
-		rt_cfg_set_rwcec(arrayTasks[idTask], 75);
-
-		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
-
-		printf("%s[TASK %d] Processando... 50%%\n", arrayTextoCorIdTask[idTask], idTask);
-		rt_cfg_set_rwcec(arrayTasks[idTask], 50);
-
-		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
-
-		printf("%s[TASK %d] Processando... 75%%\n", arrayTextoCorIdTask[idTask], idTask);
-		rt_cfg_set_rwcec(arrayTasks[idTask], 25);
-
-		//rt_cfg_set_cpu_frequency(arrayTasks[idTask], 3000000);
-		consumirProcessamento(idTask); //CODIGO PARA CONSUMIR PROCESSAMENTO...
+		//rt_cfg_set_rwcec(arrayTasks[idTask], 100);
 
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);
@@ -214,16 +164,17 @@ int create_tasks(void)
 	delay_timeline_sched = tick_period * 10;
 	timeline_sched = rt_get_time() + delay_timeline_sched;
 
-	for (i = 0; i < NTASKS; i++) {
-		if((arrayThreadParams[i] = malloc(sizeof(*arrayThreadParams[i]))) == NULL)
-		{
-			printf("[ERRO] Não foi possivel criar os parametros da tarefa %d.\n\n", i);
-			return (-1);
-		}
-		arrayThreadParams[i]->idTask = i;
+	if((arrayThreadParams[0] = malloc(sizeof(*arrayThreadParams[0]))) == NULL)
+	{
+		printf("[ERRO] Não foi possivel criar os parametros da tarefa %d.\n\n", i);
+		return (-1);
+	}
+	else
+	{
+		arrayThreadParams[0]->idTask = 0;
 
 		// Inicializando as tarefas...
-		if(pthread_create(arrayThreads[i], 0, init_task, (void *)arrayThreadParams[i]))
+		if(pthread_create(arrayThreads[0], 0, init_task_matmult, (void *)arrayThreadParams[0]))
 		{
 			printf("[ERRO] Não foi possível inicializar a Thread da tarefa %d.\n", i);
 			return(0);
