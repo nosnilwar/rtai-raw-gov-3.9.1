@@ -1,7 +1,7 @@
 /* bsort100.c */
 
 /* All output disabled for wcsim */
-//#define WCSIM 1
+#define WCSIM 1
 
 /* A read from this address will result in an known value of 1 */
 #define KNOWN_VALUE (int) 2
@@ -9,7 +9,7 @@
 /* A read from this address will result in an unknown value */
 #define UNKNOWN_VALUE (int) 2
 
-
+#include <time.h>
 #include <sys/types.h>
 #include <sys/times.h>
 #include <stdio.h>
@@ -48,7 +48,7 @@ main()
    gettimeofday(&StopTime, NULL);
    TotalTime = (1000 * (StopTime.tv_sec - StartTime.tv_sec) + (StopTime.tv_usec - StartTime.tv_usec) / 1000) / 1000.0;
 
-   printf("     - Number of elements sorted is %d\n", NUMELEMS);
+   printf("     - Number of elements sorted is %d (%ld CLOCKS_PER_SEC)\n", NUMELEMS, CLOCKS_PER_SEC);
    printf("     - Total time sorting is %3.3f seconds\n\n", TotalTime);
 #endif
 }

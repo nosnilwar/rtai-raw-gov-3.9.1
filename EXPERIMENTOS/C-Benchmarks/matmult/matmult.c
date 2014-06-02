@@ -22,8 +22,10 @@
 /* ***UPPSALA WCET***:
    disable stupid UNIX includes */
 #ifndef UPPSALAWCET
+#include <time.h>
 #include <sys/types.h>
 #include <sys/times.h>
+#include <stdio.h>
 #endif
 
 /*
@@ -33,28 +35,25 @@
  * arrays and simple arithmetic.
  */
 
-#define UPPERLIMIT 40
+#define UPPERLIMIT 650
 
 typedef int matrix [UPPERLIMIT][UPPERLIMIT];
 
 int Seed;
 matrix ArrayA, ArrayB, ResultArray;
 
-#ifdef UPPSALAWCET
 /* Our picky compiler wants prototypes! */
 void Multiply(matrix A, matrix B, matrix Res);
 void InitSeed(void);
 void Test(matrix A, matrix B, matrix Res);
 void Initialize(matrix Array);
 int RandomInteger(void);
-#endif
 
 void main()
 {
    InitSeed();
 /* ***UPPSALA WCET***:
    no printing please! */
-   printf("\n   *** PASSOU... ***\n\n");
 #ifndef UPPSALAWCET
    printf("\n   *** MATRIX MULTIPLICATION BENCHMARK TEST ***\n\n");
    printf("RESULTS OF THE TEST:\n");
@@ -71,7 +70,7 @@ void InitSeed(void)
   /* ***UPPSALA WCET***:
      changed Thomas Ls code to something simpler.
    Seed = KNOWN_VALUE - 1; */
-  Seed = 0;
+  Seed = 1;
 }
 
 
@@ -82,25 +81,25 @@ void Test(matrix A, matrix B, matrix Res)
  */
 {
 #ifndef UPPSALAWCET
-   long StartTime, StopTime;
+   struct timeval StartTime, StopTime;
    float TotalTime;
+#endif
+
+   /* ***UPPSALA WCET***: don't print or time */
+#ifndef UPPSALAWCET
+   gettimeofday(&StartTime, NULL);
 #endif
 
    Initialize(A);
    Initialize(B);
 
-   /* ***UPPSALA WCET***: don't print or time */
-#ifndef UPPSALAWCET
-   StartTime = ttime ();
-#endif
-
    Multiply(A, B, Res);
 
    /* ***UPPSALA WCET***: don't print or time */
 #ifndef UPPSALAWCET
-   StopTime = ttime();
-   TotalTime = (StopTime - StartTime) / 1000.0;
-   printf("    - Size of array is %d\n", UPPERLIMIT);
+   gettimeofday(&StopTime, NULL);
+   TotalTime = (1000 * (StopTime.tv_sec - StartTime.tv_sec) + (StopTime.tv_usec - StartTime.tv_usec) / 1000) / 1000.0;
+   printf("    - Size of array is %d (%ld CLOCKS_PER_SEC)\n", UPPERLIMIT, CLOCKS_PER_SEC);
    printf("    - Total multiplication time is %3.3f seconds\n\n", TotalTime);
 #endif
 }
@@ -113,9 +112,13 @@ void Initialize(matrix Array)
 {
    int OuterIndex, InnerIndex;
 
+//   printf("Valores da Matriz: \n\n");
    for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
       for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
+      {
          Array[OuterIndex][InnerIndex] = RandomInteger();
+//         printf("(%d)", Array[OuterIndex][InnerIndex]);
+      }
 }
 
 
