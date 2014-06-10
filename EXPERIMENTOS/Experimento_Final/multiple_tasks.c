@@ -50,9 +50,9 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 
 #define STACK_SIZE 2000
 
-#define NTASKS 3
+#define NTASKS 2
 
-char arrayTextoCorIdTask[NTASKS][8] = {"\033[31m", "\033[32m", "\033[34m"};//, "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
+char arrayTextoCorIdTask[NTASKS][8] = {"\033[31m", "\033[32m"};//, "\033[34m"};//, "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
 
 RT_TASK *arrayTasks[NTASKS];
 pthread_t *arrayThreads[NTASKS];
@@ -230,7 +230,7 @@ void *init_task_cnt(void *arg)
  * matrix. It tests a compiler's speed in handling multidimensional
  * arrays and simple arithmetic.
  **************************************************/
-#define UPPERLIMIT 650
+#define UPPERLIMIT 770
 typedef int matrixMatMult [UPPERLIMIT][UPPERLIMIT];
 int SeedMatMult;
 matrixMatMult ArrayA, ArrayB, ResultArray;
@@ -246,9 +246,13 @@ int RandomIntegerMatMult(void)
 void InitializeMatMult(matrixMatMult Array)
 {
    int OuterIndex, InnerIndex;
+//   printf("Valores da Matriz: \n\n");
    for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
       for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
+      {
          Array[OuterIndex][InnerIndex] = RandomIntegerMatMult();
+//         printf("(%d)", Array[OuterIndex][InnerIndex]);
+      }
 }
 
 // Multiplies arrays A and B and stores the result in ResultArray.
@@ -574,22 +578,22 @@ int create_tasks(void)
 	/*********************************************************
 	* Iniciando C-Benchmark -> Bsort
 	**********************************************************/
-	if((arrayThreadParams[2] = malloc(sizeof(*arrayThreadParams[2]))) == NULL)
-	{
-		printf("[ERRO] Não foi possivel criar os parametros da tarefa Bsort (C-Benchmark).\n\n");
-		return (-1);
-	}
-	else
-	{
-		arrayThreadParams[2]->idTask = 2;
-
-		// Inicializando as tarefas...
-		if(pthread_create(arrayThreads[2], 0, init_task_matmult, (void *)arrayThreadParams[2]))
-		{
-			printf("[ERRO] Não foi possível inicializar a Thread da tarefa Bsort (C-Benchmark).\n");
-			return(0);
-		}
-	}
+//	if((arrayThreadParams[2] = malloc(sizeof(*arrayThreadParams[2]))) == NULL)
+//	{
+//		printf("[ERRO] Não foi possivel criar os parametros da tarefa Bsort (C-Benchmark).\n\n");
+//		return (-1);
+//	}
+//	else
+//	{
+//		arrayThreadParams[2]->idTask = 2;
+//
+//		// Inicializando as tarefas...
+//		if(pthread_create(arrayThreads[2], 0, init_task_matmult, (void *)arrayThreadParams[2]))
+//		{
+//			printf("[ERRO] Não foi possível inicializar a Thread da tarefa Bsort (C-Benchmark).\n");
+//			return(0);
+//		}
+//	}
 
 	while(!getchar()); // Aguardo o usuario apertar alguma tecla para finalizar o escalonamento...
 

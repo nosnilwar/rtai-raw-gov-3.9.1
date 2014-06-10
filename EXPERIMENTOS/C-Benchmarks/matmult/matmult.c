@@ -113,8 +113,8 @@ void Initialize(matrix Array)
    int OuterIndex, InnerIndex;
 
 //   printf("Valores da Matriz: \n\n");
-   for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
-      for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
+   for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++) /* max 650 */
+      for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++) /* max 650 */
       {
          Array[OuterIndex][InnerIndex] = RandomInteger();
 //         printf("(%d)", Array[OuterIndex][InnerIndex]);
@@ -155,12 +155,11 @@ void Multiply(matrix A, matrix B, matrix Res)
 {
    register int Outer, Inner, Index;
 
-   for (Outer = 0; Outer < UPPERLIMIT; Outer++)
-      for (Inner = 0; Inner < UPPERLIMIT; Inner++)
+   for (Outer = 0; Outer < UPPERLIMIT; Outer++) /* max 650 */
+      for (Inner = 0; Inner < UPPERLIMIT; Inner++) /* max 650 */
       {
          Res [Outer][Inner] = 0;
-         for (Index = 0; Index < UPPERLIMIT; Index++)
-            Res[Outer][Inner]  +=
-               A[Outer][Index] * B[Index][Inner];
+         for (Index = 0; Index < UPPERLIMIT; Index++) /* max 650 */
+            Res[Outer][Inner] += A[Outer][Index] * B[Index][Inner];
        }
 }
