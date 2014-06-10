@@ -1,0 +1,146 @@
+
+# **Statements Idea**
+
+This file contains the explanation of all statements that were treated and how
+they must be in the C file.
+
+The main part of this tool is to find the blocks that each statement belongs to.
+Basically, there are four nodes, one is the CONDITION part, the second is THEN
+part, the third the ELSE (only if and switch have it), and the END part.
+
+
+* **If Statements Idea!**
+
+For each new if statement parser in the file, a new if block is created,
+which contains: condition, then, else and end node. When a new block is
+created, it is insert in the end of a dual-link list.
+
+When a then block is found in the parser, a new node is created and set to
+the current if statement. After that, it became the current node in the
+entrypoint, because its compound statment can contain more nodes that must
+have a link (edge) with it. So, when the then block is ended, the last node
+of it (the current one) have a link with the end node of the current if
+statement. The same idea is used to else blocks.
+
+The last part is to check when the if statement end node is reached. When
+it happens, a link with the if condition node must be create if a else block
+doesn't exists. Then, a link between this end node with a external end node
+is made if it's been parsed a nested if statement.
+
+In another way: IF -----> THEN [---> OTHER NODES] ----> END
+ 				|										A
+ 				|										|
+ 				--------> ELSE [---> OTHER NODES] ------
+
+
+* **Switch Statements Idea!**
+
+A switch will be a node that will starts the scope, then each case statement
+will be handle like a if-else statement. Every case is a if, and the next case
+or default is an else. If it is a case, so there's an else-if (or else-case), if
+it is just the default part, so there's only an else.
+
+In another way: SWITCH -----> CASE ---> THEN [---> OTHER NODES] ---------> END
+								|											A
+								|											|
+								------> [ELSE OTHER CASES] -----------------
+											|								|
+											|								|
+											------> ELSE DEFAULT -----------
+
+
+* **While Statements Idea!**
+
+Like switch, it can be treated like an if statement, but without else. The while
+condition is the if statement, its scope is the then part, when the then ends,
+it goes up to the condition, because it is a loop. So, as an if statement
+without else, the while condition goes to the end.
+
+In another way: WHILE -------> THEN [----> OTHER NODES]		END
+				|	A			|			|				A
+				|	|			|			|				|
+				|	------------------------				|
+				--------------------------------------------
+
+
+* **Do-While Statements Idea!**
+
+It can be treated like an if statement, but, to initialize it's handled, an if
+statement needs to be create in the DO part - like a pseudo-condition, after
+that, the THEN part is created and its scope is parser. Then, when the WHILE
+part is found, the THEN is ended and the correct condition is put in the graph:
+first, the pseudo-condition created in the DO part is removed, so the condition
+from WHILE part is created and put in the graph. At last, the condition goes to
+the THEN and END part.
+
+In another way: DO ----------> THEN [----> OTHER NODES] -----> WHILE -----> END
+								A								|			A
+								|								|			|
+								 ------------------------------- 			|
+								 								|			|
+																 -----------
+
+Important: As you can see, the DO part can be seen as a pseudo-condition that
+can be merge with the THEN part, so it is removed and the first node of the
+scope is the THEN part.
+
+
+* **For Statements Idea!**
+
+This is very similar with the while statement, the point that is different is
+the FOR expression part. When exist the three parts, the first one (before the
+first semicolon) is a common node; the second part (the condition one) is the
+condition node; the third part (after the second semicolon) is the last node of
+its scope. Then, there's the THEN part follow by the END part. But, when the
+then part ends, its last node points to the third part node of the FOR
+expression who points to the condition node. So, the condition part points to
+the end.
+
+In another way: FOR ( FIRST; ---------> CONDITION ; <---------------- LAST NODE
+										|	|								A
+										|	|								|
+										|	|								|
+								     	|	 ---> THEN [---> OTHER NODES]---
+										|
+										 --------------------------------> END
+
+
+* **Function Call - Special Case!**
+
+If in the C file there's a function call, so the line that has it will
+represents one node, and, if this call uses another call like a parameter, so
+two nodes will be made and so on.
+
+In another way: NODE -----> CALLER ----> OTHER NODES
+				NODE -----> CALLER ----> OTHER CALLERS ----> OTHER NODES
+
+
+# **Optimizations**
+
+Some optimizations are made in the graph, the complete graph has all the ndoes
+that the explanations above shown, but with optimizations, nodes like (1) BREAK
+and (2) CONTINUE are just branches in the intermediate code, so they are removed
+but their parent will keep the branch. Another optimization is (3) ELSE nodes,
+they are just remove because they mean nothing in the graph, only their scope
+cares.
+
+(4) The END node from loop statements are kept with STMT\_PSEUDO status, which
+means a pseudo node in the graph, so they represents nothing, but they are there
+to "isolate" the loops. In this way, compute cycles of loops is easier.
+
+To put all loops "alone" - in a separated subgraph, every node that points to a
+condition node, now points to the end (pseudo) node. Therefore, the pseudo node
+points to the loop condition and to the next node after the loop, on the other
+hand, all nodes that were pointed to the loop condition, now points to the
+pseudo node, like:
+
+	OTHER NODES --------> PSEUDO NODE ------------> NODES AFTER LOOP
+							|
+							|
+							-----> LOOP GRAPH
+
+Note that in the do-while case, the visualization is the same, pseudo node is
+pointing to the condition part. Also note that in the for statements, the first
+expression (initialization part) is outside the loop graph, then it's going to
+point to the pseudo node which will point to the condition part.
+

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec ./tools/arm-linux-gcc-4.3.2/bin/arm-none-linux-gnueabi-gcc -march=armv4t $*
+#exec ./arm-none-linux-gnueabi-gcc -march=armv4t $*

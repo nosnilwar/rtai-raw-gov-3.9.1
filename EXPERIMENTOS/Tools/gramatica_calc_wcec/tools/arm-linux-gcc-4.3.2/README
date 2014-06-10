@@ -1,0 +1,12 @@
+Many files of this tool were delete, because they weren't necessary to this
+application, only the gcc part is important.
+
+Note: if the following error is happened "exec: arm-none-linux-gnueabi-gcc: not
+found", open the arm-linux-gcc file and replace the executable line for:
+
+	exec ./arm-none-linux-gnueabi-gcc -march=armv4t $*
+	
+Another thing that was changed was the path of line below. For it be used in the
+"main" directory of this tool, that line should be:
+
+exec ./tools/arm-linux-gcc-4.3.2/bin/arm-none-linux-gnueabi-gcc -march=armv4t $*

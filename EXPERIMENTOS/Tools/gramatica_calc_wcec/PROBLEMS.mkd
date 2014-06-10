@@ -1,0 +1,70 @@
+
+__**Problems**__
+
+1. The for statement needs the three expressions, like: for(exp1; exp2; exp3);
+
+This problem is dued to the grammar, because when the pattern to recognize other
+constructions of for statements (like with two or just one expression) was made,
+conflicts of shift/reduce and reduce/reduce were followed by those changes. So,
+to avoid this, the current version of the grammar only accepts the for with the
+three expressions.
+
+2. The special case of if: (expression) ? a : b;
+
+In this case, not only the THEN, but also the ELSE part has the same line, so
+they are referenced only by its label in the intermediate code. This is the
+reason that this if expression can't be used, because there's no way to know
+the basic blocks that each instruction belongs to.
+
+3. goto and switch statements;
+
+The same problem as above, because goto and each CASE statement of the switch is
+refered by a label, what it makes a bigger problem to define the correct basic
+block for each instruction.
+
+For example, this piece of code show a switch statment in C and the intermediate
+code. See that only the label is different for each case statement:
+
+	`switch (a) {
+		case 1:
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
+		default:
+	}`
+
+	`.loc 1 8 0
+	ldr	r3, [fp, #-8]
+	str	r3, [fp, #-16]
+	ldr	r3, [fp, #-16]
+	cmp	r3, #2
+	beq	.L4
+	ldr	r3, [fp, #-16]
+	cmp	r3, #3
+	beq	.L5
+	ldr	r3, [fp, #-16]
+	cmp	r3, #1
+	bne	.L13`
+
+
+4. Functions in condition nodes
+
+Functions can not be call in the condition part of all statements, like:
+if( fool() ) {}; this is a problem to compute the number of cycles of this node.
+
+**Note:** this kind of statement may happen, but if there are more than one
+function be called, it becomes a bigger problem, because the "if" is a node and
+each caller is a single node too. So, the number of cycles will be wrong.
+
+5. Returns
+
+Functions that have more than one return, are not guarantee to have the
+correctly WCEC calculated, because one or more returns can jump for another
+label before go to the last part of the code - as the bicoloring.c example
+shows. So, this jump does not make the WCEC value too precise. Another point in
+this problem is the number of edges, because return always make the previous
+node point to the end, and the previous one could be any node - inclusive the
+THEN node (__it must be fixed!__)
+

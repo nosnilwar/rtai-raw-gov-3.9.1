@@ -1,0 +1,101 @@
+
+### __Structs and Data__
+
+1. Data Instruction:
+
+	* tuple(instr, label or None)
+
+2. Lines (loc) -> dictionary:
+
+	* key - line number;
+	* value - list of sets of instructions
+		( [ [instr. of the first loc],
+			[instr. of the second loc with the same line],
+			[...] ]
+		);
+
+3. Labels (.L\<number\>) -> dictionary:
+
+	* key - label;
+	* value - tuple( [instructions], WCEC).
+
+
+### __Idea__
+
+To calculate the WCEC and map each instruction of the C code in the assembly,
+it's been doing the following steps in the intermediate code:
+
+1. look for a expression "loc":
+
+	If it's found, so make a new entry in the dictionary. But, if the entry
+	already exists, so we have two "locs" with the same line (this happens with
+	for statement when the three expressions exists) that are different. Then,
+	the value of the loc key will have another element in the list related to
+	this second loc, ex:
+
+	C code:
+
+		for (a = 3; a \< 10; a++)
+
+	Intermediate code:
+
+	>
+		.loc 1 11 0			(first loc)
+		mov	r3, #2			-
+		str	r3, [fp, #-16]	 |- instr. of the 1st element in the list
+		b	.L3				-
+	 .L4:
+		.loc 1 12 0
+		ldr	r3, [fp, #-16]
+		add	r3, r3, #2
+		str	r3, [fp, #-16]
+		.loc 1 11 0			(second loc)
+		ldr	r3, [fp, #-16]	-
+		add	r3, r3, #1		 |
+		str	r3, [fp, #-16]	 |
+	 .L3:					 |- instr. of the 2nd element in the list
+		ldr	r3, [fp, #-16]	 |
+		cmp	r3, #9			 |
+		ble	.L4				 |
+		b	.L5				-
+
+	Notice: if a "loc" has an unconditional expression as the last instruction,
+	then the instructions of the refer label must be add to the loc, or the WCEC
+	of the label can be compute and add to the WCEC of the loc.
+
+	Notice (Again): The parser only in the "loc" parts gathered a lot of the
+	cases (if-else, while, do-while, etc), but this proposed idea was made to
+	the algorithm work with	for statements too.
+
+2. look for a expression ".L<number\>":
+
+	This means that it's a label. So, if a label is found, make that the
+	instructions that following this lable will be part of the same set. A set
+	of a label is made until another "loc" or unconditional branch is found.
+	Notice that if the last "loc" found has not an unconditional branch as the
+	last instruction before the label, then the following instructions are part
+	of the "loc" too, it happens the same when there's a label after another
+	one.
+
+	Notice: In the previous example, the label .L3 has two branches in the end.
+	In this case, there's no possible way to say which branch will be taken
+	until the execution of the code, this could happen with "loc" expressions
+	too (the "ble" instruction could be the last one in the "loc 11"). So, it's
+	assume that every time that a conditional branch is found, the instructions
+	following it are part of the same block, because if they aren't, the WCEC of
+	the whole task could be smaller than the real one. Therefore, it's better to
+	have a WCEC greater than the real one, because if the constraints in this
+	case are ok, so it will be in the real case.
+
+3. look for instructions:
+
+	Always that an instruction is found, it's add to the current loc and/or the
+	current label, as the explanation above.
+
+
+### __Cases That Aren't Cover__
+
+1. The proposed idea doesn't work with switch statements, because the "case"
+   part is not a "loc" or even a label, but a instruction set of conditional
+   branches.
+

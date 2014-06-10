@@ -1,0 +1,18 @@
+
+# **Structs**
+
+This tool has four steps:
+
+1. Uncrustify Parser: to make no more than one instruction per line;
+
+2. Intermediate Code: the assembler of the input code in the first step is
+generated using the arm-none-linux-gcc;
+
+3. Graphml Parser: in this step, the code generate by uncrustify is parser
+to make the control flow graph - CFG, of it. Also, it is compute the WCEC and
+RWCEC of each block;
+
+Just to know: in the step 3, each function is see as an entrypoint, and each
+node of this entrypoint is a basic block that contains the information of what
+type it is: if, switch, while, do-while, for, caller, break, continue, return or
+a common one.

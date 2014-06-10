@@ -1,0 +1,100 @@
+
+### =============== Using This Tool ===========
+
+To use this tool, just do "make", then a execution file "parser" will be create.
+All the things are done by the shell script run.sh.
+
+**Note**: Information about how this tool is divided and the ideas behind it, read
+the Documentation/.
+
+
+### ============== Shell Script ============
+
+The shell script run.sh has every command to be execute. So, give permission
+to execute, then:
+
+	`$ ./run.sh <file.c>`
+
+A file with uncrustify changes, named <file>\_uncrustify.c, will be created and
+the next steps: generate the first graphml file, computes cycles for each block
+and generates the final graphml, will work with that file. The information of
+each step is kept in the directory output/.
+
+Note: For git, the directories bckp/, examples/, output/ and tools/ will be
+ignored.
+
+Note: Before running, be sure that all the tools are working (maybe Uncrustify
+will need to be compiled, read about that below) and the C file, that will be
+used for input, has one instruction per line, not like:
+
+	`a++; b++;`
+
+and be sure that the for statement has all the three expressions and they are in
+the same line too.
+
+
+### ============= Uncrustify 0.59 ===================
+
+To use the Uncrustify, it needs to be compiled:
+
+	`$ ./configure`
+	`$ make`
+
+Now, if you want to use just it, follow this template:
+
+	`$ ./src/uncrustify -c <config_file> -f <file_name> -o <out_file>`
+
+The configuration file can be any one that you like, but the ben.cfg has some
+interesting features, and little changes were made to looks better.
+
+
+### ============== ARM Linux GCC 4.3.2 ===========
+
+This tool uses the ARM Linux GCC to generate the intemediate code of the input
+file. It can be download from: http://www.friendlyarm.net.
+
+So, if you want to generate the assembler code, just do:
+
+	`$ ./bin/arm-linux-gcc -g -S <input_file.c>`
+
+where the -S option makes the compiler just generate the assembler code while -g
+makes the debug information of the input file be in the intermediate code.
+
+More information of what changes were made can be see in this tool directory.
+
+
+### ================ Things That Can't Be Used ===============
+
+1. The special case of if: (expression) ? a : b;
+
+2. goto, switch, break and continue can't be used!
+
+3. the only for statement that works is: for(exp1; exp2; exp3), and they must
+be in the same line;
+
+4. functions can not be call in the condition part of all statements, like:
+if( fool() ) {}; this is a problem to compute the number of cycles of this node;
+
+5. conditions from statements can't be constant, they must have at least one
+variable;
+
+6. loops can't have a return instruction inside of it;
+
+7. More than one return.
+
+
+### =============== Questions ============================
+
+1. In the do-while statement, if there's this case:
+
+	`do {`
+		`do {`
+			`a++;`
+		`} while (a < 5);`
+	`} while(a < 10);`
+
+A nested do-while, the graph will have a THEN node from do-while1 pointing to
+THEN node from do-while2. The correct is that only the second THEN exists, but
+how is the instruction generated when this code is compiled? is it necessary to
+have the first DO part to count its WCEC? For now, it was corrected, but how is
+the instruction code for this example?

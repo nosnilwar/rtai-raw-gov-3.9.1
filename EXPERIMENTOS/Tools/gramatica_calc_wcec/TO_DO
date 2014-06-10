@@ -1,0 +1,140 @@
+- (PARTLY DONE) With if statements:
+
+	OBS: Because of its end nodes, some cleaning must be done to reduces the
+	number of nodes in the graph!! (DONE!)
+	
+- (DONE) Make graph accepts switch statements;
+
+	The switch statement is treated like a if statement: the switch is a node
+	that starts the scope, each case statement is a if statement, if there's a
+	statement that follows it, will be a else statement. If the follow one is
+	another case, so will be a else-if, in this case else-case, statement, if
+	it is the default part, it will be only a else statement.
+
+- (DONE) Make graph accepts while statements;
+	
+	The while statement is been treated, in fact, it is very similar to if
+	statement: it has the condition while (can be see as the if), the then part
+	which is the first node in while scope, then the end part - the one that is
+	executed when the while is ended. So, just three nodes.
+
+- (PARTLY DONE) Make graph accepts do-while statements;
+
+	Like the while statement, it needs only the if-then part of a if statement.
+	When the DO is found, an if statement is initialized, and the then part
+	begins. After that, when the WHILE from the do-while is found, it ends the
+	then part, and change the condition part from the DO to the WHILE, in this
+	way, it is guaranteed the do-while statement. So, the do-while statement
+	is ended with an end node.
+
+	Problem-4!
+
+- (PARTLY DONE) Make graph accepts for statements;
+
+	This is very similar with the while statement, the point that is different
+	is the FOR expression part. When exist the three parts, the first one
+	(before the first semicolon) is a common node; the second part (the
+	condition one) is the condition node; the third part (after the second
+	semicolon) is the last node of its scope. Then, there's the THEN part follow
+	by the END part. But, when the then part ends, its last node points to the
+	third part node of the FOR expression who points to the condition node. So,
+	the condition part points to the end.
+
+	Problem-5
+
+==== PROBLEMS AND OBSERVATIONS =====
+
+Obs.: More optimizations need to be made in graph to remove unecessary nodes!
+
+PROBLEM-1: What would be treated when a caller uses another caller, like:
+printf("%.2f\n", sqrt(10)) ? For now, it is treated like two functions:
+call1 node -> call2 node;
+
+PROBLEM-2: Each case from switch statement can be seen as a else-if or the
+switch works like a go-to: the label is put and goes to the correct CASE
+statement?
+
+PRBLEM-3: The statement: (expression) ? then : else, is not correct because the
+"then" and "else" part aren't be treated well, they read only one token in the
+parser. (IT IS INCORRECT!)
+
+PROBLEM-4: In the do-while statement, if there's this case:
+
+	do { 
+		do {
+			a++;
+		} while (a < 5);
+	}
+	while(a < 10);
+
+a nested do-while, the graph will have a THEN node from do-while1 pointing to
+THEN node from do-while2. The correct is that only the second THEN exists, but
+how is the instruction generated when this code is compiled? is it necessary to
+have the first DO part to count its WCEC? For now, it was corrected, but how is
+the instruction code for this example?
+
+Problem-5: In for statement, the problem is when there's not an one part of the
+FOR expression or two of them are missing. The parser doesn't treat the case
+that there are the first and second part, but the third is missing, like:
+
+	for (a = 0; a < 10;) {}
+
+To treat that, some changes were made, but were generate a lot of reduce erros,
+so this case is like a special one without treating.
+
+=====================================================
+
+(3/6/12)
+
+Now, some optimizations in the graph were made and the if statement is been
+analysed well. Unfortunately, the (expression) ? then : else statement is not
+working!!
+
+Next step: switch statement
+
+(5/6/12)
+
+Aparently, switch statements are working and new optimizations were made. But,
+there's a situation when a then statement follows a if, they are in the same
+line, but the optimization is not made, because it uses the number of children,
+if it has one, can be apply, otherwise, not.
+
+So, the if statement, in this case, has more than one child, maybe the parent
+list could be used to make optimizations...maybe.
+
+Next step: correct optimizations
+
+(5/6/12)
+
+The optimizations were correct e the switch statement is working.
+
+Next step: while statement
+
+(5/6/12)
+
+While statement can be used now.
+
+Another change that was made: if a caller uses another caller, they will be two
+different nodes. In the previous versions, it would be only one node, so
+despising the overhead that the second caller causes.
+
+Next step: do-while statement
+
+(8/6/12)
+
+Do-While statement partly done, there's an observation in this case that can be
+see in "Problems and Observation" part right above.
+
+Next step: for statement
+
+(8/6/12)
+
+For statement partly done, there's a problem that can be seen in the "Problems
+and Observation" part.
+
+Next step: eliminate all problems
+
+(10/9/12)
+
+For statement is not finished yet, it is parser by the grammar, but its nodes
+aren't ok.
