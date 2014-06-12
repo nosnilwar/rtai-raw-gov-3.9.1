@@ -53,18 +53,21 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 int idTaskCnt = 0;
 int idTaskMatMult = 1;
 int idTaskBsort = 2;
-int flagFimExecucao = 0;
 
 #define NTASKS 3
 
 char arrayTextoCorIdTask[NTASKS][8] = {"\033[31m", "\033[32m", "\033[34m"};//, "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
 
 RT_TASK *arrayTasks[NTASKS];
-static pthread_t *arrayThreads[NTASKS];
+pthread_t *arrayThreads[NTASKS];
 
 RTIME tick_period;
 RTIME timeline_sched;
 RTIME delay_timeline_sched;
+
+struct thread_param {
+    int idTask;
+};
 
 /**************************************************
  * INICIO: DEFINICOES DO C-BENCHMARK -> CNT
@@ -155,8 +158,13 @@ int InitSeedCnt(void)
 	return 0;
 }
 
-static void *init_task_cnt(void *arg)
+void *init_task_cnt(void *arg)
 {
+	int idTask = ((struct thread_param*) arg)->idTask;
+	//RTIME taskDeadline = 0;
+	//RTIME tick_timer_atual = 0;
+	//RTIME tick_timer_restante = 0;
+
 	// Variaveis para realizar os calculos de tempo...
 	struct tm *newtime;
 	time_t aclock;
@@ -168,14 +176,14 @@ static void *init_task_cnt(void *arg)
 	RTIME Tinicio;
 	float tempo_processamento_tarefa;
 	float periodo_tarefa;
-	int prioridade = idTaskCnt + 1;
+	int prioridade = idTask + 1;
 
 	//double tempoProcessamento = 0.0;
 	long int WCEC = 1764504180; // cycles
 	unsigned int cpuFrequencyInicial = 1800000; // Hz
 	unsigned int cpuVoltageInicial = 5; // V
 
-	if(!(arrayTasks[idTaskCnt] = rt_task_init_schmod(idTaskCnt, prioridade, STACK_SIZE, 0, SCHED_FIFO, CPU_ALLOWED)))
+	if(!(arrayTasks[idTask] = rt_task_init_schmod(idTask, prioridade, STACK_SIZE, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
 		printf("[ERRO] Não foi possível criar a tarefa CNT (C-Benchmark).\n");
 		exit(1);
@@ -186,15 +194,17 @@ static void *init_task_cnt(void *arg)
 	Tinicio = timeline_sched;
 	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
-	rt_task_make_periodic(arrayTasks[idTaskCnt], Tinicio, Tperiodo);
+	rt_task_make_periodic(arrayTasks[idTask], Tinicio, Tperiodo);
 
-	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo);
+	rt_change_prio(arrayTasks[idTask], prioridade);
+
+	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTask], idTask, Tperiodo);
 
 	while (1)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
-		rt_cfg_init_info(arrayTasks[idTaskCnt], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedCnt();
@@ -207,10 +217,10 @@ static void *init_task_cnt(void *arg)
 		terminoExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
 		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
-		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, tempo_processamento_tarefa, asctime(newtime));
+		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, tempo_processamento_tarefa, asctime(newtime));
 
 		// Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
-		rt_cfg_set_rwcec(arrayTasks[idTaskCnt], 0);
+		rt_cfg_set_rwcec(arrayTasks[idTask], 0);
 
 		rt_task_wait_period(); // **** WAIT
 
@@ -220,11 +230,9 @@ static void *init_task_cnt(void *arg)
 		terminoPeriodo = rt_get_cpu_time_ns();
 		periodo_tarefa = (terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
-		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, periodo_tarefa, asctime(newtime));
+		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_preto);
 	}
-
-	return 0;
 }
 /**************************************************
  * FIM: DEFINICOES DO C-BENCHMARK -> CNT
@@ -313,8 +321,13 @@ void InitSeedMatMult(void)
    SeedMatMult = 1;
 }
 
-static void *init_task_matmult(void *arg)
+void *init_task_matmult(void *arg)
 {
+	int idTask = ((struct thread_param*) arg)->idTask;
+	//RTIME taskDeadline = 0;
+	//RTIME tick_timer_atual = 0;
+	//RTIME tick_timer_restante = 0;
+
 	// Variaveis para realizar os calculos de tempo...
 	struct tm *newtime;
 	time_t aclock;
@@ -326,14 +339,14 @@ static void *init_task_matmult(void *arg)
 	RTIME Tinicio;
 	float tempo_processamento_tarefa;
 	float periodo_tarefa;
-	int prioridade = idTaskMatMult + 1;
+	int prioridade = idTask + 1;
 
 	//double tempoProcessamento = 0.0;
 	long int WCEC = 9071928490; // cycles
 	unsigned int cpuFrequencyInicial = 1800000; // Hz
 	unsigned int cpuVoltageInicial = 5; // V
 
-	if(!(arrayTasks[idTaskMatMult] = rt_task_init_schmod(idTaskMatMult, prioridade, STACK_SIZE, 0, SCHED_FIFO, CPU_ALLOWED)))
+	if(!(arrayTasks[idTask] = rt_task_init_schmod(idTask, prioridade, STACK_SIZE, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
 		printf("[ERRO] Não foi possível criar a tarefa MatMult (C-Benchmark).\n");
 		exit(1);
@@ -344,15 +357,17 @@ static void *init_task_matmult(void *arg)
 	Tinicio = timeline_sched;
 	Tperiodo = tick_period * 161; // ~= 8 segundos (PERIODO == DEADLINE)
 
-	rt_task_make_periodic(arrayTasks[idTaskMatMult], Tinicio, Tperiodo);
+	rt_task_make_periodic(arrayTasks[idTask], Tinicio, Tperiodo);
 
-	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskMatMult], idTaskMatMult, Tperiodo);
+	rt_change_prio(arrayTasks[idTask], prioridade);
+
+	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTask], idTask, Tperiodo);
 
 	while (1)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
-		rt_cfg_init_info(arrayTasks[idTaskMatMult], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedMatMult();
@@ -365,10 +380,10 @@ static void *init_task_matmult(void *arg)
 		terminoExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
 		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
-		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskMatMult], idTaskMatMult, tempo_processamento_tarefa, asctime(newtime));
+		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, tempo_processamento_tarefa, asctime(newtime));
 
 		// Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
-		rt_cfg_set_rwcec(arrayTasks[idTaskMatMult], 0);
+		rt_cfg_set_rwcec(arrayTasks[idTask], 0);
 
 		rt_task_wait_period(); // **** WAIT
 
@@ -378,11 +393,9 @@ static void *init_task_matmult(void *arg)
 		terminoPeriodo = rt_get_cpu_time_ns();
 		periodo_tarefa = (terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
-		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskMatMult], idTaskMatMult, periodo_tarefa, asctime(newtime));
+		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_preto);
 	}
-
-	return 0;
 }
 /**************************************************
  * FIM: DEFINICOES DO C-BENCHMARK -> MatMult
@@ -463,8 +476,13 @@ void BubbleSort(int Array[MAXDIM])
    printf("%s[TASK %d] Processando... 100%%\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort);
 }
 
-static void *init_task_bsort(void *arg)
+void *init_task_bsort(void *arg)
 {
+	int idTask = ((struct thread_param*) arg)->idTask;
+	//RTIME taskDeadline = 0;
+	//RTIME tick_timer_atual = 0;
+	//RTIME tick_timer_restante = 0;
+
 	// Variaveis para realizar os calculos de tempo...
 	struct tm *newtime;
 	time_t aclock;
@@ -476,32 +494,35 @@ static void *init_task_bsort(void *arg)
 	RTIME Tinicio;
 	float tempo_processamento_tarefa;
 	float periodo_tarefa;
-	int prioridade = idTaskBsort + 1;
+	int prioridade = idTask + 1;
 
 	//double tempoProcessamento = 0.0;
 	long int WCEC = 6500290074; // cycles
 	unsigned int cpuFrequencyInicial = 1800000; // Hz
 	unsigned int cpuVoltageInicial = 5; // V
 
-	if(!(arrayTasks[idTaskBsort] = rt_thread_init(nam2num("TSK_BSORT"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
+	if(!(arrayTasks[idTask] = rt_task_init_schmod(idTask, prioridade, STACK_SIZE, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
 		printf("[ERRO] Não foi possível criar a tarefa Bsort (C-Benchmark).\n");
 		exit(1);
 	}
 
-	rt_make_hard_real_time();
+	rt_allow_nonroot_hrt();
+
 	Tinicio = timeline_sched;
 	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
-	rt_task_make_periodic(arrayTasks[idTaskBsort], Tinicio, Tperiodo);
+	rt_task_make_periodic(arrayTasks[idTask], Tinicio, Tperiodo);
 
-	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, Tperiodo);
+	rt_change_prio(arrayTasks[idTask], prioridade);
 
-	while(!flagFimExecucao)
+	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTask], idTask, Tperiodo);
+
+	while (1)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
-		rt_cfg_init_info(arrayTasks[idTaskBsort], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitializeBsort(ArrayBsort);
@@ -514,10 +535,10 @@ static void *init_task_bsort(void *arg)
 		terminoExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
 		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
-		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, tempo_processamento_tarefa, asctime(newtime));
+		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, tempo_processamento_tarefa, asctime(newtime));
 
 		// Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
-		rt_cfg_set_rwcec(arrayTasks[idTaskBsort], 0);
+		rt_cfg_set_rwcec(arrayTasks[idTask], 0);
 
 		rt_task_wait_period(); // **** WAIT
 
@@ -527,11 +548,9 @@ static void *init_task_bsort(void *arg)
 		terminoPeriodo = rt_get_cpu_time_ns();
 		periodo_tarefa = (terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
-		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, periodo_tarefa, asctime(newtime));
+		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTask], idTask, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_preto);
 	}
-
-	return 0;
 }
 /**************************************************
  * FIM: DEFINICOES DO C-BENCHMARK -> Bsort
@@ -539,49 +558,113 @@ static void *init_task_bsort(void *arg)
 
 int create_tasks(void)
 {
-	RT_TASK *Main_Task;
-
-	if (!(Main_Task = rt_thread_init(nam2num("MAIN_TSK"), 0, 0, SCHED_FIFO, 0xF))) {
-		printf("CANNOT INIT MAIN TASK\n");
-		exit(1);
-	}
+	int i;
+	struct thread_param *arrayThreadParams[NTASKS];
 
 	start_rt_timer(0);
-	//TODO: rt_hard_timer_tick_cpuid(CPU_ALLOWED);
 
-	arrayThreads[idTaskCnt] = rt_thread_create(init_task_cnt, NULL, 0);
-	arrayThreads[idTaskMatMult] = rt_thread_create(init_task_matmult, NULL, 0);
-	arrayThreads[idTaskBsort] = rt_thread_create(init_task_bsort, NULL, 0);
+	//rt_set_periodic_mode();
+	rt_make_hard_real_time();
+	//rt_hard_timer_tick_cpuid(CPU_ALLOWED);
 
 	printf("************** Iniciando escalonamento **************\n");
 
-	tick_period = start_rt_timer(nano2count(TICK_PERIOD));
-	delay_timeline_sched = tick_period * 40; // Delay: 2 segundos
-	timeline_sched = rt_get_time() + delay_timeline_sched;
+	for (i = 0; i < NTASKS; i++)
+	{
+		arrayThreads[i] = (pthread_t *) malloc(sizeof(pthread_t));
+		if (!arrayThreads[i])
+		{
+			printf("[ERRO] Não foi possivel criar a Thread da tarefa %d.\n\n", i);
+			return(0);
+		}
+	}
 
+	tick_period = start_rt_timer(nano2count(TICK_PERIOD));
 	printf("TICK_PERIOD =======> %llu\n", tick_period);
 
-	// Aguarda interrupcao do usuario...
-	pause();
-	flagFimExecucao = 1;
+	delay_timeline_sched = tick_period * 20;
+	timeline_sched = rt_get_time() + delay_timeline_sched;
 
-	rt_thread_join(arrayThreads[idTaskCnt]);
-	rt_thread_join(arrayThreads[idTaskMatMult]);
-	rt_thread_join(arrayThreads[idTaskBsort]);
+	/*********************************************************
+	* Iniciando C-Benchmark -> CNT
+	**********************************************************/
+	if((arrayThreadParams[idTaskCnt] = malloc(sizeof(*arrayThreadParams[idTaskCnt]))) == NULL)
+	{
+		printf("[ERRO] Não foi possivel criar os parametros da tarefa CNT (C-Benchmark).\n\n");
+		return (-1);
+	}
+	else
+	{
+		arrayThreadParams[idTaskCnt]->idTask = idTaskCnt;
 
-	stop_rt_timer();
+		// Inicializando as tarefas...
+		if(pthread_create(arrayThreads[idTaskCnt], 0, init_task_cnt, (void *)arrayThreadParams[idTaskCnt]))
+		{
+			printf("[ERRO] Não foi possível inicializar a Thread da tarefa CNT (C-Benchmark).\n");
+			return(0);
+		}
+	}
 
-	rt_thread_delete(Main_Task);
+	/*********************************************************
+	* Iniciando C-Benchmark -> MatMult
+	**********************************************************/
+	if((arrayThreadParams[idTaskMatMult] = malloc(sizeof(*arrayThreadParams[idTaskMatMult]))) == NULL)
+	{
+		printf("[ERRO] Não foi possivel criar os parametros da tarefa MatMult (C-Benchmark).\n\n");
+		return (-1);
+	}
+	else
+	{
+		arrayThreadParams[idTaskMatMult]->idTask = idTaskMatMult;
+
+		// Inicializando as tarefas...
+		if(pthread_create(arrayThreads[idTaskMatMult], 0, init_task_matmult, (void *)arrayThreadParams[idTaskMatMult]))
+		{
+			printf("[ERRO] Não foi possível inicializar a Thread da tarefa MatMult (C-Benchmark).\n");
+			return(0);
+		}
+	}
+
+	/*********************************************************
+	* Iniciando C-Benchmark -> Bsort
+	**********************************************************/
+	if((arrayThreadParams[idTaskBsort] = malloc(sizeof(*arrayThreadParams[idTaskBsort]))) == NULL)
+	{
+		printf("[ERRO] Não foi possivel criar os parametros da tarefa Bsort (C-Benchmark).\n\n");
+		return (-1);
+	}
+	else
+	{
+		arrayThreadParams[idTaskBsort]->idTask = idTaskBsort;
+
+		// Inicializando as tarefas...
+		if(pthread_create(arrayThreads[idTaskBsort], 0, init_task_bsort, (void *)arrayThreadParams[idTaskBsort]))
+		{
+			printf("[ERRO] Não foi possível inicializar a Thread da tarefa Bsort (C-Benchmark).\n");
+			return(0);
+		}
+	}
+
+	while(!getchar()); // Aguardo o usuario apertar alguma tecla para finalizar o escalonamento...
+
+	for (i = 0; i < NTASKS; i++) {
+		pthread_cancel((pthread_t) *arrayThreads[i]);
+		free(arrayThreadParams[i]);
+	}
+
+	rt_make_soft_real_time();
 
 	return 0;
 }
 
 void delete_tasks(void)
 {
+	int i;
+
 	rt_make_soft_real_time();
 
-	for (int i = 0; i < NTASKS; i++) {
-		rt_thread_delete(arrayTasks[i]);
+	for (i = 0; i < NTASKS; i++) {
+		rt_task_delete(arrayTasks[i]);
 	}
 
 	printf("\nFim do Escalonamento %s\n", texto_preto);
