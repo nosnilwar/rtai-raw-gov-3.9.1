@@ -193,7 +193,8 @@ static void *init_task_cnt(void *arg)
 	}
 
 	Tinicio = start_timeline;
-	Tperiodo = tick_period * 501; // ~= 10 segundos (PERIODO == DEADLINE)
+	//Tperiodo = tick_period * 501; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo = tick_period * 450; // ~= 9 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_Cnt, Tinicio, Tperiodo);
 
@@ -507,7 +508,8 @@ static void *init_task_bsort(void *arg)
 	}
 
 	Tinicio = start_timeline;
-	Tperiodo = tick_period * 501; // ~= 10 segundos (PERIODO == DEADLINE)
+	//Tperiodo = tick_period * 501; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo = tick_period * 450; // ~= 9 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_Bsort, Tinicio, Tperiodo);
 
