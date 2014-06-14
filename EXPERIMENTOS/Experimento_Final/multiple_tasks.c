@@ -74,8 +74,7 @@ RTIME delay_start_timeline;
  * INICIO: DEFINICOES DO C-BENCHMARK -> CNT
  **************************************************/
 //#define WORSTCASE_CNT 1
-//#define MAXSIZE 7000
-#define MAXSIZE 1000
+#define MAXSIZE 7000
 typedef int matrixCnt [MAXSIZE][MAXSIZE];
 
 // Globals
@@ -116,7 +115,7 @@ void SumCnt(matrixCnt Array)
   long int WCEC = 1764504180; // cycles
   unsigned int cpuFrequencyAtual = 0; // Hz
   unsigned int cpuFrequencyInicial = 1800000; // Hz
-  unsigned int cpuVoltageInicial = 5; // V
+  //TODO:unsigned int cpuVoltageInicial = 5; // V
 
   rt_cfg_set_tsk_wcec(Task_Cnt, WCEC);
   rt_cfg_set_cpu_frequency(Task_Cnt, cpuFrequencyInicial);
@@ -280,7 +279,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
    long int WCEC = 9071928490; // cycles
    unsigned int cpuFrequencyAtual = 0; // Hz
    unsigned int cpuFrequencyInicial = 1800000; // Hz
-   unsigned int cpuVoltageInicial = 5; // V
+   //TODO:unsigned int cpuVoltageInicial = 5; // V
 
    rt_cfg_set_tsk_wcec(Task_Matmult, WCEC);
    rt_cfg_set_cpu_frequency(Task_Matmult, cpuFrequencyInicial);
@@ -303,6 +302,11 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
 			rt_cfg_set_rwcec(Task_Matmult, (WCEC * (100 - porcentagemProcessamento))/100);
+
+			if(porcentagemProcessamento == 60)
+			{
+				rt_cfg_set_cpu_frequency(Task_Matmult, 800000);
+			}
 		}
    }
 
@@ -344,7 +348,7 @@ static void *init_task_matmult(void *arg)
 	RTIME Tinicio;
 	float tempo_processamento_tarefa;
 	float periodo_tarefa;
-	int prioridade = idTaskMatmult + 10;
+	int prioridade = idTaskMatmult + 1;
 
 	if(!(Task_Matmult = rt_thread_init(nam2num("TSKMAT"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
@@ -437,6 +441,14 @@ void BubbleSort(int Array[MAXDIM])
    int porcentagemProcessamento = 0;
    int porcentagemProcessamentoAnterior = -1;
 
+   long int WCEC = 6500290074; // cycles
+   unsigned int cpuFrequencyAtual = 0; // Hz
+   unsigned int cpuFrequencyInicial = 1800000; // Hz
+   //TODO:unsigned int cpuVoltageInicial = 5; // V
+
+   rt_cfg_set_tsk_wcec(Task_Bsort, WCEC);
+   rt_cfg_set_cpu_frequency(Task_Bsort, cpuFrequencyInicial);
+
    for (i = 1; i <= NUMELEMS-1; i++) /* apsim_loop 1 0 */
    {
       Sorted = TRUE;
@@ -457,16 +469,20 @@ void BubbleSort(int Array[MAXDIM])
 	  porcentagemProcessamento = (int) ((i*NUMELEMS + Index)*100)/(NUMELEMS*NUMELEMS);
 	  if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 	  {
-	  	printf("%s[TASK %d] Processando... %3d%%\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento);
+		cpuFrequencyAtual = rt_cfg_get_cpu_frequency(Task_Bsort);
+		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %d Ghz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual);
 	  	porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
-	  	rt_cfg_set_rwcec(Task_Bsort, (100 - porcentagemProcessamento));
+	  	rt_cfg_set_rwcec(Task_Bsort, (WCEC * (100 - porcentagemProcessamento))/100);
 	  }
 
       if (Sorted)
          break;
    }
    printf("%s[TASK %d] Processando... 100%%\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort);
+
+   // Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
+   rt_cfg_set_rwcec(Task_Bsort, 0);
 }
 
 static void *init_task_bsort(void *arg)
@@ -483,11 +499,6 @@ static void *init_task_bsort(void *arg)
 	float tempo_processamento_tarefa;
 	float periodo_tarefa;
 	int prioridade = idTaskBsort + 1;
-
-	//double tempoProcessamento = 0.0;
-	long int WCEC = 6500290074; // cycles
-	unsigned int cpuFrequencyInicial = 1800000; // Hz
-	unsigned int cpuVoltageInicial = 5; // V
 
 	if(!(Task_Bsort = rt_thread_init(nam2num("TSKBSO"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
@@ -506,9 +517,6 @@ static void *init_task_bsort(void *arg)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
-		rt_cfg_set_tsk_wcec(Task_Matmult, WCEC);
-		rt_cfg_set_cpu_frequency(Task_Matmult, cpuFrequencyInicial);
-
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitializeBsort(ArrayBsort);
 	    BubbleSort(ArrayBsort);
@@ -521,9 +529,6 @@ static void *init_task_bsort(void *arg)
 		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
 		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, tempo_processamento_tarefa, asctime(newtime));
-
-		// Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
-		rt_cfg_set_rwcec(Task_Bsort, 0);
 
 		rt_task_wait_period(); // **** WAIT
 
@@ -558,7 +563,7 @@ int manager_tasks(void)
 
 	Thread_Cnt = rt_thread_create(init_task_cnt, NULL, 0);
 	Thread_Matmult = rt_thread_create(init_task_matmult, NULL, 0);
-//	Thread_Bsort = rt_thread_create(init_task_bsort, NULL, 0);
+	Thread_Bsort = rt_thread_create(init_task_bsort, NULL, 0);
 
 	printf("************** Iniciando escalonamento **************\n");
 
@@ -582,7 +587,7 @@ void delete_tasks(void)
 
 	rt_thread_delete(Task_Cnt);
 	rt_thread_delete(Task_Matmult);
-//	rt_thread_delete(Task_Bsort);
+	rt_thread_delete(Task_Bsort);
 	rt_thread_delete(Main_Task);
 }
 
