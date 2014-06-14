@@ -144,7 +144,7 @@ void SumCnt(matrixCnt Array)
 		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %d Ghz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual);
 		porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
-		rt_cfg_set_rwcec(Task_Cnt, (100 - porcentagemProcessamento));
+		rt_cfg_set_rwcec(Task_Cnt, (WCEC * (100 - porcentagemProcessamento))/100);
 	}
   }
 
@@ -283,7 +283,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
    unsigned int cpuVoltageInicial = 5; // V
 
    rt_cfg_set_tsk_wcec(Task_Matmult, WCEC);
-//   rt_cfg_set_cpu_frequency(Task_Matmult, cpuFrequencyInicial);
+   rt_cfg_set_cpu_frequency(Task_Matmult, cpuFrequencyInicial);
 
    register int Outer, Inner, Index;
    for (Outer = 0; Outer < UPPERLIMIT; Outer++)
@@ -302,7 +302,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 			printf("%s[TASK %d] Processando... %3d%% =====> Freq: %d Ghz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual);
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
-			rt_cfg_set_rwcec(Task_Matmult, (100 - porcentagemProcessamento));
+			rt_cfg_set_rwcec(Task_Matmult, (WCEC * (100 - porcentagemProcessamento))/100);
 		}
    }
 
@@ -552,9 +552,9 @@ int manager_tasks(void)
 		exit(1);
 	}
 
-	start_rt_timer(0);
+	start_rt_timer(TICK_PERIOD);
 
-	rt_make_soft_real_time();
+	rt_make_hard_real_time();
 
 	Thread_Cnt = rt_thread_create(init_task_cnt, NULL, 0);
 	Thread_Matmult = rt_thread_create(init_task_matmult, NULL, 0);
