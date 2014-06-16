@@ -2344,6 +2344,7 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsi
 	}
 	task->lnxtsk->cpu_frequency = cpu_frequency;
 	task->lnxtsk->flagReturnPreemption = 0;
+	task->lnxtsk->flagGovChangeFrequency = 0;
 	rt_global_restore_flags(flags);
 
 	policy = cpufreq_cpu_get(CPUID_RTAI);
@@ -2387,6 +2388,7 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_voltage(struct rt_task_struct *task, unsign
 	}
 	task->lnxtsk->cpu_voltage = cpu_voltage;
 	task->lnxtsk->flagReturnPreemption = 0;
+	task->lnxtsk->flagGovChangeFrequency = 0;
 	rt_global_restore_flags(flags);
 	return 0;
 }

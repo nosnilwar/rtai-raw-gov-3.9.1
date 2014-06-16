@@ -115,10 +115,9 @@ void SumCnt(matrixCnt Array)
   long int WCEC = 1764504180; // cycles
   unsigned int cpuFrequencyAtual = 0; // Hz
   unsigned int cpuFrequencyInicial = 1800000; // Hz
-  //TODO:unsigned int cpuVoltageInicial = 5; // V
+  unsigned int cpuVoltageInicial = 5; // V
 
-  rt_cfg_set_tsk_wcec(Task_Cnt, WCEC);
-  rt_cfg_set_cpu_frequency(Task_Cnt, cpuFrequencyInicial);
+  rt_cfg_init_info(Task_Cnt, WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
 
   for (Outer = 0; Outer < MAXSIZE; Outer++) { //Maxsize = 100
 	 for (Inner = 0; Inner < MAXSIZE; Inner++) {
@@ -280,10 +279,9 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
    long int WCEC = 9071928490; // cycles
    unsigned int cpuFrequencyAtual = 0; // Hz
    unsigned int cpuFrequencyInicial = 1800000; // Hz
-   //TODO:unsigned int cpuVoltageInicial = 5; // V
+   unsigned int cpuVoltageInicial = 5; // V
 
-   rt_cfg_set_tsk_wcec(Task_Matmult, WCEC);
-   rt_cfg_set_cpu_frequency(Task_Matmult, cpuFrequencyInicial);
+   rt_cfg_init_info(Task_Matmult, WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
 
    register int Outer, Inner, Index;
    for (Outer = 0; Outer < UPPERLIMIT; Outer++)
@@ -445,10 +443,9 @@ void BubbleSort(int Array[MAXDIM])
    long int WCEC = 6500290074; // cycles
    unsigned int cpuFrequencyAtual = 0; // Hz
    unsigned int cpuFrequencyInicial = 1800000; // Hz
-   //TODO:unsigned int cpuVoltageInicial = 5; // V
+   unsigned int cpuVoltageInicial = 5; // V
 
-   rt_cfg_set_tsk_wcec(Task_Bsort, WCEC);
-   rt_cfg_set_cpu_frequency(Task_Bsort, cpuFrequencyInicial);
+   rt_cfg_init_info(Task_Bsort, WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
 
    for (i = 1; i <= NUMELEMS-1; i++) /* apsim_loop 1 0 */
    {

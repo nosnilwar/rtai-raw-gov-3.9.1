@@ -1,0 +1,11 @@
+CONFIGURACOES DO CGROUPS… PARA DIRECIONAR AS TAREFAS DO SISTEMA OPERACIONAL PARA APENAS UM PROCESSADOR.
+
+root@PROTEUS:/mnt/cgroups# service cgconfig restart
+
+root@PROTEUS:/mnt/cgroups# cgset -r cpuset.cpus=0 os_default
+
+root@PROTEUS:/mnt/cgroups# service cgconfig restart
+
+root@PROTEUS:~# nano /etc/cgconfig.conf
+
+root@PROTEUS:~# nano /etc/cgrules.conf
