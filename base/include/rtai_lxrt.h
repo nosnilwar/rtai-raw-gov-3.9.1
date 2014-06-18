@@ -346,9 +346,11 @@
 #define CFG_GET_CPU_VOLTAGE	 	   		238
 #define CFG_UPDATE_TIMER_GOVERNOR		239
 #define CFG_GET_PERIODIC_RESUME_TIME	240
+#define CFG_CURRENT_CPU_FREQUENCY		241
+#define CFG_GET_CPU_STATS				242
 //TODO: RAWLINSON - FIM DAS DEFINICOES...
 
-#define MAX_LXRT_FUN		       		241
+#define MAX_LXRT_FUN		       		243
 
 // not recovered yet 
 // Qblk's 
@@ -591,6 +593,11 @@ void reset_rt_fun_ext_index(struct rt_fun_entry *fun,
 #include <stdlib.h>
 #include <string.h>
 #include <asm/rtai_lxrt.h>
+
+#include <limits.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 struct apic_timer_setup_data;
 
@@ -1541,6 +1548,107 @@ RTAI_PROTO(unsigned long long, rt_cfg_get_periodic_resume_time, (RT_TASK *rt_tas
 {
 	struct { RT_TASK *rt_task; } arg = { rt_task };
 	return rtai_lxrt(BIDX, SIZARG, CFG_GET_PERIODIC_RESUME_TIME, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned int, rt_cfg_current_cpu_frequency, (unsigned int cpu))
+{
+	struct { unsigned int cpu; } arg = { cpu };
+	return rtai_lxrt(BIDX, SIZARG, CFG_CURRENT_CPU_FREQUENCY, &arg).i[LOW];
+}
+
+struct cpufreq_sysfs_stats {
+	unsigned long frequency;
+	unsigned long long time_in_state;
+	struct cpufreq_sysfs_stats *next;
+	struct cpufreq_sysfs_stats *first;
+};
+
+// Definicoes da funcao rt_cfg_get_cpu_stats
+#define RT_PATH_TO_CPU "/sys/devices/system/cpu/"
+#define RT_MAX_LINE_LEN 255
+#define RT_SYSFS_PATH_MAX 255
+
+/* helper function to read file from /sys into given buffer */
+/* fname is a relative path under "cpuX/cpufreq" dir */
+unsigned int sysfs_read_cpu_file(unsigned int cpu, const char *fname, char *buf, size_t buflen)
+{
+	char path[RT_SYSFS_PATH_MAX];
+	int fd;
+	size_t numread;
+
+	snprintf(path, sizeof(path), RT_PATH_TO_CPU "cpu%u/cpufreq/%s", cpu, fname);
+
+	if ( ( fd = open(path, O_RDONLY) ) == -1 )
+		return 0;
+
+	numread = read(fd, buf, buflen - 1);
+	if ( numread < 1 )
+	{
+		close(fd);
+		return 0;
+	}
+
+	buf[numread] = '\0';
+	close(fd);
+
+	return numread;
+}
+
+RTAI_PROTO(struct cpufreq_sysfs_stats *, rt_cfg_get_cpu_stats, (unsigned int cpu, unsigned long long *total_time))
+{
+	struct cpufreq_sysfs_stats *first = NULL;
+	struct cpufreq_sysfs_stats *current = NULL;
+	char one_value[RT_SYSFS_PATH_MAX];
+	char linebuf[RT_MAX_LINE_LEN];
+	unsigned int pos, i;
+	unsigned int len;
+
+	if ( ( len = sysfs_read_cpu_file(cpu, "stats/time_in_state", linebuf, sizeof(linebuf))) == 0 )
+		return NULL;
+
+	*total_time = 0;
+	pos = 0;
+	for ( i = 0; i < len; i++ )
+	{
+		if ( i == strlen(linebuf) || linebuf[i] == '\n' )
+		{
+			if ( i - pos < 2 )
+				continue;
+			if ( (i - pos) >= RT_SYSFS_PATH_MAX )
+				goto error_out;
+			if ( current ) {
+				current->next = malloc(sizeof *current );
+				if ( ! current->next )
+					goto error_out;
+				current = current->next;
+			} else {
+				first = malloc(sizeof *first );
+				if ( ! first )
+					goto error_out;
+				current = first;
+			}
+			current->first = first;
+			current->next = NULL;
+
+			memcpy(one_value, linebuf + pos, i - pos);
+			one_value[i - pos] = '\0';
+			if ( sscanf(one_value, "%lu %llu", &current->frequency, &current->time_in_state) != 2 )
+				goto error_out;
+
+			*total_time = *total_time + current->time_in_state;
+			pos = i + 1;
+		}
+	}
+
+	return first;
+
+error_out:
+	while ( first ) {
+		current = first->next;
+		free(first);
+		first = current;
+	}
+	return NULL;
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 

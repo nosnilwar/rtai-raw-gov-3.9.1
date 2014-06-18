@@ -440,6 +440,7 @@ static inline void rem_ready_current(RT_TASK *rt_current)
 	//TODO:RAWLINSON...
 	if(rt_current->lnxtsk)
 	{
+		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
 		rt_current->lnxtsk->period = rt_current->period;
 		rt_current->lnxtsk->resume_time = rt_current->resume_time;
 		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
@@ -478,12 +479,14 @@ static inline void enq_timed_task(RT_TASK *timed_task)
 	//TODO:RAWLINSON...
 	if(timed_task->lnxtsk)
 	{
+		timed_task->lnxtsk->timer_freq = TIMER_FREQ;
 		timed_task->lnxtsk->period = timed_task->period;
 		timed_task->lnxtsk->resume_time = timed_task->resume_time;
 		timed_task->lnxtsk->periodic_resume_time = timed_task->periodic_resume_time;
 	}
 	if(task->lnxtsk)
 	{
+		task->lnxtsk->timer_freq = TIMER_FREQ;
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;

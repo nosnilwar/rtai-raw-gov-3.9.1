@@ -56,6 +56,7 @@ RTAI_SYSCALL_MODE void rt_set_sched_policy(RT_TASK *task, int policy, int rr_qua
 		//TODO:RAWLINSON...
 		if(task->lnxtsk)
 		{
+			task->lnxtsk->timer_freq = TIMER_FREQ;
 			task->lnxtsk->period = task->period;
 			task->lnxtsk->resume_time = task->resume_time;
 			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -423,6 +424,7 @@ RTAI_SYSCALL_MODE int rt_task_suspend_until(RT_TASK *task, RTIME time)
 		//TODO:RAWLINSON...
 		if(task->lnxtsk)
 		{
+			task->lnxtsk->timer_freq = TIMER_FREQ;
 			task->lnxtsk->period = task->period;
 			task->lnxtsk->resume_time = task->resume_time;
 			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -746,6 +748,7 @@ RTAI_SYSCALL_MODE int rt_task_make_periodic_relative_ns(RT_TASK *task, RTIME sta
 	//TODO:RAWLINSON...
 	if(task->lnxtsk)
 	{
+		task->lnxtsk->timer_freq = TIMER_FREQ;
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -813,6 +816,7 @@ RTAI_SYSCALL_MODE int rt_task_make_periodic(RT_TASK *task, RTIME start_time, RTI
 	//TODO:RAWLINSON...
 	if(task->lnxtsk)
 	{
+		task->lnxtsk->timer_freq = TIMER_FREQ;
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -860,6 +864,7 @@ int rt_task_wait_period(void)
 	//TODO:RAWLINSON...
 	if(rt_current->lnxtsk)
 	{
+		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
 		rt_current->lnxtsk->period = rt_current->period;
 		rt_current->lnxtsk->resume_time = rt_current->resume_time;
 		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
@@ -880,6 +885,7 @@ int rt_task_wait_period(void)
 		//TODO:RAWLINSON...
 		if(rt_current->lnxtsk)
 		{
+			rt_current->lnxtsk->timer_freq = TIMER_FREQ;
 			rt_current->lnxtsk->period = rt_current->period;
 			rt_current->lnxtsk->resume_time = rt_current->resume_time;
 			rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
@@ -903,6 +909,7 @@ int rt_task_wait_period(void)
 	//TODO:RAWLINSON...
 	if(rt_current->lnxtsk)
 	{
+		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
 		rt_current->lnxtsk->period = rt_current->period;
 		rt_current->lnxtsk->resume_time = rt_current->resume_time;
 		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
@@ -934,6 +941,7 @@ RTAI_SYSCALL_MODE void rt_task_set_resume_end_times(RTIME resume, RTIME end)
 	//TODO:RAWLINSON...
 	if(rt_current->lnxtsk)
 	{
+		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
 		rt_current->lnxtsk->period = rt_current->period;
 		rt_current->lnxtsk->resume_time = rt_current->resume_time;
 		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
@@ -961,6 +969,7 @@ RTAI_SYSCALL_MODE int rt_set_resume_time(RT_TASK *task, RTIME new_resume_time)
 		//TODO:RAWLINSON...
 		if(task->lnxtsk)
 		{
+			task->lnxtsk->timer_freq = TIMER_FREQ;
 			task->lnxtsk->period = task->period;
 			task->lnxtsk->resume_time = task->resume_time;
 			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -990,6 +999,7 @@ RTAI_SYSCALL_MODE int rt_set_period(RT_TASK *task, RTIME new_period)
 	//TODO:RAWLINSON...
 	if(task->lnxtsk)
 	{
+		task->lnxtsk->timer_freq = TIMER_FREQ;
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -1081,6 +1091,7 @@ RTAI_SYSCALL_MODE int rt_sleep(RTIME delay)
 	//TODO:RAWLINSON...
 	if(rt_current->lnxtsk)
 	{
+		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
 		rt_current->lnxtsk->period = rt_current->period;
 		rt_current->lnxtsk->resume_time = rt_current->resume_time;
 		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
@@ -1136,6 +1147,7 @@ RTAI_SYSCALL_MODE int rt_sleep_until(RTIME time)
 	//TODO:RAWLINSON...
 	if(rt_current->lnxtsk)
 	{
+		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
 		rt_current->lnxtsk->period = rt_current->period;
 		rt_current->lnxtsk->resume_time = rt_current->resume_time;
 		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
@@ -2357,6 +2369,7 @@ EXPORT_SYMBOL(rt_cfg_set_cpu_voltage);
 EXPORT_SYMBOL(rt_cfg_get_cpu_voltage);
 EXPORT_SYMBOL(update_governor_timer);
 EXPORT_SYMBOL(rt_cfg_get_periodic_resume_time);
+EXPORT_SYMBOL(rt_cfg_current_cpu_frequency);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #ifdef CONFIG_SMP

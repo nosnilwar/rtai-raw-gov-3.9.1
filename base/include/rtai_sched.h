@@ -162,6 +162,7 @@ struct rt_heap_t { void *heap, *kadr, *uadr; };
 
 #define RTAI_MAX_NAME_LENGTH  32
 
+//TODO:RAWLINSON...
 typedef struct rt_task_struct {
 	long *stack __attribute__ ((__aligned__ (L1_CACHE_BYTES)));
 	int uses_fpu;
@@ -439,6 +440,8 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *tas
 RTAI_SYSCALL_MODE int update_governor_timer(RTIME tick_time);
 
 RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt_task);
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_current_cpu_frequency(unsigned int cpu);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 void rt_schedule(void);

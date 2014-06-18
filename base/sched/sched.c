@@ -25,7 +25,6 @@ ACKNOWLEDGMENTS:
 - Geoffrey Martin (gmartin@altersys.com) for a fix to functions with timeouts.
 */
 
-
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/version.h>
@@ -317,6 +316,7 @@ int set_rtext(RT_TASK *task, int priority, int uses_fpu, void(*signal)(void), un
 	//TODO:RAWLINSON...
 	if(task->lnxtsk)
 	{
+		task->lnxtsk->timer_freq = TIMER_FREQ;
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -503,6 +503,7 @@ RTAI_SYSCALL_MODE void rt_set_runnable_on_cpuid(RT_TASK *task, unsigned int cpui
 	//TODO:RAWLINSON...
 	if(task->lnxtsk)
 	{
+		task->lnxtsk->timer_freq = TIMER_FREQ;
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
@@ -586,6 +587,7 @@ if (CONFIG_RTAI_ALLOW_RR && rt_current->policy > 0) { \
 	} \
 	if(rt_current->lnxtsk) /*TODO:RAWLINSON... */  \
 	{ \
+		rt_current->lnxtsk->timer_freq = TIMER_FREQ; \
 		rt_current->lnxtsk->period = rt_current->period; \
 		rt_current->lnxtsk->resume_time = rt_current->resume_time; \
 		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time; \
@@ -603,6 +605,7 @@ do { \
 	} \
 	if(new_task->lnxtsk) /* TODO:RAWLINSON... */ \
 	{ \
+		new_task->lnxtsk->timer_freq = TIMER_FREQ; \
 		new_task->lnxtsk->period = new_task->period; \
 		new_task->lnxtsk->resume_time = new_task->resume_time; \
 		new_task->lnxtsk->periodic_resume_time = new_task->periodic_resume_time; \
@@ -2433,10 +2436,22 @@ RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt
 		return -EINVAL;
 	}
 	flags = rt_global_save_flags_and_cli();
-	periodic_resume_time = rt_task->lnxtsk->periodic_resume_time;
+	periodic_resume_time = rt_task->periodic_resume_time;
 	rt_global_restore_flags(flags);
 
 	return periodic_resume_time;
+}
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_current_cpu_frequency(unsigned int cpu)
+{
+	struct cpufreq_policy *policy;
+
+	policy = cpufreq_cpu_get(cpu);
+	if(policy)
+	{
+		return(policy->cur); // (KHz) Frequencia corrento do processador...
+	}
+	return 0;
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 

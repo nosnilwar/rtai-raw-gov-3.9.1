@@ -477,7 +477,8 @@ void BubbleSort(int Array[MAXDIM])
       if (Sorted)
          break;
    }
-   printf("%s[TASK %d] Processando... 100%%\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort);
+   cpuFrequencyAtual = rt_cfg_get_cpu_frequency(Task_Bsort);
+   printf("%s[TASK %d] Processando... 100%%\n =====> Freq: %d Ghz", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, cpuFrequencyAtual);
 
    // Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
    rt_cfg_set_rwcec(Task_Bsort, 0);
@@ -590,15 +591,85 @@ void delete_tasks(void)
 	rt_thread_delete(Main_Task);
 }
 
+//TODO: copiado do cpufrequtils-8
+static void print_speed(unsigned long speed)
+{
+	unsigned long tmp;
+
+	if (speed > 1000000) {
+		tmp = speed % 10000;
+		if (tmp >= 5000)
+			speed += 10000;
+		printf ("%u.%02u GHz", ((unsigned int) speed/1000000),
+			((unsigned int) (speed%1000000)/10000));
+	} else if (speed > 100000) {
+		tmp = speed % 1000;
+		if (tmp >= 500)
+			speed += 1000;
+		printf ("%u MHz", ((unsigned int) speed / 1000));
+	} else if (speed > 1000) {
+		tmp = speed % 100;
+		if (tmp >= 50)
+			speed += 100;
+		printf ("%u.%01u MHz", ((unsigned int) speed/1000),
+			((unsigned int) (speed%1000)/100));
+	} else
+		printf ("%lu kHz", speed);
+
+	return;
+}
+
+//TODO: copiado do cpufrequtils-8
+void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sysfs_stats *afterStats, unsigned long long total_time)
+{
+	printf("\n\nEstatísticas do Processador...\n\n");
+	if (beforeStats && afterStats) {
+		printf("** cpufreq stats: **\n");
+		while (beforeStats && afterStats) {
+			printf("-> ");
+			if(beforeStats->frequency == afterStats->frequency)
+			{
+				print_speed(beforeStats->frequency);
+				printf(": %.2f%%", (100.0 * (afterStats->time_in_state - beforeStats->time_in_state)) / total_time);
+			}
+			else
+			{
+				printf("-> ERROR: frequências inválidas! :(");
+			}
+
+			beforeStats = beforeStats->next;
+			afterStats = afterStats->next;
+			if (beforeStats && afterStats)
+				printf("\n");
+		}
+	}
+}
+
 int main(void)
 {
+	int cpuid = 0;
+	unsigned long long total_time;
+	unsigned long long before_total_time;
+	unsigned long long after_total_time;
+	struct cpufreq_sysfs_stats *beforeStats;
+	struct cpufreq_sysfs_stats *afterStats;
+
 	printf("\n\nIniciando o escalonamento das tarefas...\n\n");
+
+	// Obtendo as estatisticas do processador antes...
+	beforeStats = rt_cfg_get_cpu_stats(cpuid, &before_total_time);
 
 	manager_tasks();
 
+	// Obtendo as estatisticas do processador depois...
+	afterStats = rt_cfg_get_cpu_stats(cpuid, &after_total_time);
+
+	total_time = after_total_time - before_total_time;
+	print_cpu_stats(beforeStats, afterStats, total_time);
+
 	delete_tasks();
 
-	printf("\nFim do Escalonamento %s\n", texto_preto);
+	printf("\n\nFim do Escalonamento %s\n", texto_preto);
 
 	return 0 ;
 }

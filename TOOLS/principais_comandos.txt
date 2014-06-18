@@ -1,0 +1,16 @@
+MacBook-Poseidon:git rsgoncalves$ scp -r linux-raw-gov-2.6.38.8/drivers/cpufreq/cpufreq_raw.c root@proteus.ufam.edu.br:/usr/src/linux-2.6.38.8/drivers/cpufreq/
+MacBook-Poseidon:git rsgoncalves$ 
+MacBook-Poseidon:git rsgoncalves$ scp -r linux-raw-gov-2.6.38.8/include/linux/sched.h root@proteus.ufam.edu.br:/usr/src/linux-2.6.38.8/include/linux/
+MacBook-Poseidon:git rsgoncalves$ 
+MacBook-Poseidon:git rsgoncalves$ scp -r linux-raw-gov-2.6.38.8/kernel/fork.c root@proteus.ufam.edu.br:/usr/src/linux-2.6.38.8/kernel/
+
+
+
+MacBook-Poseidon:git rsgoncalves$ 
+MacBook-Poseidon:git rsgoncalves$ scp -r rtai-raw-gov-3.9.1/base/include/rtai_lxrt.h root@proteus.ufam.edu.br:/usr/src/rtai-raw-gov-3.9.1/base/include/
+MacBook-Poseidon:git rsgoncalves$ 
+MacBook-Poseidon:git rsgoncalves$ scp -r rtai-raw-gov-3.9.1/base/include/rtai_sched.h root@proteus.ufam.edu.br:/usr/src/rtai-raw-gov-3.9.1/base/include/
+MacBook-Poseidon:git rsgoncalves$ 
+MacBook-Poseidon:git rsgoncalves$ scp -r rtai-raw-gov-3.9.1/base/sched/sched.c root@proteus.ufam.edu.br:/usr/src/rtai-raw-gov-3.9.1/base/sched/
+MacBook-Poseidon:git rsgoncalves$ 
+MacBook-Poseidon:git rsgoncalves$ scp -r rtai-raw-gov-3.9.1/base/sched/api.c root@proteus.ufam.edu.br:/usr/src/rtai-raw-gov-3.9.1/base/sched/
