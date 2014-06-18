@@ -2235,7 +2235,7 @@ static void kthread_fun(int cpuid)
 
 
 //TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
-RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency, unsigned int cpu_voltage)
+RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency_min, unsigned int cpu_frequency, unsigned int cpu_voltage)
 {
 	unsigned long flags;
 
@@ -2251,6 +2251,7 @@ RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned lon
 	rt_global_restore_flags(flags);
 
 	//aplicando a frequencia e voltagem no processador...
+	rt_cfg_set_cpu_frequency_min(task, cpu_frequency_min); // em KHz
 	rt_cfg_set_cpu_frequency(task, cpu_frequency); // em KHz
 	rt_cfg_set_cpu_voltage(task, cpu_voltage);
 
@@ -2452,6 +2453,35 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_current_cpu_frequency(unsigned int cpu)
 		return(policy->cur); // (KHz) Frequencia corrento do processador...
 	}
 	return 0;
+}
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency_min(struct rt_task_struct *task, unsigned int cpu_frequency_min)
+{
+	unsigned long flags;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+
+	flags = rt_global_save_flags_and_cli();
+	task->lnxtsk->cpu_frequency_min = cpu_frequency_min;
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency_min(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned int cpu_frequency_min;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	cpu_frequency_min = task->lnxtsk->cpu_frequency_min;
+	rt_global_restore_flags(flags);
+
+	return cpu_frequency_min;
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
@@ -3180,6 +3210,8 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 0, rt_cfg_get_cpu_voltage },			CFG_GET_CPU_VOLTAGE },
 	{ { 0, update_governor_timer },				CFG_UPDATE_TIMER_GOVERNOR },
 	{ { 0, rt_cfg_get_periodic_resume_time },	CFG_GET_PERIODIC_RESUME_TIME },
+	{ { 0, rt_cfg_set_cpu_frequency_min },			CFG_SET_CPU_FREQUENCY_MIN },
+	{ { 0, rt_cfg_get_cpu_frequency_min },			CFG_GET_CPU_FREQUENCY_MIN },
 	//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 	{ { 0, 0 },			            000 }

@@ -168,7 +168,7 @@ void *init_task(void *arg)
 			contPeriodo = 1;
 		}
 
-		rt_cfg_init_info(arrayTasks[idTask], 100, 800000, 3003); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], 100, 800000, 800000, 3003); // Lugar correto...
 
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);

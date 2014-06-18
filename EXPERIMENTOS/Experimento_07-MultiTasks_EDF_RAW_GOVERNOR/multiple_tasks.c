@@ -160,7 +160,7 @@ void *init_task(void *arg)
 	while (1)
 	{
 		cpu_frequency = 2300000;
-		rt_cfg_init_info(arrayTasks[idTask], 100, cpu_frequency, 3003); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], 100, cpu_frequency, cpu_frequency, 3003); // Lugar correto...
 
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);

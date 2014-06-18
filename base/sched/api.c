@@ -2370,6 +2370,8 @@ EXPORT_SYMBOL(rt_cfg_get_cpu_voltage);
 EXPORT_SYMBOL(update_governor_timer);
 EXPORT_SYMBOL(rt_cfg_get_periodic_resume_time);
 EXPORT_SYMBOL(rt_cfg_current_cpu_frequency);
+EXPORT_SYMBOL(rt_cfg_set_cpu_frequency_min);
+EXPORT_SYMBOL(rt_cfg_get_cpu_frequency_min);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #ifdef CONFIG_SMP

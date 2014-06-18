@@ -114,10 +114,11 @@ void SumCnt(matrixCnt Array)
 
   long int WCEC = 1764504180; // cycles
   unsigned int cpuFrequencyAtual = 0; // Hz
+  unsigned int cpuFrequencyMin = 1800000; // Hz
   unsigned int cpuFrequencyInicial = 1800000; // Hz
   unsigned int cpuVoltageInicial = 5; // V
 
-  rt_cfg_init_info(Task_Cnt, WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
+  rt_cfg_init_info(Task_Cnt, WCEC, cpuFrequencyMin, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
 
   for (Outer = 0; Outer < MAXSIZE; Outer++) { //Maxsize = 100
 	 for (Inner = 0; Inner < MAXSIZE; Inner++) {
@@ -139,7 +140,7 @@ void SumCnt(matrixCnt Array)
 	if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 	{
 		cpuFrequencyAtual = rt_cfg_get_cpu_frequency(Task_Cnt);
-		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %d Ghz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual);
+		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual);
 		porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
 		rt_cfg_set_rwcec(Task_Cnt, (WCEC * (100 - porcentagemProcessamento))/100);
@@ -278,10 +279,11 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
    //double tempoProcessamento = 0.0;
    long int WCEC = 9071928490; // cycles
    unsigned int cpuFrequencyAtual = 0; // Hz
+   unsigned int cpuFrequencyMin = 800000; // Hz
    unsigned int cpuFrequencyInicial = 1800000; // Hz
    unsigned int cpuVoltageInicial = 5; // V
 
-   rt_cfg_init_info(Task_Matmult, WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
+   rt_cfg_init_info(Task_Matmult, WCEC, cpuFrequencyMin, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
 
    register int Outer, Inner, Index;
    for (Outer = 0; Outer < UPPERLIMIT; Outer++)
@@ -297,7 +299,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 		{
 			cpuFrequencyAtual = rt_cfg_get_cpu_frequency(Task_Matmult);
-			printf("%s[TASK %d] Processando... %3d%% =====> Freq: %d Ghz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual);
+			printf("%s[TASK %d] Processando... %3d%% =====> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual);
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
 			rt_cfg_set_rwcec(Task_Matmult, (WCEC * (100 - porcentagemProcessamento))/100);
@@ -442,10 +444,11 @@ void BubbleSort(int Array[MAXDIM])
 
    long int WCEC = 6500290074; // cycles
    unsigned int cpuFrequencyAtual = 0; // Hz
+   unsigned int cpuFrequencyMin = 1800000; // Hz
    unsigned int cpuFrequencyInicial = 1800000; // Hz
    unsigned int cpuVoltageInicial = 5; // V
 
-   rt_cfg_init_info(Task_Bsort, WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
+   rt_cfg_init_info(Task_Bsort, WCEC, cpuFrequencyMin, cpuFrequencyInicial, cpuVoltageInicial); // Inicializando informacoes importantes para o gerenciamento do Governor.
 
    for (i = 1; i <= NUMELEMS-1; i++) /* apsim_loop 1 0 */
    {
@@ -468,7 +471,7 @@ void BubbleSort(int Array[MAXDIM])
 	  if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 	  {
 		cpuFrequencyAtual = rt_cfg_get_cpu_frequency(Task_Bsort);
-		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %d Ghz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual);
+		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual);
 	  	porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
 	  	rt_cfg_set_rwcec(Task_Bsort, (WCEC * (100 - porcentagemProcessamento))/100);
@@ -478,7 +481,7 @@ void BubbleSort(int Array[MAXDIM])
          break;
    }
    cpuFrequencyAtual = rt_cfg_get_cpu_frequency(Task_Bsort);
-   printf("%s[TASK %d] Processando... 100%%\n =====> Freq: %d Ghz", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, cpuFrequencyAtual);
+   printf("%s[TASK %d] Processando... 100%% =====> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, cpuFrequencyAtual);
 
    // Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
    rt_cfg_set_rwcec(Task_Bsort, 0);
@@ -600,21 +603,21 @@ static void print_speed(unsigned long speed)
 		tmp = speed % 10000;
 		if (tmp >= 5000)
 			speed += 10000;
-		printf ("%u.%02u GHz", ((unsigned int) speed/1000000),
+		printf ("%7u.%02u GHz", ((unsigned int) speed/1000000),
 			((unsigned int) (speed%1000000)/10000));
 	} else if (speed > 100000) {
 		tmp = speed % 1000;
 		if (tmp >= 500)
 			speed += 1000;
-		printf ("%u MHz", ((unsigned int) speed / 1000));
+		printf ("%10u MHz", ((unsigned int) speed / 1000));
 	} else if (speed > 1000) {
 		tmp = speed % 100;
 		if (tmp >= 50)
 			speed += 100;
-		printf ("%u.%01u MHz", ((unsigned int) speed/1000),
+		printf ("%7u.%01u MHz", ((unsigned int) speed/1000),
 			((unsigned int) (speed%1000)/100));
 	} else
-		printf ("%lu kHz", speed);
+		printf ("%10lu kHz", speed);
 
 	return;
 }
@@ -630,7 +633,7 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 			if(beforeStats->frequency == afterStats->frequency)
 			{
 				print_speed(beforeStats->frequency);
-				printf(": %.2f%%", (100.0 * (afterStats->time_in_state - beforeStats->time_in_state)) / total_time);
+				printf(": %.4f%%", (100.0 * (afterStats->time_in_state - beforeStats->time_in_state)) / total_time);
 			}
 			else
 			{

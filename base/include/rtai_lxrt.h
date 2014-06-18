@@ -348,9 +348,11 @@
 #define CFG_GET_PERIODIC_RESUME_TIME	240
 #define CFG_CURRENT_CPU_FREQUENCY		241
 #define CFG_GET_CPU_STATS				242
+#define CFG_SET_CPU_FREQUENCY_MIN  		243
+#define CFG_GET_CPU_FREQUENCY_MIN  		244
 //TODO: RAWLINSON - FIM DAS DEFINICOES...
 
-#define MAX_LXRT_FUN		       		243
+#define MAX_LXRT_FUN		       		245
 
 // not recovered yet 
 // Qblk's 
@@ -1484,9 +1486,9 @@ RTAI_PROTO(int, rt_set_period, (RT_TASK *rt_task, RTIME new_period))
 }
 
 //TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
-RTAI_PROTO(int, rt_cfg_init_info, (RT_TASK *rt_task, unsigned long tsk_wcec, unsigned int cpu_frequency, unsigned int cpu_voltage))
+RTAI_PROTO(int, rt_cfg_init_info, (RT_TASK *rt_task, unsigned long tsk_wcec, unsigned int cpu_frequency_min, unsigned int cpu_frequency, unsigned int cpu_voltage))
 {
-	struct { RT_TASK *rt_task; unsigned long tsk_wcec, cpu_frequency, cpu_voltage; } arg = { rt_task, tsk_wcec, cpu_frequency, cpu_voltage };
+	struct { RT_TASK *rt_task; unsigned long tsk_wcec, cpu_frequency_min, cpu_frequency, cpu_voltage; } arg = { rt_task, tsk_wcec, cpu_frequency_min, cpu_frequency, cpu_voltage };
 	return rtai_lxrt(BIDX, SIZARG, CFG_INIT_INFO, &arg).i[LOW];
 }
 
@@ -1649,6 +1651,18 @@ error_out:
 		first = current;
 	}
 	return NULL;
+}
+
+RTAI_PROTO(int, rt_cfg_set_cpu_frequency_min, (RT_TASK *rt_task, unsigned int cpu_frequency_min))
+{
+	struct { RT_TASK *rt_task; unsigned int cpu_frequency_min; } arg = { rt_task, cpu_frequency_min };
+	return rtai_lxrt(BIDX, SIZARG, CFG_SET_CPU_FREQUENCY_MIN, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned int, rt_cfg_get_cpu_frequency_min, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, CFG_GET_CPU_FREQUENCY_MIN, &arg).i[LOW];
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 

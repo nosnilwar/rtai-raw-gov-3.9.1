@@ -204,7 +204,7 @@ void *init_task_cnt(void *arg)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
-		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedCnt();
@@ -367,7 +367,7 @@ void *init_task_matmult(void *arg)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
-		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedMatMult();
@@ -522,7 +522,7 @@ void *init_task_bsort(void *arg)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
-		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
+		rt_cfg_init_info(arrayTasks[idTask], WCEC, cpuFrequencyInicial, cpuFrequencyInicial, cpuVoltageInicial); // Lugar correto...
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitializeBsort(ArrayBsort);

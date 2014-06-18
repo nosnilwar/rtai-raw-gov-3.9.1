@@ -419,7 +419,7 @@ RTAI_SYSCALL_MODE int rt_set_period(struct rt_task_struct *task,
 int rt_task_wait_period(void);
 
 //TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
-RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency, unsigned int cpu_voltage);
+RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency_min, unsigned int cpu_frequency, unsigned int cpu_voltage);
 
 RTAI_SYSCALL_MODE int rt_cfg_set_tsk_wcec(struct rt_task_struct *task, unsigned long tsk_wcec);
 
@@ -442,6 +442,10 @@ RTAI_SYSCALL_MODE int update_governor_timer(RTIME tick_time);
 RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt_task);
 
 RTAI_SYSCALL_MODE unsigned int rt_cfg_current_cpu_frequency(unsigned int cpu);
+
+RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency_min(struct rt_task_struct *task, unsigned int cpu_frequency_min);
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency_min(struct rt_task_struct *task);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 void rt_schedule(void);
