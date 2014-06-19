@@ -50,17 +50,21 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 
 char arrayTextoCorIdTask[4][8] = {"\033[31m", "\033[32m", "\033[34m", "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
 
-RT_TASK *Main_Task;
-
 int idTaskCnt = 0;
+int qtdPeriodosCnt = 1;
+int qtdMaxPeriodosCnt = 4;
 static RT_TASK *Task_Cnt;
 static pthread_t Thread_Cnt;
 
 int idTaskMatmult = 1;
+int qtdPeriodosMatmult = 1;
+int qtdMaxPeriodosMatmult = 5;
 static RT_TASK *Task_Matmult;
 static pthread_t Thread_Matmult;
 
 int idTaskBsort = 2;
+int qtdPeriodosBsort = 1;
+int qtdMaxPeriodosBsort = 4;
 static RT_TASK *Task_Bsort;
 static pthread_t Thread_Bsort;
 
@@ -200,7 +204,7 @@ static void *init_task_cnt(void *arg)
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo);
 
-	while(!flagFimExecucao)
+	while(!flagFimExecucao && qtdPeriodosCnt <= qtdMaxPeriodosCnt)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
@@ -227,7 +231,11 @@ static void *init_task_cnt(void *arg)
 
 		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_preto);
+
+		qtdPeriodosCnt++;
 	}
+
+	printf("%s[TASK %d] ##### FIM EXECUCAO\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt);
 
 	return 0;
 }
@@ -364,7 +372,7 @@ static void *init_task_matmult(void *arg)
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, Tperiodo);
 
-	while(!flagFimExecucao)
+	while(!flagFimExecucao && qtdPeriodosMatmult <= qtdMaxPeriodosMatmult)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
@@ -391,7 +399,11 @@ static void *init_task_matmult(void *arg)
 
 		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_preto);
+
+		qtdPeriodosMatmult++;
 	}
+
+	printf("%s[TASK %d] ##### FIM EXECUCAO\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult);
 
 	return 0;
 }
@@ -516,7 +528,7 @@ static void *init_task_bsort(void *arg)
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, Tperiodo);
 
-	while(!flagFimExecucao)
+	while(!flagFimExecucao && qtdPeriodosBsort <= qtdMaxPeriodosBsort)
 	{
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
@@ -543,7 +555,11 @@ static void *init_task_bsort(void *arg)
 
 		printf("%s[TASK %d] ##### Duracao do Periodo   ==================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_preto);
+
+		qtdPeriodosBsort++;
 	}
+
+	printf("%s[TASK %d] ##### FIM EXECUCAO\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort);
 
 	return 0;
 }
@@ -553,13 +569,6 @@ static void *init_task_bsort(void *arg)
 
 int manager_tasks(void)
 {
-	int prioridadeMainTask = 0;
-
-	if (!(Main_Task = rt_thread_init(nam2num("MAIN_TSK"), prioridadeMainTask, 0, SCHED_FIFO, CPU_ALLOWED))) {
-		printf("CANNOT INIT MAIN TASK\n");
-		exit(1);
-	}
-
 	start_rt_timer(TICK_PERIOD);
 
 	rt_make_hard_real_time();
@@ -576,8 +585,8 @@ int manager_tasks(void)
 
 	printf("TICK_PERIOD =======> %llu\n", tick_period);
 
-	// Aguarda interrupcao do usuario...
-	while(!getchar()); // Aguardo o usuario apertar alguma tecla para finalizar o escalonamento...
+	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
+	while(!getchar());
 	flagFimExecucao = 1;
 
 	stop_rt_timer();
@@ -591,7 +600,6 @@ void delete_tasks(void)
 	rt_thread_delete(Task_Cnt);
 	rt_thread_delete(Task_Matmult);
 	rt_thread_delete(Task_Bsort);
-	rt_thread_delete(Main_Task);
 }
 
 //TODO: copiado do cpufrequtils-8
@@ -650,7 +658,7 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 
 int main(void)
 {
-	int cpuid = 0;
+	int cpuid_stats = 0;
 	unsigned long long total_time;
 	unsigned long long before_total_time;
 	unsigned long long after_total_time;
@@ -660,12 +668,12 @@ int main(void)
 	printf("\n\nIniciando o escalonamento das tarefas...\n\n");
 
 	// Obtendo as estatisticas do processador antes...
-	beforeStats = rt_cfg_get_cpu_stats(cpuid, &before_total_time);
+	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
 
 	manager_tasks();
 
 	// Obtendo as estatisticas do processador depois...
-	afterStats = rt_cfg_get_cpu_stats(cpuid, &after_total_time);
+	afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
 
 	total_time = after_total_time - before_total_time;
 	print_cpu_stats(beforeStats, afterStats, total_time);
