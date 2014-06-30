@@ -567,41 +567,6 @@ static void *init_task_bsort(void *arg)
  * FIM: DEFINICOES DO C-BENCHMARK -> Bsort
  **************************************************/
 
-int manager_tasks(void)
-{
-	start_rt_timer(TICK_PERIOD);
-
-	rt_make_hard_real_time();
-
-	Thread_Cnt = rt_thread_create(init_task_cnt, NULL, 0);
-	Thread_Matmult = rt_thread_create(init_task_matmult, NULL, 0);
-	Thread_Bsort = rt_thread_create(init_task_bsort, NULL, 0);
-
-	printf("************** Iniciando escalonamento **************\n");
-
-	tick_period = nano2count(TICK_PERIOD);
-	delay_start_timeline = tick_period * 100; // Delay: 2 segundos
-	start_timeline = rt_get_time() + delay_start_timeline;
-
-	printf("TICK_PERIOD =======> %llu\n", tick_period);
-
-	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
-	while(!getchar());
-	flagFimExecucao = 1;
-
-	stop_rt_timer();
-	return 0;
-}
-
-void delete_tasks(void)
-{
-	rt_make_soft_real_time();
-
-	rt_thread_delete(Task_Cnt);
-	rt_thread_delete(Task_Matmult);
-	rt_thread_delete(Task_Bsort);
-}
-
 //TODO: copiado do cpufrequtils-8
 static void print_speed(unsigned long speed)
 {
@@ -656,7 +621,7 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 	}
 }
 
-int main(void)
+int manager_tasks(void)
 {
 	int cpuid_stats = 0;
 	unsigned long long total_time;
@@ -665,18 +630,53 @@ int main(void)
 	struct cpufreq_sysfs_stats *beforeStats;
 	struct cpufreq_sysfs_stats *afterStats;
 
-	printf("\n\nIniciando o escalonamento das tarefas...\n\n");
+	start_rt_timer(TICK_PERIOD);
+
+	rt_make_hard_real_time();
+
+	Thread_Cnt = rt_thread_create(init_task_cnt, NULL, 0);
+	Thread_Matmult = rt_thread_create(init_task_matmult, NULL, 0);
+	Thread_Bsort = rt_thread_create(init_task_bsort, NULL, 0);
+
+	printf("************** Iniciando escalonamento **************\n");
+
+	tick_period = nano2count(TICK_PERIOD);
+	delay_start_timeline = tick_period * 100; // Delay: 2 segundos
+	start_timeline = rt_get_time() + delay_start_timeline;
+
+	printf("TICK_PERIOD =======> %llu\n", tick_period);
 
 	// Obtendo as estatisticas do processador antes...
 	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
 
-	manager_tasks();
+	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
+	while(!getchar());
+	flagFimExecucao = 1;
 
 	// Obtendo as estatisticas do processador depois...
 	afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
 
 	total_time = after_total_time - before_total_time;
 	print_cpu_stats(beforeStats, afterStats, total_time);
+
+	stop_rt_timer();
+	return 0;
+}
+
+void delete_tasks(void)
+{
+	rt_make_soft_real_time();
+
+	rt_thread_delete(Task_Cnt);
+	rt_thread_delete(Task_Matmult);
+	rt_thread_delete(Task_Bsort);
+}
+
+int main(void)
+{
+	printf("\n\nIniciando o escalonamento das tarefas...\n\n");
+
+	manager_tasks();
 
 	delete_tasks();
 
