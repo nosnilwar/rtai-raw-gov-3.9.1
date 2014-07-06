@@ -2313,7 +2313,7 @@ RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned lon
 	}
 	rt_global_restore_flags(flags);
 
-	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %lu %% - STATE(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->state_task_period);
+	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %lu %% - STATE_PERIOD(%d) - FRP(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->state_task_period, task->lnxtsk->flagReturnPreemption);
 	return 0;
 }
 
@@ -2441,18 +2441,6 @@ RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt
 	rt_global_restore_flags(flags);
 
 	return periodic_resume_time;
-}
-
-RTAI_SYSCALL_MODE unsigned int rt_cfg_current_cpu_frequency(unsigned int cpu)
-{
-	struct cpufreq_policy *policy;
-
-	policy = cpufreq_cpu_get(cpu);
-	if(policy)
-	{
-		return(policy->cur); // (KHz) Frequencia corrento do processador...
-	}
-	return 0;
 }
 
 RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency_min(struct rt_task_struct *task, unsigned int cpu_frequency_min)

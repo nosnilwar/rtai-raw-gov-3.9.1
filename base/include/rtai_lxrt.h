@@ -346,13 +346,12 @@
 #define CFG_GET_CPU_VOLTAGE	 	   		238
 #define CFG_UPDATE_TIMER_GOVERNOR		239
 #define CFG_GET_PERIODIC_RESUME_TIME	240
-#define CFG_CURRENT_CPU_FREQUENCY		241
-#define CFG_GET_CPU_STATS				242
-#define CFG_SET_CPU_FREQUENCY_MIN  		243
-#define CFG_GET_CPU_FREQUENCY_MIN  		244
+#define CFG_GET_CPU_STATS				241
+#define CFG_SET_CPU_FREQUENCY_MIN  		242
+#define CFG_GET_CPU_FREQUENCY_MIN  		243
 //TODO: RAWLINSON - FIM DAS DEFINICOES...
 
-#define MAX_LXRT_FUN		       		245
+#define MAX_LXRT_FUN		       		244
 
 // not recovered yet 
 // Qblk's 
@@ -1550,12 +1549,6 @@ RTAI_PROTO(unsigned long long, rt_cfg_get_periodic_resume_time, (RT_TASK *rt_tas
 {
 	struct { RT_TASK *rt_task; } arg = { rt_task };
 	return rtai_lxrt(BIDX, SIZARG, CFG_GET_PERIODIC_RESUME_TIME, &arg).i[LOW];
-}
-
-RTAI_PROTO(unsigned int, rt_cfg_current_cpu_frequency, (unsigned int cpu))
-{
-	struct { unsigned int cpu; } arg = { cpu };
-	return rtai_lxrt(BIDX, SIZARG, CFG_CURRENT_CPU_FREQUENCY, &arg).i[LOW];
 }
 
 struct cpufreq_sysfs_stats {

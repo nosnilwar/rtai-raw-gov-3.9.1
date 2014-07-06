@@ -441,8 +441,6 @@ RTAI_SYSCALL_MODE int update_governor_timer(RTIME tick_time);
 
 RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt_task);
 
-RTAI_SYSCALL_MODE unsigned int rt_cfg_current_cpu_frequency(unsigned int cpu);
-
 RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency_min(struct rt_task_struct *task, unsigned int cpu_frequency_min);
 
 RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency_min(struct rt_task_struct *task);
