@@ -66,7 +66,7 @@ int idTaskCnt = 0;
 int qtdPeriodosCnt = 1;
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * 4;
 static RT_TASK *Task_Cnt;
-static pthread_t *Thread_Cnt;
+static pthread_t Thread_Cnt;
 long int WCEC_Cnt = 1764504180; // cycles
 unsigned int cpuFrequencyAtual_Cnt = 0; // Hz
 unsigned int cpuFrequencyMin_Cnt = 800000; // Hz
@@ -77,7 +77,7 @@ int idTaskMatmult = 1;
 int qtdPeriodosMatmult = 1;
 int qtdMaxPeriodosMatmult = QTD_CICLOS_EXPERIMENTOS * 5;
 static RT_TASK *Task_Matmult;
-static pthread_t *Thread_Matmult;
+static pthread_t Thread_Matmult;
 long int WCEC_Matmult = 9071928490; // cycles
 unsigned int cpuFrequencyAtual_Matmult = 0; // Hz
 unsigned int cpuFrequencyMin_Matmult = 1800000; // Hz
@@ -273,7 +273,7 @@ static void *init_task_cnt(void *arg)
 	int prioridade = idTaskCnt;
 
 	// Obtendo as estatisticas do processador antes...
-//	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
+	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
 
 	if(!(Task_Cnt = rt_thread_init(nam2num("TSKCNT"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
@@ -282,8 +282,8 @@ static void *init_task_cnt(void *arg)
 	}
 
 	Tinicio = start_timeline;
-//	Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
-	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
+	//Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_Cnt, Tinicio, Tperiodo);
 
@@ -592,8 +592,8 @@ static void *init_task_bsort(void *arg)
 	}
 
 	Tinicio = start_timeline;
-	//Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
-	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
+	//Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_Bsort, Tinicio, Tperiodo);
 
@@ -660,8 +660,8 @@ static void *init_task_cpustats(void *arg)
 	}
 
 	Tinicio = start_timeline;
-	//Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
-	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
+	//Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_CpuStats, Tinicio, Tperiodo);
 
@@ -715,8 +715,8 @@ int manager_tasks(void)
 
 	Thread_Cnt = rt_thread_create(init_task_cnt, NULL, 0);
 	Thread_Matmult = rt_thread_create(init_task_matmult, NULL, 0);
-//	Thread_Bsort = rt_thread_create(init_task_bsort, NULL, 0);
-//	Thread_CpuStats = rt_thread_create(init_task_cpustats, NULL, 0);
+	Thread_Bsort = rt_thread_create(init_task_bsort, NULL, 0);
+	Thread_CpuStats = rt_thread_create(init_task_cpustats, NULL, 0);
 
 	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
 	while(!getchar());
@@ -730,17 +730,10 @@ void delete_tasks(void)
 {
 	rt_make_soft_real_time();
 
-	rt_thread_delete(Task_Cnt);
-	rt_thread_delete(Thread_Cnt);
-
-	rt_thread_delete(Task_Matmult);
-	rt_thread_delete(Thread_Matmult);
-
-//	rt_thread_delete(Task_Bsort);
-//	rt_thread_delete(Thread_Bsort);
-
-//	rt_thread_delete(Task_CpuStats);
-//	rt_thread_delete(Thread_CpuStats);
+	rt_task_delete(Task_Cnt);
+	rt_task_delete(Task_Matmult);
+	rt_task_delete(Task_Bsort);
+	rt_task_delete(Task_CpuStats);
 }
 
 int main(void)
