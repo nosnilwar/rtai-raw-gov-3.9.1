@@ -66,10 +66,10 @@ int idTaskCnt = 0;
 int qtdPeriodosCnt = 1;
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * 4;
 static RT_TASK *Task_Cnt;
-static pthread_t Thread_Cnt;
+static pthread_t *Thread_Cnt;
 long int WCEC_Cnt = 1764504180; // cycles
 unsigned int cpuFrequencyAtual_Cnt = 0; // Hz
-unsigned int cpuFrequencyMin_Cnt = 1800000; // Hz
+unsigned int cpuFrequencyMin_Cnt = 800000; // Hz
 unsigned int cpuFrequencyInicial_Cnt = 1800000; // Hz
 unsigned int cpuVoltageInicial_Cnt = 5; // V
 
@@ -77,10 +77,10 @@ int idTaskMatmult = 1;
 int qtdPeriodosMatmult = 1;
 int qtdMaxPeriodosMatmult = QTD_CICLOS_EXPERIMENTOS * 5;
 static RT_TASK *Task_Matmult;
-static pthread_t Thread_Matmult;
+static pthread_t *Thread_Matmult;
 long int WCEC_Matmult = 9071928490; // cycles
 unsigned int cpuFrequencyAtual_Matmult = 0; // Hz
-unsigned int cpuFrequencyMin_Matmult = 800000; // Hz
+unsigned int cpuFrequencyMin_Matmult = 1800000; // Hz
 unsigned int cpuFrequencyInicial_Matmult = 1800000; // Hz
 unsigned int cpuVoltageInicial_Matmult = 5; // V
 
@@ -204,7 +204,6 @@ void SumCnt(matrixCnt Array)
   int Ntotal = 0;
   int Pcnt = 0;
   int Ncnt = 0;
-
   int porcentagemProcessamento = 0;
   int porcentagemProcessamentoAnterior = -1;
 
@@ -287,7 +286,6 @@ static void *init_task_cnt(void *arg)
 	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_Cnt, Tinicio, Tperiodo);
-	rt_change_prio(Task_Cnt, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo);
 
@@ -391,7 +389,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 
 			rt_cfg_set_rwcec(Task_Matmult, (WCEC_Matmult * (100 - porcentagemProcessamento))/100);
 
-			if(porcentagemProcessamento == 90)
+			if(porcentagemProcessamento == 60)
 			{
 				rt_cfg_set_cpu_frequency(Task_Matmult, 800000);
 			}
@@ -449,7 +447,6 @@ static void *init_task_matmult(void *arg)
 	Tperiodo = tick_period * 161; // ~= 8 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_Matmult, Tinicio, Tperiodo);
-	rt_change_prio(Task_Matmult, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, Tperiodo);
 
@@ -599,7 +596,6 @@ static void *init_task_bsort(void *arg)
 	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_Bsort, Tinicio, Tperiodo);
-	rt_change_prio(Task_Bsort, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, Tperiodo);
 
@@ -668,7 +664,6 @@ static void *init_task_cpustats(void *arg)
 	Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
 	rt_task_make_periodic(Task_CpuStats, Tinicio, Tperiodo);
-	rt_change_prio(Task_CpuStats, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, Tperiodo);
 
@@ -736,9 +731,16 @@ void delete_tasks(void)
 	rt_make_soft_real_time();
 
 	rt_thread_delete(Task_Cnt);
+	rt_thread_delete(Thread_Cnt);
+
 	rt_thread_delete(Task_Matmult);
+	rt_thread_delete(Thread_Matmult);
+
 //	rt_thread_delete(Task_Bsort);
+//	rt_thread_delete(Thread_Bsort);
+
 //	rt_thread_delete(Task_CpuStats);
+//	rt_thread_delete(Thread_CpuStats);
 }
 
 int main(void)
