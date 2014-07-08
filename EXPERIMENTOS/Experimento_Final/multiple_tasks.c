@@ -51,6 +51,8 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 /* Definindo variaveis goblais*/
 #define TICK_PERIOD 50000000 //Tempo em nano segundos... a cada 0.05 segundos tem o tick
 
+#define STACK_SIZE 2000
+
 char arrayTextoCorIdTask[4][8] = {"\033[31m", "\033[32m", "\033[37m", "\033[36m"}; // O texto no qual as tarefas serao imprimidas na tela.
 
 // variaveis globais do sistema de estatistica...
@@ -65,8 +67,8 @@ struct cpufreq_sysfs_stats *afterStats;
 int idTaskCnt = 0;
 int qtdPeriodosCnt = 1;
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * 4;
-static RT_TASK *Task_Cnt;
-static pthread_t Thread_Cnt;
+RT_TASK *Task_Cnt;
+pthread_t Thread_Cnt;
 long int WCEC_Cnt = 1764504180; // cycles
 unsigned int cpuFrequencyAtual_Cnt = 0; // Hz
 unsigned int cpuFrequencyMin_Cnt = 800000; // Hz
@@ -76,19 +78,19 @@ unsigned int cpuVoltageInicial_Cnt = 5; // V
 int idTaskMatmult = 1;
 int qtdPeriodosMatmult = 1;
 int qtdMaxPeriodosMatmult = QTD_CICLOS_EXPERIMENTOS * 5;
-static RT_TASK *Task_Matmult;
-static pthread_t Thread_Matmult;
+RT_TASK *Task_Matmult;
+pthread_t Thread_Matmult;
 long int WCEC_Matmult = 9071928490; // cycles
 unsigned int cpuFrequencyAtual_Matmult = 0; // Hz
-unsigned int cpuFrequencyMin_Matmult = 1800000; // Hz
+unsigned int cpuFrequencyMin_Matmult = 800000; // Hz
 unsigned int cpuFrequencyInicial_Matmult = 1800000; // Hz
 unsigned int cpuVoltageInicial_Matmult = 5; // V
 
 int idTaskBsort = 2;
 int qtdPeriodosBsort = 1;
 int qtdMaxPeriodosBsort = QTD_CICLOS_EXPERIMENTOS * 4;
-static RT_TASK *Task_Bsort;
-static pthread_t Thread_Bsort;
+RT_TASK *Task_Bsort;
+pthread_t Thread_Bsort;
 long int WCEC_Bsort = 6500290074; // cycles
 unsigned int cpuFrequencyAtual_Bsort = 0; // Hz
 unsigned int cpuFrequencyMin_Bsort = 1800000; // Hz
@@ -97,8 +99,8 @@ unsigned int cpuVoltageInicial_Bsort = 5; // V
 
 int idTaskCpuStats = 3;
 int qtdPeriodosCpuStats = 1;
-static RT_TASK *Task_CpuStats;
-static pthread_t Thread_CpuStats;
+RT_TASK *Task_CpuStats;
+pthread_t Thread_CpuStats;
 long int WCEC_CpuStats = 10000; // cycles
 unsigned int cpuFrequencyAtual_CpuStats = 0; // Hz
 unsigned int cpuFrequencyMin_CpuStats = 1800000; // Hz
@@ -257,7 +259,7 @@ int InitSeedCnt(void)
 	return 0;
 }
 
-static void *init_task_cnt(void *arg)
+void *init_task_cnt(void *arg)
 {
 	// Variaveis para realizar os calculos de tempo...
 	struct tm *newtime;
@@ -285,7 +287,9 @@ static void *init_task_cnt(void *arg)
 	Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
 	//Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
+	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_Cnt, Tinicio, Tperiodo);
+	rt_change_prio(Task_Cnt, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo);
 
@@ -389,7 +393,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 
 			rt_cfg_set_rwcec(Task_Matmult, (WCEC_Matmult * (100 - porcentagemProcessamento))/100);
 
-			if(porcentagemProcessamento == 60)
+			if(porcentagemProcessamento == 90)
 			{
 				rt_cfg_set_cpu_frequency(Task_Matmult, 800000);
 			}
@@ -421,7 +425,7 @@ void InitSeedMatMult(void)
    SeedMatMult = 1;
 }
 
-static void *init_task_matmult(void *arg)
+void *init_task_matmult(void *arg)
 {
 	// Variaveis para realizar os calculos de tempo...
 	struct tm *newtime;
@@ -446,7 +450,9 @@ static void *init_task_matmult(void *arg)
 	//Tperiodo = tick_period * 160; // ~= 8 segundos (PERIODO == DEADLINE)
 	Tperiodo = tick_period * 161; // ~= 8 segundos (PERIODO == DEADLINE)
 
+	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_Matmult, Tinicio, Tperiodo);
+	rt_change_prio(Task_Matmult, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, Tperiodo);
 
@@ -570,7 +576,7 @@ void BubbleSort(int Array[MAXDIM])
    rt_cfg_set_rwcec(Task_Bsort, 0);
 }
 
-static void *init_task_bsort(void *arg)
+void *init_task_bsort(void *arg)
 {
 	// Variaveis para realizar os calculos de tempo...
 	struct tm *newtime;
@@ -595,7 +601,9 @@ static void *init_task_bsort(void *arg)
 	Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
 	//Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
+	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_Bsort, Tinicio, Tperiodo);
+	rt_change_prio(Task_Bsort, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, Tperiodo);
 
@@ -645,7 +653,7 @@ static void *init_task_bsort(void *arg)
  * INICIO: DEFINICOES DO C-BENCHMARK -> CpuStats
  **************************************************/
 
-static void *init_task_cpustats(void *arg)
+void *init_task_cpustats(void *arg)
 {
 	int flagFimExecucaoCpuStats = 0;
 
@@ -663,7 +671,9 @@ static void *init_task_cpustats(void *arg)
 	Tperiodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
 	//Tperiodo = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
 
+	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_CpuStats, Tinicio, Tperiodo);
+	rt_change_prio(Task_CpuStats, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  =======> %llu\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, Tperiodo);
 
@@ -703,11 +713,13 @@ static void *init_task_cpustats(void *arg)
 
 int manager_tasks(void)
 {
+	rt_set_periodic_mode();
 	rt_make_hard_real_time();
 
 	printf("************** Iniciando escalonamento **************\n");
 
-	tick_period = start_rt_timer(nano2count(TICK_PERIOD));
+	start_rt_timer(0);
+	tick_period = nano2count(TICK_PERIOD);
 	delay_start_timeline = tick_period * 20; // Delay: 1 segundo(s)
 	start_timeline = rt_get_time() + delay_start_timeline;
 

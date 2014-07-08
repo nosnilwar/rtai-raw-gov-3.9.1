@@ -63,6 +63,7 @@ RTAI_SYSCALL_MODE void rt_set_sched_policy(RT_TASK *task, int policy, int rr_qua
 			task->lnxtsk->yield_time = task->yield_time;
 			task->lnxtsk->rr_quantum = task->rr_quantum;
 			task->lnxtsk->rr_remaining = task->rr_remaining;
+			//printk("[API] 04 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
 		}
 	}
 }
@@ -428,6 +429,7 @@ RTAI_SYSCALL_MODE int rt_task_suspend_until(RT_TASK *task, RTIME time)
 			task->lnxtsk->period = task->period;
 			task->lnxtsk->resume_time = task->resume_time;
 			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+			//printk("[API] 05 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
 		}
 
 		if (task->resume_time > rt_time_h) {
@@ -752,6 +754,7 @@ RTAI_SYSCALL_MODE int rt_task_make_periodic_relative_ns(RT_TASK *task, RTIME sta
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+		//printk("[API] 06 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
 	}
 
 	task->suspdepth = 0;
@@ -820,6 +823,7 @@ RTAI_SYSCALL_MODE int rt_task_make_periodic(RT_TASK *task, RTIME start_time, RTI
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+		//printk("[API] 07 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
 	}
 
 	task->suspdepth = 0;
@@ -861,15 +865,6 @@ int rt_task_wait_period(void)
 	flags = rt_global_save_flags_and_cli();
 	ASSIGN_RT_CURRENT;
 
-	//TODO:RAWLINSON...
-	if(rt_current->lnxtsk)
-	{
-		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
-		rt_current->lnxtsk->period = rt_current->period;
-		rt_current->lnxtsk->resume_time = rt_current->resume_time;
-		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
-	}
-
 	if (rt_current->resync_frame) { // Request from watchdog
 	    	rt_current->resync_frame = 0;
 		rt_current->periodic_resume_time = rt_current->resume_time = oneshot_timer ? rtai_rdtsc() :
@@ -882,14 +877,6 @@ int rt_task_wait_period(void)
 		void *blocked_on;
 		rt_current->resume_time = rt_current->periodic_resume_time;
 		rt_current->blocked_on = NULL;
-		//TODO:RAWLINSON...
-		if(rt_current->lnxtsk)
-		{
-			rt_current->lnxtsk->timer_freq = TIMER_FREQ;
-			rt_current->lnxtsk->period = rt_current->period;
-			rt_current->lnxtsk->resume_time = rt_current->resume_time;
-			rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
-		}
 		rt_current->state |= RT_SCHED_DELAYED;
 		rem_ready_current(rt_current);
 		enq_timed_task(rt_current);
@@ -905,14 +892,6 @@ int rt_task_wait_period(void)
 #else
 		return likely(!blocked_on) ? 0 : RTE_UNBLKD;
 #endif
-	}
-	//TODO:RAWLINSON...
-	if(rt_current->lnxtsk)
-	{
-		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
-		rt_current->lnxtsk->period = rt_current->period;
-		rt_current->lnxtsk->resume_time = rt_current->resume_time;
-		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
 	}
 	rt_global_restore_flags(flags);
 	return RTE_TMROVRN;
@@ -936,15 +915,6 @@ RTAI_SYSCALL_MODE void rt_task_set_resume_end_times(RTIME resume, RTIME end)
 		rt_current->period = end;
 	} else {
 		rt_current->period = rt_current->resume_time - end;
-	}
-
-	//TODO:RAWLINSON...
-	if(rt_current->lnxtsk)
-	{
-		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
-		rt_current->lnxtsk->period = rt_current->period;
-		rt_current->lnxtsk->resume_time = rt_current->resume_time;
-		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
 	}
 
 	rt_current->state |= RT_SCHED_DELAYED;
@@ -973,6 +943,7 @@ RTAI_SYSCALL_MODE int rt_set_resume_time(RT_TASK *task, RTIME new_resume_time)
 			task->lnxtsk->period = task->period;
 			task->lnxtsk->resume_time = task->resume_time;
 			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+			//printk("[API] 08 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
 		}
 
 		if ((task->resume_time - (task->tnext)->resume_time) > 0) {
@@ -1003,6 +974,7 @@ RTAI_SYSCALL_MODE int rt_set_period(RT_TASK *task, RTIME new_period)
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+		//printk("[API] 09 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
 	}
 
 	rt_global_restore_flags(flags);
@@ -1088,15 +1060,6 @@ RTAI_SYSCALL_MODE int rt_sleep(RTIME delay)
 
 	rt_current->resume_time = get_time() + delay;
 
-	//TODO:RAWLINSON...
-	if(rt_current->lnxtsk)
-	{
-		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
-		rt_current->lnxtsk->period = rt_current->period;
-		rt_current->lnxtsk->resume_time = rt_current->resume_time;
-		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
-	}
-
 	if (rt_current->resume_time > rt_time_h) {
 		void *blocked_on;
 		rt_current->blocked_on = NULL;
@@ -1143,15 +1106,6 @@ RTAI_SYSCALL_MODE int rt_sleep_until(RTIME time)
 	ASSIGN_RT_CURRENT;
 
 	rt_current->resume_time = time;
-
-	//TODO:RAWLINSON...
-	if(rt_current->lnxtsk)
-	{
-		rt_current->lnxtsk->timer_freq = TIMER_FREQ;
-		rt_current->lnxtsk->period = rt_current->period;
-		rt_current->lnxtsk->resume_time = rt_current->resume_time;
-		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time;
-	}
 
 	if (rt_current->resume_time > rt_time_h) {
 		void *blocked_on;

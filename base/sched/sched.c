@@ -313,15 +313,6 @@ int set_rtext(RT_TASK *task, int priority, int uses_fpu, void(*signal)(void), un
 	task->prev = rt_linux_task.prev;
 	rt_linux_task.prev = task;
 
-	//TODO:RAWLINSON...
-	if(task->lnxtsk)
-	{
-		task->lnxtsk->timer_freq = TIMER_FREQ;
-		task->lnxtsk->period = task->period;
-		task->lnxtsk->resume_time = task->resume_time;
-		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-	}
-
 	rt_global_restore_flags(flags);
 
 	task->resq.prev = task->resq.next = &task->resq;
@@ -507,6 +498,7 @@ RTAI_SYSCALL_MODE void rt_set_runnable_on_cpuid(RT_TASK *task, unsigned int cpui
 		task->lnxtsk->period = task->period;
 		task->lnxtsk->resume_time = task->resume_time;
 		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
+		//printk("[API] 10 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
 	}
 
 	if (!((task->prev)->next = task->next)) {
@@ -585,16 +577,6 @@ if (CONFIG_RTAI_ALLOW_RR && rt_current->policy > 0) { \
 	} else { \
 		rt_current->rr_remaining = rt_current->yield_time - rt_times.tick_time; \
 	} \
-	if(rt_current->lnxtsk) /*TODO:RAWLINSON... */  \
-	{ \
-		rt_current->lnxtsk->timer_freq = TIMER_FREQ; \
-		rt_current->lnxtsk->period = rt_current->period; \
-		rt_current->lnxtsk->resume_time = rt_current->resume_time; \
-		rt_current->lnxtsk->periodic_resume_time = rt_current->periodic_resume_time; \
-		rt_current->lnxtsk->yield_time = rt_current->yield_time; \
-		rt_current->lnxtsk->rr_quantum = rt_current->rr_quantum; \
-		rt_current->lnxtsk->rr_remaining = rt_current->rr_remaining; \
-	} \
 } 
 
 #define TASK_TO_SCHEDULE() \
@@ -602,16 +584,6 @@ do { \
 	new_task = rt_linux_task.rnext; \
 	if (CONFIG_RTAI_ALLOW_RR && new_task->policy > 0) { \
 		new_task->yield_time = rt_times.tick_time + new_task->rr_remaining; \
-	} \
-	if(new_task->lnxtsk) /* TODO:RAWLINSON... */ \
-	{ \
-		new_task->lnxtsk->timer_freq = TIMER_FREQ; \
-		new_task->lnxtsk->period = new_task->period; \
-		new_task->lnxtsk->resume_time = new_task->resume_time; \
-		new_task->lnxtsk->periodic_resume_time = new_task->periodic_resume_time; \
-		new_task->lnxtsk->yield_time = new_task->yield_time; \
-		new_task->lnxtsk->rr_quantum = new_task->rr_quantum; \
-		new_task->lnxtsk->rr_remaining = new_task->rr_remaining; \
 	} \
 	new_task->running = 1; \
 } while (0)
@@ -2245,6 +2217,7 @@ RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned lon
 		return -EINVAL;
 	}
 	flags = rt_global_save_flags_and_cli();
+	task->lnxtsk->flagReturnPreemption = 0;
 	task->lnxtsk->tsk_wcec = tsk_wcec;
 	task->lnxtsk->rwcec = tsk_wcec;
 	task->lnxtsk->state_task_period = TASK_PERIOD_RUNNING;
