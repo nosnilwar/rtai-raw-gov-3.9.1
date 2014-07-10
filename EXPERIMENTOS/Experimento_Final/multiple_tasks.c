@@ -64,44 +64,56 @@ struct cpufreq_sysfs_stats *beforeStats;
 struct cpufreq_sysfs_stats *afterStats;
 
 // DEFINICAO DAS TASKS...
+#define WCEC_CNT 17738532203 // cycles
 int idTaskCnt = 0;
 int qtdPeriodosCnt = 1;
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * 4;
 RT_TASK *Task_Cnt;
 pthread_t Thread_Cnt;
-long int WCEC_Cnt = 1764504180; // cycles
+long int WCEC_Cnt = WCEC_CNT;
+long int RWCEC_Cnt = WCEC_CNT;
+long int SEC_Cnt = 0; // cycles
 unsigned int cpuFrequencyAtual_Cnt = 0; // Hz
 unsigned int cpuFrequencyMin_Cnt = 800000; // Hz
 unsigned int cpuFrequencyInicial_Cnt = 1800000; // Hz
 unsigned int cpuVoltageInicial_Cnt = 5; // V
 
+#define WCEC_MATMULT 144471438065 // cycles
 int idTaskMatmult = 1;
 int qtdPeriodosMatmult = 1;
 int qtdMaxPeriodosMatmult = QTD_CICLOS_EXPERIMENTOS * 5;
 RT_TASK *Task_Matmult;
 pthread_t Thread_Matmult;
-long int WCEC_Matmult = 9071928490; // cycles
+long int WCEC_Matmult = WCEC_MATMULT;
+long int RWCEC_Matmult = WCEC_MATMULT;
+long int SEC_Matmult = 0; // cycles
 unsigned int cpuFrequencyAtual_Matmult = 0; // Hz
 unsigned int cpuFrequencyMin_Matmult = 800000; // Hz
 unsigned int cpuFrequencyInicial_Matmult = 1800000; // Hz
 unsigned int cpuVoltageInicial_Matmult = 5; // V
 
+#define WCEC_BSORT 25601640180 // cycles
 int idTaskBsort = 2;
 int qtdPeriodosBsort = 1;
 int qtdMaxPeriodosBsort = QTD_CICLOS_EXPERIMENTOS * 4;
 RT_TASK *Task_Bsort;
 pthread_t Thread_Bsort;
-long int WCEC_Bsort = 6500290074; // cycles
+long int WCEC_Bsort = WCEC_BSORT;
+long int RWCEC_Bsort = WCEC_BSORT;
+long int SEC_Bsort = 0; // cycles
 unsigned int cpuFrequencyAtual_Bsort = 0; // Hz
 unsigned int cpuFrequencyMin_Bsort = 1800000; // Hz
 unsigned int cpuFrequencyInicial_Bsort = 1800000; // Hz
 unsigned int cpuVoltageInicial_Bsort = 5; // V
 
+#define WCEC_CPUSTATS 0 // OBS.: SENDO ZERO O RAW MONITOR NAO INFLUENCIA NA EXECUTACAO DA TAREFA.
 int idTaskCpuStats = 3;
 int qtdPeriodosCpuStats = 1;
 RT_TASK *Task_CpuStats;
 pthread_t Thread_CpuStats;
-long int WCEC_CpuStats = 10000; // cycles
+long int WCEC_CpuStats = WCEC_CPUSTATS;
+long int RWCEC_CpuStats = WCEC_CPUSTATS;
+long int SEC_CpuStats = 0; // cycles
 unsigned int cpuFrequencyAtual_CpuStats = 0; // Hz
 unsigned int cpuFrequencyMin_CpuStats = 1800000; // Hz
 unsigned int cpuFrequencyInicial_CpuStats = 1800000; // Hz
@@ -191,10 +203,12 @@ int InitializeCnt(matrixCnt Array)
 {
    register int OuterIndex, InnerIndex;
 
-   for (OuterIndex = 0; OuterIndex < MAXSIZE; OuterIndex++) //100 + 1
-      for (InnerIndex = 0; InnerIndex < MAXSIZE; InnerIndex++) //100 + 1
+   for (OuterIndex = 0; OuterIndex < MAXSIZE; OuterIndex++)
+      for (InnerIndex = 0; InnerIndex < MAXSIZE; InnerIndex++)
          Array[OuterIndex][InnerIndex] = RandomIntegerCnt();
 
+   RWCEC_Cnt = RWCEC_Cnt - 5635266203; // Quantidade de ciclos da inicializacao do array.
+   rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
    return 0;
 }
 
@@ -209,7 +223,7 @@ void SumCnt(matrixCnt Array)
   int porcentagemProcessamento = 0;
   int porcentagemProcessamentoAnterior = -1;
 
-  for (Outer = 0; Outer < MAXSIZE; Outer++) { //Maxsize = 100
+  for (Outer = 0; Outer < MAXSIZE; Outer++) {
 	 for (Inner = 0; Inner < MAXSIZE; Inner++) {
 #ifdef WORSTCASE_CNT
     	if (Array[Outer][Inner] >= 0) {
@@ -225,13 +239,17 @@ void SumCnt(matrixCnt Array)
 		}
      }
 
+	RWCEC_Cnt = RWCEC_Cnt - 1729038; // Quantidade de ciclos do loop interno.
+
 	porcentagemProcessamento = (int) ((Outer*MAXSIZE + Inner)*100)/(MAXSIZE*MAXSIZE);
 	if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 	{
 		cpuFrequencyAtual_Cnt = rt_cfg_get_cpu_frequency(Task_Cnt);
 		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual_Cnt);
 		porcentagemProcessamentoAnterior = porcentagemProcessamento;
-		rt_cfg_set_rwcec(Task_Cnt, (WCEC_Cnt * (100 - porcentagemProcessamento))/100);
+
+		//TODO: debug apenas... rt_cfg_set_rwcec(Task_Cnt, (WCEC_Cnt * (100 - porcentagemProcessamento))/100);
+		rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
 	}
   }
 
@@ -240,8 +258,7 @@ void SumCnt(matrixCnt Array)
   Negtotal = Ntotal;
   Negcnt = Ncnt;
 
-  // Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
-  rt_cfg_set_rwcec(Task_Cnt, 0);
+  rt_cfg_set_rwcec(Task_Cnt, 0); // Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
 }
 
 int TestCnt(matrixCnt Array)
@@ -295,6 +312,10 @@ void *init_task_cnt(void *arg)
 
 	while(!flagFimExecucao && qtdPeriodosCnt <= qtdMaxPeriodosCnt)
 	{
+		// Inicializando WCEC e RWCEC...
+		WCEC_Cnt = WCEC_CNT;
+		RWCEC_Cnt = WCEC_CNT;
+
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
@@ -361,11 +382,16 @@ void InitializeMatMult(matrixMatMult Array)
    int OuterIndex, InnerIndex;
 //   printf("Valores da Matriz: \n\n");
    for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
+   {
       for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
       {
          Array[OuterIndex][InnerIndex] = RandomIntegerMatMult();
 //         printf("(%d)", Array[OuterIndex][InnerIndex]);
       }
+   }
+
+	RWCEC_Matmult = RWCEC_Matmult - 75327616; // Quantidade de ciclos da inicializacao do array.
+	rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult);
 }
 
 // Multiplies arrays A and B and stores the result in ResultArray.
@@ -377,12 +403,16 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
    register int Outer, Inner, Index;
    for (Outer = 0; Outer < UPPERLIMIT; Outer++)
    {
+	  //TODO: URGENTE COLOCAR SECs AQUI...
       for (Inner = 0; Inner < UPPERLIMIT; Inner++)
       {
          Res [Outer][Inner] = 0;
          for (Index = 0; Index < UPPERLIMIT; Index++)
+         {
             Res[Outer][Inner] += A[Outer][Index] * B[Index][Inner];
-       }
+         }
+      }
+      RWCEC_Matmult = RWCEC_Matmult - 187429588; // cycles
 
 		porcentagemProcessamento = (int) ((Outer*UPPERLIMIT*UPPERLIMIT + Inner*UPPERLIMIT + Index)*100)/(UPPERLIMIT*UPPERLIMIT*UPPERLIMIT);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
@@ -391,12 +421,8 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 			printf("%s[TASK %d] Processando... %3d%% =====> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult);
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 
-			rt_cfg_set_rwcec(Task_Matmult, (WCEC_Matmult * (100 - porcentagemProcessamento))/100);
-
-			if(porcentagemProcessamento == 90)
-			{
-				rt_cfg_set_cpu_frequency(Task_Matmult, 800000);
-			}
+			//TODO: apenas debug... rt_cfg_set_rwcec(Task_Matmult, (WCEC_Matmult * (100 - porcentagemProcessamento))/100);
+			rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult);
 		}
    }
 
@@ -423,6 +449,8 @@ void InitSeedMatMult(void)
      changed Thomas Ls code to something simpler.
    SeedMatMult = KNOWN_VALUE - 1; */
    SeedMatMult = 1;
+
+   RWCEC_Matmult = RWCEC_Matmult - 73; // cycles
 }
 
 void *init_task_matmult(void *arg)
@@ -458,6 +486,10 @@ void *init_task_matmult(void *arg)
 
 	while(!flagFimExecucao && qtdPeriodosMatmult <= qtdMaxPeriodosMatmult)
 	{
+		// Inicializando WCEC e RWCEC...
+		WCEC_Matmult = WCEC_MATMULT;
+		RWCEC_Matmult = WCEC_MATMULT;
+
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
@@ -528,6 +560,8 @@ void InitializeBsort(int Array[MAXDIM])
 	fact = factor;
 	for (Index = 1; Index <= NUMELEMS; Index ++)
 		Array[Index] = Index * fact * KNOWN_VALUE;
+
+	RWCEC_Bsort = RWCEC_Bsort - 960178; // Quantidade de ciclos do loop interno e da declaracao das variaveis.
 }
 
 // Sorts an array of integers of size NUMELEMS in ascending order.
@@ -555,6 +589,7 @@ void BubbleSort(int Array[MAXDIM])
             Sorted = FALSE;
          }
       }
+      RWCEC_Bsort = RWCEC_Bsort - 2560068; // Quantidade de ciclos do loop interno e da declaracao das variaveis.
 
 	  porcentagemProcessamento = (int) ((i*NUMELEMS + Index)*100)/(NUMELEMS*NUMELEMS);
 	  if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
@@ -562,7 +597,9 @@ void BubbleSort(int Array[MAXDIM])
 		cpuFrequencyAtual_Bsort = rt_cfg_get_cpu_frequency(Task_Bsort);
 		printf("%s[TASK %d] Processando... %3d%% =====> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual_Bsort);
 	  	porcentagemProcessamentoAnterior = porcentagemProcessamento;
-	  	rt_cfg_set_rwcec(Task_Bsort, (WCEC_Bsort * (100 - porcentagemProcessamento))/100);
+
+	  	//TODO: apenas debug... rt_cfg_set_rwcec(Task_Bsort, (WCEC_Bsort * (100 - porcentagemProcessamento))/100);
+	  	rt_cfg_set_rwcec(Task_Bsort, RWCEC_Bsort);
 	  }
 
       if (Sorted)
@@ -609,6 +646,10 @@ void *init_task_bsort(void *arg)
 
 	while(!flagFimExecucao && qtdPeriodosBsort <= qtdMaxPeriodosBsort)
 	{
+		// Inicializando WCEC e RWCEC...
+		WCEC_Bsort = WCEC_BSORT;
+		RWCEC_Bsort = WCEC_BSORT;
+
 		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
@@ -679,6 +720,10 @@ void *init_task_cpustats(void *arg)
 
 	while(!flagFimExecucaoCpuStats)
 	{
+		// Inicializando WCEC e RWCEC...
+		WCEC_CpuStats = WCEC_CPUSTATS;
+		RWCEC_CpuStats = WCEC_CPUSTATS;
+
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
 

@@ -2286,7 +2286,7 @@ RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned lon
 	}
 	rt_global_restore_flags(flags);
 
-	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %lu %% - STATE_PERIOD(%d) - FRP(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->state_task_period, task->lnxtsk->flagReturnPreemption);
+	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %ld cycle(s) - STATE_PERIOD(%d) - FRP(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->state_task_period, task->lnxtsk->flagReturnPreemption);
 	return 0;
 }
 
