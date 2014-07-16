@@ -426,16 +426,6 @@ static inline void rem_ready_task(RT_TASK *task)
 		(task->rprev)->rnext = task->rnext;
 		(task->rnext)->rprev = task->rprev;
 	}
-
-	//TODO:RAWLINSON...
-	if(task->lnxtsk)
-	{
-		task->lnxtsk->timer_freq = TIMER_FREQ;
-		task->lnxtsk->period = task->period;
-		task->lnxtsk->resume_time = task->resume_time;
-		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-		//printk("[API] 01 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-	}
 }
 
 static inline void rem_ready_current(RT_TASK *rt_current)
@@ -497,24 +487,6 @@ static inline void enq_timed_task(RT_TASK *timed_task)
 	}
 	task->tprev = (timed_task->tprev = task->tprev)->tnext = timed_task;
 	timed_task->tnext = task;
-
-	//TODO:RAWLINSON...
-	if(timed_task->lnxtsk)
-	{
-		timed_task->lnxtsk->timer_freq = TIMER_FREQ;
-		timed_task->lnxtsk->period = timed_task->period;
-		timed_task->lnxtsk->resume_time = timed_task->resume_time;
-		timed_task->lnxtsk->periodic_resume_time = timed_task->periodic_resume_time;
-		//printk("[API] 02 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", timed_task->lnxtsk->pid, timed_task->lnxtsk->period, timed_task->lnxtsk->resume_time, timed_task->lnxtsk->periodic_resume_time);
-	}
-	if(task->lnxtsk)
-	{
-		task->lnxtsk->timer_freq = TIMER_FREQ;
-		task->lnxtsk->period = task->period;
-		task->lnxtsk->resume_time = task->resume_time;
-		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-		//printk("[API] 03 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-	}
 }
 
 #define	rb_erase_task(task, cpuid)

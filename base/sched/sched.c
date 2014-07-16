@@ -491,16 +491,6 @@ RTAI_SYSCALL_MODE void rt_set_runnable_on_cpuid(RT_TASK *task, unsigned int cpui
 			break;
 	}
 
-	//TODO:RAWLINSON...
-	if(task->lnxtsk)
-	{
-		task->lnxtsk->timer_freq = TIMER_FREQ;
-		task->lnxtsk->period = task->period;
-		task->lnxtsk->resume_time = task->resume_time;
-		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-		//printk("[API] 10 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-	}
-
 	if (!((task->prev)->next = task->next)) {
 		rt_smp_linux_task[task->runnable_on_cpus].prev = task->prev;
 	} else {
@@ -931,9 +921,6 @@ static void rt_schedule_on_schedule_ipi(void)
 
 		rt_time_h = rtai_rdtsc() + rt_half_tick;
 
-		//TODO:RAWLINSON...
-		update_governor_timer(rt_time_h);
-
 		wake_up_timed_tasks(cpuid);
 		TASK_TO_SCHEDULE();
 
@@ -1001,9 +988,6 @@ void rt_schedule(void)
 		int prio, fire_shot;
 
 		rt_time_h = rtai_rdtsc() + rt_half_tick;
-
-		//TODO:RAWLINSON...
-		update_governor_timer(rt_time_h);
 
 		wake_up_timed_tasks(cpuid);
 		TASK_TO_SCHEDULE();
@@ -1286,9 +1270,6 @@ redo_timer_handler:
 	rt_times.tick_time = oneshot_timer ? rtai_rdtsc() : rt_times.intr_time;
 	rt_time_h = rt_times.tick_time + rt_half_tick;
 
-	//TODO:RAWLINSON - ATUALIZAR O TIMER DO RAW GOVERNOR PARA O PROCESSADOR CORRENTE...
-	update_governor_timer(rt_time_h);
-
 	SET_PEND_LINUX_TIMER_SHOT();
 
 	sched_get_global_lock(cpuid);
@@ -1416,9 +1397,6 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 		rt_smp_times[cpuid].periodic_tick = 1;
 		tuned.timers_tol[cpuid] = rt_half_tick = 0;
 		rt_time_h = 0;
-
-		//TODO:RAWLINSON...
-		update_governor_timer(rt_time_h);
 	}
 	linux_times = rt_smp_times;
 	rt_request_irq(RTAI_APIC_TIMER_IPI, (void *)rt_timer_handler, NULL, 0);
@@ -1439,9 +1417,6 @@ void stop_rt_timer(void)
 		for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++) {
 			rt_time_h = RT_TIME_END;
 			oneshot_running = 0;
-
-			//TODO:RAWLINSON...
-			update_governor_timer(rt_time_h);
 		}
 	}
 }
@@ -1460,9 +1435,6 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	tuned.timers_tol[0] = rt_half_tick = 0;
 	rt_time_h = 0;
 
-	//TODO:RAWLINSON...
-	update_governor_timer(rt_time_h);
-
 	linux_times = rt_smp_times;
 	rt_request_rtc(CONFIG_RTAI_RTC_FREQ, (void *)rt_timer_handler);
 	rt_sched_timed = 1;
@@ -1479,9 +1451,6 @@ void stop_rt_timer(void)
 		rt_release_rtc();
 		rt_time_h = RT_TIME_END;
 		rt_smp_oneshot_timer[0] = 0;
-
-		//TODO:RAWLINSON...
-		update_governor_timer(rt_time_h);
 	}
 }
 
@@ -1570,9 +1539,6 @@ RTAI_SYSCALL_MODE void start_rt_apic_timers(struct apic_timer_setup_data *setup_
 		}
 		rt_time_h = rt_times.tick_time + rt_half_tick;
 		timer_shot_fired = 1;
-
-		//TODO:RAWLINSON...
-		update_governor_timer(rt_time_h);
 	}
 	rt_sched_timed = 1;
 	linux_times = rt_smp_times + (rcvr_jiffies_cpuid < NR_RT_CPUS ? rcvr_jiffies_cpuid : 0);
@@ -1618,9 +1584,6 @@ void stop_rt_timer(void)
 		for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++) {
 			rt_time_h = RT_TIME_END;
 			oneshot_running = 0;
-
-			//TODO:RAWLINSON...
-			update_governor_timer(rt_time_h);
 		}
 	}
 }
@@ -1657,9 +1620,6 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	rt_smp_times[cpuid].linux_time    = rt_times.linux_time;
 	rt_smp_times[cpuid].periodic_tick = rt_times.periodic_tick;
 	rt_time_h = rt_times.tick_time + rt_half_tick;
-
-	//TODO:RAWLINSON...
-	update_governor_timer(rt_time_h);
 
 	linux_times = rt_smp_times;
 	rt_global_restore_flags(flags);
@@ -1705,9 +1665,6 @@ void stop_rt_timer(void)
 		rt_free_timer();
 		rt_time_h = RT_TIME_END;
 		rt_smp_oneshot_timer[0] = 0;
-
-		//TODO:RAWLINSON...
-		update_governor_timer(rt_time_h);
 	}
 }
 
@@ -2286,7 +2243,8 @@ RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned lon
 	}
 	rt_global_restore_flags(flags);
 
-	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %ld cycle(s) - STATE_PERIOD(%d) - FRP(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->state_task_period, task->lnxtsk->flagReturnPreemption);
+	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %ld cycle(s) - Freq(%8d Khz) - StateP(%d) - FRP(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->cpu_frequency, task->lnxtsk->state_task_period, task->lnxtsk->flagReturnPreemption);
+	//rt_printk("DEBUG:RAWLINSON - [TASK %d] PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->period, task->resume_time, task->periodic_resume_time);
 	return 0;
 }
 
@@ -2385,22 +2343,6 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_voltage(struct rt_task_struct *tas
 	return cpu_voltage;
 }
 
-RTAI_SYSCALL_MODE int update_governor_timer(RTIME tick_time)
-{
-	if((contUpdateTimerGovernor % CPUFREQ_UPDATE_RATE_TIMER) == 0)
-	{
-		struct cpufreq_policy *policy;
-		policy = cpufreq_cpu_get(CPUID_RTAI);
-		if(policy && policy->governor && policy->governor->update_rt_smp_time_h)
-		{
-			policy->governor->update_rt_smp_time_h(tick_time);
-		}
-	}
-
-	contUpdateTimerGovernor = contUpdateTimerGovernor + 1;
-	return 0;
-}
-
 RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_periodic_resume_time(RT_TASK *rt_task)
 {
 	unsigned long flags;
@@ -2443,6 +2385,36 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency_min(struct rt_task_struc
 	rt_global_restore_flags(flags);
 
 	return cpu_frequency_min;
+}
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_get_return_preemption(struct rt_task_struct *task)
+{
+	unsigned long flags;
+	unsigned int flagReturnPreemption;
+
+	if (task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	flagReturnPreemption = task->lnxtsk->flagReturnPreemption;
+	rt_global_restore_flags(flags);
+
+	return flagReturnPreemption;
+}
+
+RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_period(RT_TASK *rt_task)
+{
+	unsigned long flags;
+	RTIME period;
+
+	if (rt_task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	period = rt_task->period;
+	rt_global_restore_flags(flags);
+
+	return period;
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
@@ -3169,10 +3141,11 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 0, rt_cfg_get_cpu_frequency },			CFG_GET_CPU_FREQUENCY },
 	{ { 0, rt_cfg_set_cpu_voltage },			CFG_SET_CPU_VOLTAGE },
 	{ { 0, rt_cfg_get_cpu_voltage },			CFG_GET_CPU_VOLTAGE },
-	{ { 0, update_governor_timer },				CFG_UPDATE_TIMER_GOVERNOR },
 	{ { 0, rt_cfg_get_periodic_resume_time },	CFG_GET_PERIODIC_RESUME_TIME },
-	{ { 0, rt_cfg_set_cpu_frequency_min },			CFG_SET_CPU_FREQUENCY_MIN },
-	{ { 0, rt_cfg_get_cpu_frequency_min },			CFG_GET_CPU_FREQUENCY_MIN },
+	{ { 0, rt_cfg_set_cpu_frequency_min },		CFG_SET_CPU_FREQUENCY_MIN },
+	{ { 0, rt_cfg_get_cpu_frequency_min },		CFG_GET_CPU_FREQUENCY_MIN },
+	{ { 0, rt_cfg_get_return_preemption },		CFG_GET_RETURN_PREEMPTION },
+	{ { 0, rt_cfg_get_period },					CFG_GET_PERIOD },
 	//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 	{ { 0, 0 },			            000 }

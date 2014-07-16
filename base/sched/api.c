@@ -52,19 +52,6 @@ RTAI_SYSCALL_MODE void rt_set_sched_policy(RT_TASK *task, int policy, int rr_qua
 		}
 		task->rr_remaining = task->rr_quantum;
 		task->yield_time = 0;
-
-		//TODO:RAWLINSON...
-		if(task->lnxtsk)
-		{
-			task->lnxtsk->timer_freq = TIMER_FREQ;
-			task->lnxtsk->period = task->period;
-			task->lnxtsk->resume_time = task->resume_time;
-			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-			task->lnxtsk->yield_time = task->yield_time;
-			task->lnxtsk->rr_quantum = task->rr_quantum;
-			task->lnxtsk->rr_remaining = task->rr_remaining;
-			//printk("[API] 04 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-		}
 	}
 }
 
@@ -422,16 +409,6 @@ RTAI_SYSCALL_MODE int rt_task_suspend_until(RT_TASK *task, RTIME time)
 #endif
 		task->resume_time = time;
 
-		//TODO:RAWLINSON...
-		if(task->lnxtsk)
-		{
-			task->lnxtsk->timer_freq = TIMER_FREQ;
-			task->lnxtsk->period = task->period;
-			task->lnxtsk->resume_time = task->resume_time;
-			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-			//printk("[API] 05 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-		}
-
 		if (task->resume_time > rt_time_h) {
 			task->suspdepth = 1;
 			if (task == RT_CURRENT) {
@@ -747,16 +724,6 @@ RTAI_SYSCALL_MODE int rt_task_make_periodic_relative_ns(RT_TASK *task, RTIME sta
 	task->periodic_resume_time = task->resume_time = rt_get_time_cpuid(task->runnable_on_cpus) + start_delay;
 	task->period = period;
 
-	//TODO:RAWLINSON...
-	if(task->lnxtsk)
-	{
-		task->lnxtsk->timer_freq = TIMER_FREQ;
-		task->lnxtsk->period = task->period;
-		task->lnxtsk->resume_time = task->resume_time;
-		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-		//printk("[API] 06 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-	}
-
 	task->suspdepth = 0;
         if (!(task->state & RT_SCHED_DELAYED)) {
 		rem_ready_task(task);
@@ -815,16 +782,6 @@ RTAI_SYSCALL_MODE int rt_task_make_periodic(RT_TASK *task, RTIME start_time, RTI
 	flags = rt_global_save_flags_and_cli();
 	task->periodic_resume_time = task->resume_time = start_time;
 	task->period = period;
-
-	//TODO:RAWLINSON...
-	if(task->lnxtsk)
-	{
-		task->lnxtsk->timer_freq = TIMER_FREQ;
-		task->lnxtsk->period = task->period;
-		task->lnxtsk->resume_time = task->resume_time;
-		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-		//printk("[API] 07 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-	}
 
 	task->suspdepth = 0;
         if (!(task->state & RT_SCHED_DELAYED)) {
@@ -936,16 +893,6 @@ RTAI_SYSCALL_MODE int rt_set_resume_time(RT_TASK *task, RTIME new_resume_time)
 	if (task->state & RT_SCHED_DELAYED) {
 		task->resume_time = new_resume_time;
 
-		//TODO:RAWLINSON...
-		if(task->lnxtsk)
-		{
-			task->lnxtsk->timer_freq = TIMER_FREQ;
-			task->lnxtsk->period = task->period;
-			task->lnxtsk->resume_time = task->resume_time;
-			task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-			//printk("[API] 08 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-		}
-
 		if ((task->resume_time - (task->tnext)->resume_time) > 0) {
 			rem_timed_task(task);
 			enq_timed_task(task);
@@ -966,16 +913,6 @@ RTAI_SYSCALL_MODE int rt_set_period(RT_TASK *task, RTIME new_period)
 	}
 	flags = rt_global_save_flags_and_cli();
 	task->period = new_period;
-
-	//TODO:RAWLINSON...
-	if(task->lnxtsk)
-	{
-		task->lnxtsk->timer_freq = TIMER_FREQ;
-		task->lnxtsk->period = task->period;
-		task->lnxtsk->resume_time = task->resume_time;
-		task->lnxtsk->periodic_resume_time = task->periodic_resume_time;
-		//printk("[API] 09 - PID(%d) PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->lnxtsk->period, task->lnxtsk->resume_time, task->lnxtsk->periodic_resume_time);
-	}
 
 	rt_global_restore_flags(flags);
 	return 0;
@@ -2321,10 +2258,11 @@ EXPORT_SYMBOL(rt_cfg_set_cpu_frequency);
 EXPORT_SYMBOL(rt_cfg_get_cpu_frequency);
 EXPORT_SYMBOL(rt_cfg_set_cpu_voltage);
 EXPORT_SYMBOL(rt_cfg_get_cpu_voltage);
-EXPORT_SYMBOL(update_governor_timer);
 EXPORT_SYMBOL(rt_cfg_get_periodic_resume_time);
 EXPORT_SYMBOL(rt_cfg_set_cpu_frequency_min);
 EXPORT_SYMBOL(rt_cfg_get_cpu_frequency_min);
+EXPORT_SYMBOL(rt_cfg_get_return_preemption);
+EXPORT_SYMBOL(rt_cfg_get_period);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #ifdef CONFIG_SMP
