@@ -576,6 +576,12 @@ do { \
 		new_task->yield_time = rt_times.tick_time + new_task->rr_remaining; \
 	} \
 	new_task->running = 1; \
+	if(current->flagReturnPreemption && current->state == TASK_RUNNING) { \
+		printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ RETORNANDO DE PREEMPCAO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"); \
+		printk("[RAWLINSON_SCHEDULE - TASK_TO_SCHEDULE]:   PID(%d)   STATE(%d)   FRP(%d)\n", new_task->lnxtsk->pid, new_task->state, new_task->lnxtsk->flagReturnPreemption); \
+		printk("[RAWLINSON_SCHEDULE - TASK_TO_SCHEDULE]: C_PID(%d) C_STATE(%d) C_FRP(%d)\n", current->pid, current->state, current->flagReturnPreemption); \
+		current->flagReturnPreemption = 0; \
+	} \
 } while (0)
 
 #define RR_INTR_TIME(fire_shot) \

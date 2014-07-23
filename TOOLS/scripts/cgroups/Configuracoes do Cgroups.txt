@@ -9,3 +9,8 @@ root@PROTEUS:/mnt/cgroups# service cgconfig restart
 root@PROTEUS:~# nano /etc/cgconfig.conf
 
 root@PROTEUS:~# nano /etc/cgrules.conf
+
+root@PROTEUS:/mnt/cgroups/sistema_operacional/os_default# echo 0-1 > cpuset.cpus
+
+root@PROTEUS:/mnt/cgroups/sistema_operacional/os_default# cat cpuset.cpus
+0-1

@@ -14,3 +14,4 @@ MacBook-Poseidon:git rsgoncalves$
 MacBook-Poseidon:git rsgoncalves$ scp -r rtai-raw-gov-3.9.1/base/sched/sched.c root@proteus.ufam.edu.br:/usr/src/rtai-raw-gov-3.9.1/base/sched/
 MacBook-Poseidon:git rsgoncalves$ 
 MacBook-Poseidon:git rsgoncalves$ scp -r rtai-raw-gov-3.9.1/base/sched/api.c root@proteus.ufam.edu.br:/usr/src/rtai-raw-gov-3.9.1/base/sched/
+
