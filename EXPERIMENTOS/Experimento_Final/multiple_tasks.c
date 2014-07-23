@@ -16,17 +16,13 @@ Nanosegundos 1 -> Microsegundos 10^3
 /* Inclusao das bibliotecas. */
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sched.h>
-
 #include <rtai_lxrt.h>
 
 /* Definindo CONSTANTES... */
 #define DEBUG 1
-#define FLAG_HABILITAR_CONTROLE_PREEMPCAO 1
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 1 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
 
 /** TABELA DE CORES... **/
@@ -143,7 +139,7 @@ RTIME tick_period;
 RTIME start_timeline;
 RTIME delay_start_timeline;
 
-unsigned int reajustarCpuFreq(int idTask, RT_TASK *task, long int RWCEC, unsigned int flagReturnPreemption)
+unsigned int reajustarCpuFreq(int idTask, RT_TASK *task, long int RWCEC)
 {
 	double cpu_frequency_target = 0.0; // Conterah a frequencia que o processador terah que assumir para que a tarefa conclua seu processamento dentro do seu deadline.
 	double tempoRestanteProcessamento = 0.0; // Conterah o tempo restante que a tarefa tem para concluir sua execucao.
@@ -361,22 +357,22 @@ void *init_task_cnt(void *arg)
 
 	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo_Cnt);
 
-#if DEBUG == 1
-		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
-#endif
-
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(qtdPeriodosCnt <= qtdMaxPeriodosCnt)
 #else // por tempo de execucao
 	while(!flagFimExecucao)
 #endif
 	{
+#if DEBUG == 1
+		inicioExecucao = rt_get_time(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
+#endif
 		// Inicializando WCEC e RWCEC...
 		WCEC_Cnt = WCEC_CNT;
 		RWCEC_Cnt = WCEC_CNT;
 		SEC_Cnt = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
+		cpuFrequencyInicial_Cnt = abs((WCEC_Cnt / (count2nano(Tperiodo_Cnt)/1000000000.0))/1000.0); // KHz
 		rt_cfg_init_info(Task_Cnt, WCEC_Cnt, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
@@ -388,8 +384,8 @@ void *init_task_cnt(void *arg)
 		/** CALCULANDO TEMPO DE PROCESSAMENTO DA TAREFA... **/
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);
-		terminoExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
-		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		terminoExecucao = rt_get_time(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
+		tempo_processamento_tarefa = count2nano(terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, tempo_processamento_tarefa, asctime(newtime));
 #endif
 		rt_task_wait_period(); // **** WAIT
@@ -398,12 +394,10 @@ void *init_task_cnt(void *arg)
 		/** CALCULANDO TEMPO DE DURACAO DO PERIODO DA TAREFA... **/
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);
-		terminoPeriodo = rt_get_cpu_time_ns();
-		periodo_tarefa = (terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		terminoPeriodo = rt_get_time();
+		periodo_tarefa = count2nano(terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 		printf("%s[TASK %d] ##### Duracao do Periodo   ===========================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_branco);
-
-		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 #endif
 		qtdPeriodosCnt++;
 	}
@@ -441,27 +435,32 @@ int RandomIntegerMatMult(void)
 // Intializes the given array with random integers.
 void InitializeMatMult(matrixMatMult Array)
 {
-	int OuterIndex, InnerIndex;
+	int OuterIndex = 0, InnerIndex = 0;
 	int flagInsertSecs = 0;
-	int limitInferiorSecs = 0;
-	int limitSuperiorSecs = 0;
+	int limitInferiorSecs = 0; // %
+	int limitSuperiorSecs = 0; // %
+	int porcentagemProcessamento = 0;
 
 //	printf("Valores da Matriz: \n\n");
 	for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
 	{
 		//INSERINDO SECs na tarefa Matmult...
+		porcentagemProcessamento = (int) ((OuterIndex*UPPERLIMIT + InnerIndex)*100)/(UPPERLIMIT*UPPERLIMIT);
 		flagInsertSecs = 0;
-		if(OuterIndex > limitInferiorSecs && OuterIndex < limitSuperiorSecs)
+		if(porcentagemProcessamento >= limitInferiorSecs && porcentagemProcessamento <= limitSuperiorSecs)
 		{
 			flagInsertSecs = 1;
 		}
 
 		for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
 		{
-			Array[OuterIndex][InnerIndex] = RandomIntegerMatMult();
 			if(flagInsertSecs)
 			{
 				Array[OuterIndex][InnerIndex] = 0;
+			}
+			else
+			{
+				Array[OuterIndex][InnerIndex] = RandomIntegerMatMult();
 			}
 //			printf("(%d)", Array[OuterIndex][InnerIndex]);
 		}
@@ -476,16 +475,20 @@ void InitializeMatMult(matrixMatMult Array)
 // Multiplies arrays A and B and stores the result in ResultArray.
 void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 {
-	unsigned int flagReturnPreemption;
 	unsigned int cpu_frequency_target = 0; // Conterah a frequencia que o processador terah que assumir para que a tarefa conclua seu processamento dentro do seu deadline.
 	int porcentagemProcessamento = 0;
 	int porcentagemProcessamentoAnterior = -1;
+	int somaColunas = 0;
 
 	register int Outer, Inner, Index;
 	for (Outer = 0; Outer < UPPERLIMIT; Outer++)
 	{
+		somaColunas = 0;
+		for (Inner = 0; Inner < UPPERLIMIT; Inner++)
+			somaColunas += Res[Outer][Inner];
+
 		//TODO: URGENTE COLOCAR SECs AQUI...
-		if(A[Outer][0] > 0)
+		if(1)//if(somaColunas > 0)
 		{
 			for (Inner = 0; Inner < UPPERLIMIT; Inner++)
 			{
@@ -495,28 +498,19 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 					Res[Outer][Inner] += A[Outer][Index] * B[Index][Inner];
 				}
 			}
-
-			if(RWCEC_Matmult > 0)
-				RWCEC_Matmult = RWCEC_Matmult - 68811849; // cycles
 		}
 		else // se for igual a zero... significa q a linha esta toda zerada...
 		{
-			SEC_Matmult = SEC_Matmult + 68811849; // cycles
-			if(RWCEC_Matmult > 0)
-				RWCEC_Matmult = RWCEC_Matmult - SEC_Matmult; // cycles
+			for (Inner = 0; Inner < UPPERLIMIT; Inner++)
+			{
+				Res[Outer][Inner] = 0;
+			}
+
+			SEC_Matmult = SEC_Matmult + 68776400; // cycles
 		}
 
-#if FLAG_HABILITAR_CONTROLE_PREEMPCAO == 1
-		flagReturnPreemption = rt_cfg_get_return_preemption(Task_Matmult);
-		if(flagReturnPreemption) // Se a tarefa estiver voltando de uma preempcao a sua frequencia deve ser reajustada.
-		{
-			cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult, flagReturnPreemption);
-#if DEBUG == 1
-			cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
-			printf("%s[TASK %d] Processando... %3d%% ==PREEMPTADA==> Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpu_frequency_target);
-#endif
-		}
-#endif
+		if(RWCEC_Matmult > 0)
+			RWCEC_Matmult = RWCEC_Matmult - 68811849; // cycles
 
 		porcentagemProcessamento = (int) ((Outer*UPPERLIMIT*UPPERLIMIT + Inner*UPPERLIMIT + Index)*100)/(UPPERLIMIT*UPPERLIMIT*UPPERLIMIT);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
@@ -527,7 +521,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 90)
 			{
-				cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult, 0);
+				//cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
 #if DEBUG == 1
 				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
 				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpu_frequency_target);
@@ -599,22 +593,22 @@ void *init_task_matmult(void *arg)
 
 	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, Tperiodo_Matmult);
 
-#if DEBUG == 1
-		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
-#endif
-
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(qtdPeriodosMatmult <= qtdMaxPeriodosMatmult)
 #else // por tempo de execucao
 	while(!flagFimExecucao)
 #endif
 	{
+#if DEBUG == 1
+		inicioExecucao = rt_get_time(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
+#endif
 		// Inicializando WCEC e RWCEC...
 		WCEC_Matmult = WCEC_MATMULT;
 		RWCEC_Matmult = WCEC_MATMULT;
 		SEC_Matmult = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
+		cpuFrequencyInicial_Matmult = abs((WCEC_Matmult / (count2nano(Tperiodo_Matmult)/1000000000.0))/1000.0); // KHz
 		rt_cfg_init_info(Task_Matmult, WCEC_Matmult, cpuFrequencyMin_Matmult, cpuFrequencyInicial_Matmult, cpuVoltageInicial_Matmult);
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
@@ -626,8 +620,8 @@ void *init_task_matmult(void *arg)
 		/** CALCULANDO TEMPO DE PROCESSAMENTO DA TAREFA... **/
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);
-		terminoExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
-		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		terminoExecucao = rt_get_time(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
+		tempo_processamento_tarefa = count2nano(terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, tempo_processamento_tarefa, asctime(newtime));
 #endif
 
@@ -635,14 +629,10 @@ void *init_task_matmult(void *arg)
 
 #if DEBUG == 1
 		/** CALCULANDO TEMPO DE DURACAO DO PERIODO DA TAREFA... **/
-		time(&aclock); // Pega tempo em segundos.
-		newtime = localtime(&aclock);
-		terminoPeriodo = rt_get_cpu_time_ns();
-		periodo_tarefa = (terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
-		printf("%s[TASK %d] ##### Duracao do Periodo   ===========================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, periodo_tarefa, asctime(newtime));
+		terminoPeriodo = rt_get_time();
+		periodo_tarefa = count2nano(terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		printf("%s[TASK %d] ##### Duracao do Periodo   ===========================================================> Duracao: %.10f\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, periodo_tarefa);
 		printf("%s", texto_branco);
-
-		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 #endif
 
 		qtdPeriodosMatmult++;
@@ -778,22 +768,22 @@ void *init_task_bsort(void *arg)
 
 	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, Tperiodo_Bsort);
 
-#if DEBUG == 1
-		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
-#endif
-
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(qtdPeriodosBsort <= qtdMaxPeriodosBsort)
 #else // por tempo de execucao
 	while(!flagFimExecucao)
 #endif
 	{
+#if DEBUG == 1
+		inicioExecucao = rt_get_time(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
+#endif
 		// Inicializando WCEC e RWCEC...
 		WCEC_Bsort = WCEC_BSORT;
 		RWCEC_Bsort = WCEC_BSORT;
 		SEC_Bsort = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
+		cpuFrequencyInicial_Bsort = abs((WCEC_Bsort / (count2nano(Tperiodo_Bsort)/1000000000.0))/1000.0); // KHz
 		rt_cfg_init_info(Task_Bsort, WCEC_Bsort, cpuFrequencyMin_Bsort, cpuFrequencyInicial_Bsort, cpuVoltageInicial_Bsort);
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
@@ -805,8 +795,8 @@ void *init_task_bsort(void *arg)
 		/** CALCULANDO TEMPO DE PROCESSAMENTO DA TAREFA... **/
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);
-		terminoExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
-		tempo_processamento_tarefa = (terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		terminoExecucao = rt_get_time(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
+		tempo_processamento_tarefa = count2nano(terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, tempo_processamento_tarefa, asctime(newtime));
 #endif
 
@@ -816,12 +806,10 @@ void *init_task_bsort(void *arg)
 		/** CALCULANDO TEMPO DE DURACAO DO PERIODO DA TAREFA... **/
 		time(&aclock); // Pega tempo em segundos.
 		newtime = localtime(&aclock);
-		terminoPeriodo = rt_get_cpu_time_ns();
-		periodo_tarefa = (terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		terminoPeriodo = rt_get_time();
+		periodo_tarefa = count2nano(terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 		printf("%s[TASK %d] ##### Duracao do Periodo   ===========================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, periodo_tarefa, asctime(newtime));
 		printf("%s", texto_branco);
-
-		inicioExecucao = rt_get_cpu_time_ns(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
 #endif
 
 		qtdPeriodosBsort++;
@@ -872,6 +860,7 @@ void *init_task_cpustats(void *arg)
 		SEC_CpuStats = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
+		cpuFrequencyInicial_CpuStats = abs((WCEC_CpuStats / (count2nano(Tperiodo_CpuStats)/1000000000.0))/1000.0); // KHz
 		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
 
 		cpuFrequencyAtual_CpuStats = rt_cfg_get_cpu_frequency(Task_CpuStats);
@@ -880,8 +869,8 @@ void *init_task_cpustats(void *arg)
 #endif
 
 		/** INICIO: PROCESSANDO A TAREFA... CALCULANDO O TEMPO TOTAL DE EXECUCAO DO EXPERIMENTO. **/
-		timerTerminoExperimento = rt_get_cpu_time_ns();
-		tempoTotalExperimento = (timerTerminoExperimento - timerInicioExperimento) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+		timerTerminoExperimento = rt_get_time();
+		tempoTotalExperimento = count2nano(timerTerminoExperimento - timerInicioExperimento) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 		if(qtdPeriodosCnt >= qtdMaxPeriodosCnt && qtdPeriodosMatmult >= qtdMaxPeriodosMatmult && qtdPeriodosBsort >= qtdMaxPeriodosBsort)
@@ -926,7 +915,7 @@ void *init_task_cpustats(void *arg)
 
 int manager_tasks(void)
 {
-	//rt_set_periodic_mode();
+	rt_set_periodic_mode();
 	rt_make_hard_real_time();
 
 	printf("************** Iniciando escalonamento **************\n");
@@ -936,16 +925,11 @@ int manager_tasks(void)
 #else
 	printf("=> [NAO] DEBUG\n");
 #endif
-#if FLAG_HABILITAR_CONTROLE_PREEMPCAO == 1
-	printf("=> [SIM] CONTROLE PREEMPCAO\n");
-#else
-	printf("=> [NAO] CONTROLE PREEMPCAO\n");
-#endif
 
 	//rt_set_oneshot_mode();
 	start_rt_timer(0);
 	tick_period = nano2count(TICK_PERIOD);
-	delay_start_timeline = tick_period * 20; // Delay: 1 segundo(s)
+	delay_start_timeline = tick_period * 20; // Delay: 2 segundo(s)
 	start_timeline = rt_get_time() + delay_start_timeline;
 
 	printf("TICK_PERIOD ================> %llu\n", tick_period);
@@ -956,7 +940,7 @@ int manager_tasks(void)
 	Thread_CpuStats = rt_thread_create(init_task_cpustats, NULL, 0);
 
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
-	timerInicioExperimento = rt_get_cpu_time_ns();
+	timerInicioExperimento = rt_get_time();
 
 	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
 	while(!getchar());
