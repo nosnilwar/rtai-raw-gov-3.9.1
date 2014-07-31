@@ -14,3 +14,24 @@ root@PROTEUS:/mnt/cgroups/sistema_operacional/os_default# echo 0-1 > cpuset.cpus
 
 root@PROTEUS:/mnt/cgroups/sistema_operacional/os_default# cat cpuset.cpus
 0-1
+
+
+root@PROTEUS:~# \
+> service cgred stop \
+> service cgconfig stop \
+> echo 0-1 > /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus
+
+
+root@PROTEUS:/usr/src/linux-2.6.38.8# service cgred stop && service cgconfig stop
+Stopping CGroup Rules Engine Daemon...
+.
+Stopping cgconfig service: cgclear failed with Invalid argument
+.
+root@PROTEUS:/usr/src/linux-2.6.38.8# echo 0-1 > /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus
+root@PROTEUS:/usr/src/linux-2.6.38.8# 
+root@PROTEUS:/usr/src/linux-2.6.38.8# 
+root@PROTEUS:/usr/src/linux-2.6.38.8# 
+root@PROTEUS:/usr/src/linux-2.6.38.8# cpufreq-set -c 0 -f 3000000
+root@PROTEUS:/usr/src/linux-2.6.38.8# cpufreq-set -c 1 -f 3000000
+root@PROTEUS:/usr/src/linux-2.6.38.8# 
+

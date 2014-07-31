@@ -147,7 +147,6 @@ unsigned int reajustarCpuFreq(int idTask, RT_TASK *task, long int RWCEC)
 	RTIME period = 0;
 	RTIME periodic_resume_time = 0;
 
-	//tick_timer_atual = rt_get_cpu_time_ns(); //** PEGANDO O TIMER ATUAL DO PROCESSADOR.
 	tick_timer_atual = rt_get_time();
 	period = rt_cfg_get_period(task);
 	periodic_resume_time = rt_cfg_get_periodic_resume_time(task);
@@ -157,7 +156,7 @@ unsigned int reajustarCpuFreq(int idTask, RT_TASK *task, long int RWCEC)
 		tempoRestanteProcessamento = 1;
 
 #if DEBUG == 1
-	printf("%s[TASK %d] - cpu_frequency_target = RWCEC(%ld) / TRP(%f) ===> TIMER(%llu)\n", arrayTextoCorIdTask[idTask], idTask, RWCEC, tempoRestanteProcessamento, tick_timer_atual);
+	printf("%s[TASK %d] - cpu_frequency_target = RWCEC(%ld) / TRP(%f) ===> TIMER(%llu)\n", arrayTextoCorIdTask[idTask], idTask, RWCEC, tempoRestanteProcessamento, count2nano(tick_timer_atual));
 #endif
 
 	cpu_frequency_target = (RWCEC / tempoRestanteProcessamento) ; // Unidade: Ciclos/segundo (a conversao para segundos foi feita acima 10^9)
@@ -336,7 +335,7 @@ void *init_task_cnt(void *arg)
 #endif
 
 	RTIME Tinicio;
-	int prioridade = idTaskCnt;
+	int prioridade = idTaskCnt + 1;
 
 	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
 	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
@@ -523,6 +522,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 			{
 				//cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
 #if DEBUG == 1
+				//cpuFrequencyAtual_Matmult = cpufreq_get(CPUID_RTAI); //TODO:TESTAR COM URGENCIA A OBTENCAO DA FREQUENCIA ATUAL DO PROCESSADOR
 				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
 				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpu_frequency_target);
 #endif

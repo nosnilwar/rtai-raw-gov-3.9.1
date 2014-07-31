@@ -88,9 +88,6 @@ struct klist_t wake_up_srq[NR_RT_CPUS];
 
 /* +++++++++++++++ END OF WHAT MUST BE AVAILABLE EVERYWHERE +++++++++++++++++ */
 
-//TODO:RAWLINSON...
-unsigned long long contUpdateTimerGovernor = 0;
-
 extern struct { volatile int locked, rqsted; } rt_scheduling[];
 
 static unsigned long rt_smp_linux_cr0[NR_RT_CPUS];
@@ -546,7 +543,6 @@ int rt_check_current_stack(void)
 	}
 }
 
-
 #define RR_YIELD() \
 if (CONFIG_RTAI_ALLOW_RR && rt_current->policy > 0) { \
 	if (rt_current->yield_time <= rt_times.tick_time) { \
@@ -567,7 +563,39 @@ if (CONFIG_RTAI_ALLOW_RR && rt_current->policy > 0) { \
 	} else { \
 		rt_current->rr_remaining = rt_current->yield_time - rt_times.tick_time; \
 	} \
-} 
+}
+
+//TODO:RAWLINSON... MONITORA A EXECUCAO DAS TAREFAS QUE RETORNARAM DE PREEMPCAO.
+int preemption_monitor(void)
+{
+	unsigned long flags;
+
+	struct task_struct *current_task_linux;
+	RT_TASK *rt_task;
+	struct cpufreq_policy *policy;
+	unsigned long long deadline_ns;
+	unsigned long long tick_timer_atual_ns; // possui o timer do processador RTAI atualizado...
+
+	// Verifica se a tarefa em execucao retornou de uma preempcao...
+	current_task_linux = get_current_task(CPUID_RTAI);
+	rt_task = pid2rttask(current_task_linux->pid);
+	if(rt_task && current_task_linux && current_task_linux->flagReturnPreemption && current_task_linux->pid > 0 && current_task_linux->state == TASK_RUNNING)
+	{
+		printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ RETORNANDO DE PREEMPCAO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+		printk("[RAWLINSON_SCHEDULE - TASK_TO_SCHEDULE]: C_PID(%d) C_STATE(%ld) C_FRP(%d)\n", current_task_linux->pid, current_task_linux->state, current_task_linux->flagReturnPreemption);
+
+		policy = cpufreq_cpu_get(CPUID_RTAI);
+		if(policy && policy->governor && policy->governor->wake_up_kworker)
+		{
+			tick_timer_atual_ns = rt_get_cpu_time_ns();
+			deadline_ns = count2nano(rt_task->periodic_resume_time + rt_task->period);
+			policy->governor->wake_up_kworker(policy, current_task_linux, tick_timer_atual_ns, deadline_ns);
+		}
+		//TODO:RAWLINSON - FIM
+	}
+
+	return 0;
+}
 
 #define TASK_TO_SCHEDULE() \
 do { \
@@ -576,12 +604,6 @@ do { \
 		new_task->yield_time = rt_times.tick_time + new_task->rr_remaining; \
 	} \
 	new_task->running = 1; \
-	if(current->flagReturnPreemption && current->state == TASK_RUNNING) { \
-		printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ RETORNANDO DE PREEMPCAO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"); \
-		printk("[RAWLINSON_SCHEDULE - TASK_TO_SCHEDULE]:   PID(%d)   STATE(%d)   FRP(%d)\n", new_task->lnxtsk->pid, new_task->state, new_task->lnxtsk->flagReturnPreemption); \
-		printk("[RAWLINSON_SCHEDULE - TASK_TO_SCHEDULE]: C_PID(%d) C_STATE(%d) C_FRP(%d)\n", current->pid, current->state, current->flagReturnPreemption); \
-		current->flagReturnPreemption = 0; \
-	} \
 } while (0)
 
 #define RR_INTR_TIME(fire_shot) \
@@ -1299,6 +1321,12 @@ redo_timer_handler:
                 rt_set_timer_delay(0);
 	}
 
+	//TODO:RAWLINSON...
+	if(cpuid == CPUID_RTAI)
+	{
+		preemption_monitor();
+	}
+
 	if (new_task != rt_current) {
 		if (rt_scheduling[cpuid].locked) {
 			rt_scheduling[cpuid].rqsted = 1;
@@ -1440,7 +1468,6 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	rt_smp_times[cpuid].periodic_tick = 1;
 	tuned.timers_tol[0] = rt_half_tick = 0;
 	rt_time_h = 0;
-
 	linux_times = rt_smp_times;
 	rt_request_rtc(CONFIG_RTAI_RTC_FREQ, (void *)rt_timer_handler);
 	rt_sched_timed = 1;
@@ -1450,8 +1477,6 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 
 void stop_rt_timer(void)
 {
-	int const cpuid = 0;
-
 	if (rt_sched_timed) {
 		rt_sched_timed = 0;
 		rt_release_rtc();
@@ -1560,20 +1585,9 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 		period = 0;
 		rt_set_oneshot_mode();
 	}
-
-	//TODO:RAWLINSON
-	for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++)
-	{
-		if(cpuid == CPUID_RTAI)
-		{
-			setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
-			setup_data[cpuid].count = count2nano(period);
-		}
-		else
-		{
-			setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
-			setup_data[cpuid].count = count2nano(CLOCKS_PER_SEC);
-		}
+	for (cpuid = 0; cpuid < NR_RT_CPUS; cpuid++) {
+		setup_data[cpuid].mode = oneshot_timer ? 0 : 1;
+		setup_data[cpuid].count = count2nano(period);
 	}
 	start_rt_apic_timers(setup_data, rtai_cpuid());
 	rt_gettimeorig(NULL);
@@ -1625,13 +1639,12 @@ RTAI_SYSCALL_MODE RTIME start_rt_timer(int period)
 	rt_smp_times[cpuid].intr_time     = rt_times.intr_time;
 	rt_smp_times[cpuid].linux_time    = rt_times.linux_time;
 	rt_smp_times[cpuid].periodic_tick = rt_times.periodic_tick;
-	rt_time_h = rt_times.tick_time + rt_half_tick;
-
+        rt_time_h = rt_times.tick_time + rt_half_tick;
 	linux_times = rt_smp_times;
-	rt_global_restore_flags(flags);
+        rt_global_restore_flags(flags);
 	REQUEST_RECOVER_JIFFIES();
 	rt_gettimeorig(NULL);
-	return period;
+        return period;
 
 #undef cpuid
 #define rt_times (rt_smp_times[cpuid])
@@ -1663,8 +1676,6 @@ RTAI_SYSCALL_MODE void start_rt_apic_timers(struct apic_timer_setup_data *setup_
 
 void stop_rt_timer(void)
 {
-	int const cpuid = 0;
-
 	if (rt_sched_timed) {
 		rt_sched_timed = 0;
 		RELEASE_RECOVER_JIFFIES();
@@ -1964,7 +1975,6 @@ void rt_deregister_watchdog(RT_TASK *wd, int cpuid)
 
 static RT_TRAP_HANDLER lxrt_old_trap_handler;
 
-//TODO:RAWLINSON - FUNCAO POSSUI A TASK Q ESTA EM EXECUCAO
 static inline void _rt_schedule_soft_tail(RT_TASK *rt_task, int cpuid)
 {
 	rt_global_cli();
@@ -2285,7 +2295,6 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_frequency(struct rt_task_struct *task, unsi
 	}
 	task->lnxtsk->cpu_frequency = cpu_frequency;
 	task->lnxtsk->flagReturnPreemption = 0;
-	task->lnxtsk->flagGovChangeFrequency = 0;
 	rt_global_restore_flags(flags);
 
 	policy = cpufreq_cpu_get(CPUID_RTAI);
@@ -2329,7 +2338,6 @@ RTAI_SYSCALL_MODE int rt_cfg_set_cpu_voltage(struct rt_task_struct *task, unsign
 	}
 	task->lnxtsk->cpu_voltage = cpu_voltage;
 	task->lnxtsk->flagReturnPreemption = 0;
-	task->lnxtsk->flagGovChangeFrequency = 0;
 	rt_global_restore_flags(flags);
 	return 0;
 }
