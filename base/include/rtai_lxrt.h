@@ -1556,7 +1556,31 @@ struct cpufreq_sysfs_stats {
 // Definicoes da funcao rt_cfg_get_cpu_stats
 #define RT_PATH_TO_CPU "/sys/devices/system/cpu/"
 #define RT_MAX_LINE_LEN 255
+#define RT_MAX_VALUE_FILES 8
 #define RT_SYSFS_PATH_MAX 255
+
+// Definicoes da funcao rt_cfg_get_transitions
+#define RT_CPUINFO_CUR_FREQ 0
+#define RT_CPUINFO_MIN_FREQ 1
+#define RT_CPUINFO_MAX_FREQ 2
+#define RT_CPUINFO_LATENCY 3
+#define RT_SCALING_CUR_FREQ 4
+#define RT_SCALING_MIN_FREQ 5
+#define RT_SCALING_MAX_FREQ 6
+#define RT_STATS_NUM_TRANSITIONS 7
+
+#define RT_MAX_VALUE_FILES 8
+
+static const char *value_files[RT_MAX_VALUE_FILES] = {
+	[RT_CPUINFO_CUR_FREQ] = "cpuinfo_cur_freq",
+	[RT_CPUINFO_MIN_FREQ] = "cpuinfo_min_freq",
+	[RT_CPUINFO_MAX_FREQ] = "cpuinfo_max_freq",
+	[RT_CPUINFO_LATENCY]  = "cpuinfo_transition_latency",
+	[RT_SCALING_CUR_FREQ] = "scaling_cur_freq",
+	[RT_SCALING_MIN_FREQ] = "scaling_min_freq",
+	[RT_SCALING_MAX_FREQ] = "scaling_max_freq",
+	[RT_STATS_NUM_TRANSITIONS] = "stats/total_trans"
+};
 
 /* helper function to read file from /sys into given buffer */
 /* fname is a relative path under "cpuX/cpufreq" dir */
@@ -1582,6 +1606,50 @@ unsigned int sysfs_read_cpu_file(unsigned int cpu, const char *fname, char *buf,
 	close(fd);
 
 	return numread;
+}
+
+static unsigned long sysfs_get_one_value(unsigned int cpu, unsigned int which)
+{
+ 	unsigned long value;
+	unsigned int len;
+	char linebuf[RT_MAX_LINE_LEN];
+	char *endp;
+
+	if ( which >= RT_MAX_VALUE_FILES )
+		return 0;
+
+	if ( ( len = sysfs_read_cpu_file(cpu, value_files[which], linebuf, sizeof(linebuf))) == 0 )
+	{
+		return 0;
+	}
+
+	value = strtoul(linebuf, &endp, 0);
+
+	if ( endp == linebuf || errno == ERANGE )
+		return 0;
+
+	return value;
+}
+
+RTAI_PROTO(void, rt_cfg_put_stats, (struct cpufreq_sysfs_stats *any))
+{
+	struct cpufreq_sysfs_stats *tmp, *next;
+
+	if (!any)
+		return;
+
+	tmp = any->first;
+	while (tmp) {
+		next = tmp->next;
+		free(tmp);
+		tmp = next;
+	}
+}
+
+RTAI_PROTO(unsigned long, rt_cfg_get_transitions, (unsigned int cpu))
+{
+	unsigned long ret = sysfs_get_one_value(cpu, RT_STATS_NUM_TRANSITIONS);
+	return (ret);
 }
 
 RTAI_PROTO(struct cpufreq_sysfs_stats *, rt_cfg_get_cpu_stats, (unsigned int cpu, unsigned long long *total_time))

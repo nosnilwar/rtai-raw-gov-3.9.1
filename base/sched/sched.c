@@ -568,8 +568,6 @@ if (CONFIG_RTAI_ALLOW_RR && rt_current->policy > 0) { \
 //TODO:RAWLINSON... MONITORA A EXECUCAO DAS TAREFAS QUE RETORNARAM DE PREEMPCAO.
 int preemption_monitor(void)
 {
-	unsigned long flags;
-
 	struct task_struct *current_task_linux;
 	RT_TASK *rt_task;
 	struct cpufreq_policy *policy;

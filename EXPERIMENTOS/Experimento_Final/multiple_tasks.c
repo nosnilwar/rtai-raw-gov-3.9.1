@@ -47,6 +47,7 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 #define QTD_CICLOS_EXPERIMENTOS 3 // MMC * 3
 
 /* Definindo MACROS */
+#define CPUID_RTAI 0 // para o Kernel o primeiro processador é o zero.
 #define CPU_ALLOWED 1 // Processador 1
 
 /* Definindo variaveis goblais*/
@@ -59,8 +60,10 @@ char arrayTextoCorIdTask[4][8] = {"\033[31m", "\033[32m", "\033[37m", "\033[36m"
 RTIME timerInicioExperimento = 0;
 RTIME timerTerminoExperimento = 0;
 RTIME tempoTotalExperimento = 0;
-#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO 300 // segundos
 #define TEMPO_AMOSTRAGEM_ESTATISTICA_PARCIAL_CPU 30 // segundos
+
+#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (180) // segundos -> 3 minutos
+//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (3 * 3600) // segundos -> 3 horas
 
 // variaveis globais do sistema de estatistica...
 int cpuid_stats = 0;
@@ -69,6 +72,8 @@ unsigned long long before_total_time;
 unsigned long long after_total_time;
 struct cpufreq_sysfs_stats *beforeStats;
 struct cpufreq_sysfs_stats *afterStats;
+unsigned long before_total_trans;
+unsigned long after_total_trans;
 
 // DEFINICAO DAS TASKS...
 #define WCEC_CNT 8281406000 // cycles -> frequencia ideal => 800 Mhz
@@ -195,8 +200,12 @@ static void print_speed(unsigned long speed)
 }
 
 //TODO: copiado do cpufrequtils-8
-void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sysfs_stats *afterStats, unsigned long long total_time)
+void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sysfs_stats *afterStats, unsigned long before_total_trans, unsigned long after_total_trans, unsigned long long total_time)
 {
+	unsigned long total_trans;
+
+	total_trans = after_total_trans - before_total_trans;
+
 	printf("\n\nEstatísticas do Processador...\n\n");
 	if (beforeStats && afterStats) {
 		printf("** cpufreq stats: **\n");
@@ -218,6 +227,13 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 				printf("\n");
 		}
 		printf("\n");
+
+		if (total_trans)
+			printf("Num. Total de Transições: (%lu)\n", total_trans);
+		else
+			printf("\n");
+
+		printf("\n\n");
 	}
 }
 
@@ -336,9 +352,6 @@ void *init_task_cnt(void *arg)
 
 	RTIME Tinicio;
 	int prioridade = idTaskCnt + 1;
-
-	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
-	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
 
 	if(!(Task_Cnt = rt_thread_init(nam2num("TSKCNT"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
 	{
@@ -520,7 +533,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 90)
 			{
-				//cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
+				cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
 #if DEBUG == 1
 				//cpuFrequencyAtual_Matmult = cpufreq_get(CPUID_RTAI); //TODO:TESTAR COM URGENCIA A OBTENCAO DA FREQUENCIA ATUAL DO PROCESSADOR
 				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
@@ -890,9 +903,10 @@ void *init_task_cpustats(void *arg)
 
 			// Obtendo as estatisticas do processador depois...
 			afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
+			after_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
 			total_time = after_total_time - before_total_time;
-			print_cpu_stats(beforeStats, afterStats, total_time);
+			print_cpu_stats(beforeStats, afterStats, before_total_trans, after_total_trans, total_time);
 		}
 		/** FIM: PROCESSANDO A TAREFA... **/
 
@@ -905,7 +919,7 @@ void *init_task_cpustats(void *arg)
 
 	printf("************** ESTATISTICAS FINAL **************\n");
 	total_time = after_total_time - before_total_time;
-	print_cpu_stats(beforeStats, afterStats, total_time);
+	print_cpu_stats(beforeStats, afterStats, before_total_trans, after_total_trans, total_time);
 
 	return 0;
 }
@@ -941,6 +955,10 @@ int manager_tasks(void)
 
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
 	timerInicioExperimento = rt_get_time();
+
+	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
+	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
+	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
 	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
 	while(!getchar());
