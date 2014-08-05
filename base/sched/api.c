@@ -2263,6 +2263,7 @@ EXPORT_SYMBOL(rt_cfg_set_cpu_frequency_min);
 EXPORT_SYMBOL(rt_cfg_get_cpu_frequency_min);
 EXPORT_SYMBOL(rt_cfg_get_return_preemption);
 EXPORT_SYMBOL(rt_cfg_get_period);
+EXPORT_SYMBOL(rt_cfg_cpufreq_get);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #ifdef CONFIG_SMP

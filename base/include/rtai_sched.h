@@ -446,6 +446,8 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_get_cpu_frequency_min(struct rt_task_struc
 RTAI_SYSCALL_MODE unsigned int rt_cfg_get_return_preemption(struct rt_task_struct *task);
 
 RTAI_SYSCALL_MODE unsigned long long rt_cfg_get_period(RT_TASK *rt_task);
+
+RTAI_SYSCALL_MODE unsigned int rt_cfg_cpufreq_get(unsigned int cpu);
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 void rt_schedule(void);

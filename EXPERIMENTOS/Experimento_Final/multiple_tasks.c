@@ -24,7 +24,7 @@ Nanosegundos 1 -> Microsegundos 10^3
 /* Definindo CONSTANTES... */
 #define DEBUG 1
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 1 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
-#define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_RAW_MONITOR 0 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
 
@@ -279,6 +279,8 @@ int InitializeCnt(matrixCnt Array)
 
 void SumCnt(matrixCnt Array)
 {
+	unsigned int cpuFrequencyAtual = 0; // KHz
+
 	register int Outer, Inner;
 
 	int Ptotal = 0; /* changed these to locals in order to drive worst case */
@@ -312,10 +314,11 @@ void SumCnt(matrixCnt Array)
 		porcentagemProcessamento = (int) ((Outer*MAXSIZE + Inner)*100)/(MAXSIZE*MAXSIZE);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 		{
+			cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 			cpuFrequencyAtual_Cnt = rt_cfg_get_cpu_frequency(Task_Cnt);
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 #if DEBUG == 1
-			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual_Cnt);
+			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual_Cnt, cpuFrequencyAtual);
 #endif
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
@@ -508,6 +511,8 @@ void InitializeMatMult(matrixMatMult Array)
 // Multiplies arrays A and B and stores the result in ResultArray.
 void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 {
+	unsigned int cpuFrequencyAtual = 0; // KHz
+
 	unsigned int cpu_frequency_target = 0; // Conterah a frequencia que o processador terah que assumir para que a tarefa conclua seu processamento dentro do seu deadline.
 	int porcentagemProcessamento = 0;
 	int porcentagemProcessamentoAnterior = -1;
@@ -558,15 +563,17 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 				cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
 #endif
 #if DEBUG == 1
+				cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
-				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpu_frequency_target);
+				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpuFrequencyAtual, cpu_frequency_target);
 #endif
 			}
 			else
 			{
 #if DEBUG == 1
+				cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
-				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult);
+				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpuFrequencyAtual);
 #endif
 			}
 		}
@@ -725,6 +732,8 @@ void InitializeBsort(int Array[MAXDIM])
 // Sorts an array of integers of size NUMELEMS in ascending order.
 void BubbleSort(int Array[MAXDIM])
 {
+	unsigned int cpuFrequencyAtual = 0; // KHz
+
 	int Sorted = FALSE;
 	int Temp, /** LastIndex,**/ Index, i;
 
@@ -754,10 +763,11 @@ void BubbleSort(int Array[MAXDIM])
 		porcentagemProcessamento = (int) ((i*NUMELEMS + Index)*100)/(NUMELEMS*NUMELEMS);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 		{
+			cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 			cpuFrequencyAtual_Bsort = rt_cfg_get_cpu_frequency(Task_Bsort);
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 #if DEBUG == 1
-			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual_Bsort);
+			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual_Bsort, cpuFrequencyAtual);
 #endif
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Bsort, RWCEC_Bsort);
@@ -769,8 +779,9 @@ void BubbleSort(int Array[MAXDIM])
 	}
 
 #if DEBUG == 1
+	cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 	cpuFrequencyAtual_Bsort = rt_cfg_get_cpu_frequency(Task_Bsort);
-	printf("%s[TASK %d] Processando... 100%% ==============> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, cpuFrequencyAtual_Bsort);
+	printf("%s[TASK %d] Processando... 100%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, cpuFrequencyAtual_Bsort, cpuFrequencyAtual);
 #endif
 
 	// Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
@@ -878,6 +889,7 @@ void *init_task_bsort(void *arg)
 
 void *init_task_cpustats(void *arg)
 {
+	unsigned int cpuFrequencyAtual = 0; // KHz
 	int multiplicadorEstatisticasParciais = 1;
 
 	RTIME Tinicio;
@@ -914,9 +926,10 @@ void *init_task_cpustats(void *arg)
 		rt_cfg_init_info(Task_CpuStats, 0, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
 #endif
 
-		cpuFrequencyAtual_CpuStats = rt_cfg_get_cpu_frequency(Task_CpuStats);
 #if DEBUG == 1
-		printf("%s[TASK %d] Processando... 100%% ==============> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, cpuFrequencyAtual_CpuStats);
+		cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
+		cpuFrequencyAtual_CpuStats = rt_cfg_get_cpu_frequency(Task_CpuStats);
+		printf("%s[TASK %d] Processando... 100%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, cpuFrequencyAtual_CpuStats, cpuFrequencyAtual);
 #endif
 
 		/** INICIO: PROCESSANDO A TAREFA... CALCULANDO O TEMPO TOTAL DE EXECUCAO DO EXPERIMENTO. **/
