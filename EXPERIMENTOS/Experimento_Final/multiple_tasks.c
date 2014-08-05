@@ -76,7 +76,7 @@ unsigned long before_total_trans;
 unsigned long after_total_trans;
 
 // DEFINICAO DAS TASKS...
-#define WCEC_CNT 8281406000 // cycles -> frequencia ideal => 800 Mhz
+#define WCEC_CNT 8281406000 // cycles -> frequencia ideal => 1.8 Ghz
 int idTaskCnt = 0;
 int qtdPeriodosCnt = 1;
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * 8;
@@ -368,6 +368,10 @@ void *init_task_cnt(void *arg)
 	rt_change_prio(Task_Cnt, prioridade);
 
 	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo_Cnt);
+
+	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
+	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
+	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(qtdPeriodosCnt <= qtdMaxPeriodosCnt)
@@ -895,6 +899,7 @@ void *init_task_cpustats(void *arg)
 
 			// Obtendo as estatisticas do processador depois...
 			afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
+			after_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 		}
 		else if(tempoTotalExperimento >= (multiplicadorEstatisticasParciais * TEMPO_AMOSTRAGEM_ESTATISTICA_PARCIAL_CPU))
 		{
@@ -918,6 +923,8 @@ void *init_task_cpustats(void *arg)
 	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %d\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, qtdPeriodosCpuStats);
 
 	printf("************** ESTATISTICAS FINAL **************\n");
+
+	// Obtendo as estatisticas do processador depois...
 	total_time = after_total_time - before_total_time;
 	print_cpu_stats(beforeStats, afterStats, before_total_trans, after_total_trans, total_time);
 
@@ -955,10 +962,6 @@ int manager_tasks(void)
 
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
 	timerInicioExperimento = rt_get_time();
-
-	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
-	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
-	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
 	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
 	while(!getchar());
