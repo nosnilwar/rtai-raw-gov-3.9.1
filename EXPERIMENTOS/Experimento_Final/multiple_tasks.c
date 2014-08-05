@@ -24,6 +24,9 @@ Nanosegundos 1 -> Microsegundos 10^3
 /* Definindo CONSTANTES... */
 #define DEBUG 1
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 1 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
+#define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
 
 /** TABELA DE CORES... **/
 char texto_preto[8] = "\033[30m"; //Cor do primeiro plano preta
@@ -268,7 +271,9 @@ int InitializeCnt(matrixCnt Array)
 	if(RWCEC_Cnt > 0)
 		RWCEC_Cnt = RWCEC_Cnt - 2499203000; // Quantidade de ciclos da inicializacao do array.
 
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 	rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
+#endif
 	return 0;
 }
 
@@ -312,7 +317,9 @@ void SumCnt(matrixCnt Array)
 #if DEBUG == 1
 			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual_Cnt);
 #endif
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
+#endif
 		}
 	}
 
@@ -389,7 +396,11 @@ void *init_task_cnt(void *arg)
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 		cpuFrequencyInicial_Cnt = abs((WCEC_Cnt / (count2nano(Tperiodo_Cnt)/1000000000.0))/1000.0); // KHz
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Cnt, WCEC_Cnt, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
+#else
+		rt_cfg_init_info(Task_Cnt, 0, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
+#endif
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedCnt();
@@ -453,9 +464,11 @@ void InitializeMatMult(matrixMatMult Array)
 {
 	int OuterIndex = 0, InnerIndex = 0;
 	int flagInsertSecs = 0;
-	int limitInferiorSecs = 0; // %
-	int limitSuperiorSecs = 0; // %
 	int porcentagemProcessamento = 0;
+#if FLAG_HABILITAR_SECS == 1
+	int limitInferiorSecs = 0; // %
+	int limitSuperiorSecs = 50; // %
+#endif
 
 //	printf("Valores da Matriz: \n\n");
 	for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
@@ -463,10 +476,12 @@ void InitializeMatMult(matrixMatMult Array)
 		//INSERINDO SECs na tarefa Matmult...
 		porcentagemProcessamento = (int) ((OuterIndex*UPPERLIMIT + InnerIndex)*100)/(UPPERLIMIT*UPPERLIMIT);
 		flagInsertSecs = 0;
+#if FLAG_HABILITAR_SECS == 1
 		if(porcentagemProcessamento >= limitInferiorSecs && porcentagemProcessamento <= limitSuperiorSecs)
 		{
 			flagInsertSecs = 1;
 		}
+#endif
 
 		for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
 		{
@@ -485,7 +500,9 @@ void InitializeMatMult(matrixMatMult Array)
 	if(RWCEC_Matmult > 0)
 		RWCEC_Matmult = RWCEC_Matmult - 38554700; // Quantidade de ciclos da inicializacao do array.
 
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 	rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult);
+#endif
 }
 
 // Multiplies arrays A and B and stores the result in ResultArray.
@@ -499,28 +516,27 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 	register int Outer, Inner, Index;
 	for (Outer = 0; Outer < UPPERLIMIT; Outer++)
 	{
+#if FLAG_HABILITAR_SECS == 1
 		somaColunas = 0;
 		for (Inner = 0; Inner < UPPERLIMIT; Inner++)
 			somaColunas += Res[Outer][Inner];
+#else
+		somaColunas = 1;
+#endif
 
-		//TODO: URGENTE COLOCAR SECs AQUI...
-		if(1)//if(somaColunas > 0)
+		if(somaColunas > 0)
 		{
 			for (Inner = 0; Inner < UPPERLIMIT; Inner++)
 			{
 				Res[Outer][Inner] = 0;
 				for (Index = 0; Index < UPPERLIMIT; Index++)
-				{
 					Res[Outer][Inner] += A[Outer][Index] * B[Index][Inner];
-				}
 			}
 		}
 		else // se for igual a zero... significa q a linha esta toda zerada...
 		{
 			for (Inner = 0; Inner < UPPERLIMIT; Inner++)
-			{
 				Res[Outer][Inner] = 0;
-			}
 
 			SEC_Matmult = SEC_Matmult + 68776400; // cycles
 		}
@@ -531,15 +547,17 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 		porcentagemProcessamento = (int) ((Outer*UPPERLIMIT*UPPERLIMIT + Inner*UPPERLIMIT + Index)*100)/(UPPERLIMIT*UPPERLIMIT*UPPERLIMIT);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 		{
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult);
-
+#endif
 			// PONTOS DE CONTROLE DO MATMULT
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 90)
 			{
+#if FLAG_HABILITAR_PONTOS_CONTROLE == 1
 				cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
+#endif
 #if DEBUG == 1
-				//cpuFrequencyAtual_Matmult = cpufreq_get(CPUID_RTAI); //TODO:TESTAR COM URGENCIA A OBTENCAO DA FREQUENCIA ATUAL DO PROCESSADOR
 				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
 				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpu_frequency_target);
 #endif
@@ -626,7 +644,11 @@ void *init_task_matmult(void *arg)
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 		cpuFrequencyInicial_Matmult = abs((WCEC_Matmult / (count2nano(Tperiodo_Matmult)/1000000000.0))/1000.0); // KHz
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Matmult, WCEC_Matmult, cpuFrequencyMin_Matmult, cpuFrequencyInicial_Matmult, cpuVoltageInicial_Matmult);
+#else
+		rt_cfg_init_info(Task_Matmult, 0, cpuFrequencyMin_Matmult, cpuFrequencyInicial_Matmult, cpuVoltageInicial_Matmult);
+#endif
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedMatMult();
@@ -737,7 +759,9 @@ void BubbleSort(int Array[MAXDIM])
 #if DEBUG == 1
 			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual_Bsort);
 #endif
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Bsort, RWCEC_Bsort);
+#endif
 		}
 
 		if (Sorted)
@@ -750,7 +774,9 @@ void BubbleSort(int Array[MAXDIM])
 #endif
 
 	// Sinaliza para o RAW GOVERNOR que a tarefa concluio o seu processamento...
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 	rt_cfg_set_rwcec(Task_Bsort, 0);
+#endif
 }
 
 void *init_task_bsort(void *arg)
@@ -801,7 +827,11 @@ void *init_task_bsort(void *arg)
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 		cpuFrequencyInicial_Bsort = abs((WCEC_Bsort / (count2nano(Tperiodo_Bsort)/1000000000.0))/1000.0); // KHz
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Bsort, WCEC_Bsort, cpuFrequencyMin_Bsort, cpuFrequencyInicial_Bsort, cpuVoltageInicial_Bsort);
+#else
+		rt_cfg_init_info(Task_Bsort, 0, cpuFrequencyMin_Bsort, cpuFrequencyInicial_Bsort, cpuVoltageInicial_Bsort);
+#endif
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitializeBsort(ArrayBsort);
@@ -878,7 +908,11 @@ void *init_task_cpustats(void *arg)
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 		cpuFrequencyInicial_CpuStats = abs((WCEC_CpuStats / (count2nano(Tperiodo_CpuStats)/1000000000.0))/1000.0); // KHz
+#if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
+#else
+		rt_cfg_init_info(Task_CpuStats, 0, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
+#endif
 
 		cpuFrequencyAtual_CpuStats = rt_cfg_get_cpu_frequency(Task_CpuStats);
 #if DEBUG == 1
@@ -945,6 +979,21 @@ int manager_tasks(void)
 	printf("=> [SIM] DEBUG\n");
 #else
 	printf("=> [NAO] DEBUG\n");
+#endif
+#if FLAG_HABILITAR_RAW_MONITOR == 1
+	printf("=> [SIM] RAW MONITOR\n");
+#else
+	printf("=> [NAO] RAW MONITOR\n");
+#endif
+#if FLAG_HABILITAR_PONTOS_CONTROLE == 1
+	printf("=> [SIM] PONTOS DE CONTROLE\n");
+#else
+	printf("=> [NAO] PONTOS DE CONTROLE\n");
+#endif
+#if FLAG_HABILITAR_SECS == 1
+	printf("=> [SIM] SEC's\n");
+#else
+	printf("=> [NAO] SEC's\n");
 #endif
 
 	//rt_set_oneshot_mode();
