@@ -19,6 +19,7 @@ $(TARGET): $(SRCS:.c=.o)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -S $<
 
 -include $(SRCS:.c=.d)
 

@@ -24,9 +24,12 @@ Nanosegundos 1 -> Microsegundos 10^3
 /* Definindo CONSTANTES... */
 #define DEBUG 1
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 1 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
-#define FLAG_HABILITAR_RAW_MONITOR 0 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_SECS 1 // 0 - DESABILITADO e 1 - HABILITADO
+
+#define VALOR_HABILITAR_SECS 1
+#define VALOR_DESABILITAR_SECS 0
 
 /** TABELA DE CORES... **/
 char texto_preto[8] = "\033[30m"; //Cor do primeiro plano preta
@@ -51,7 +54,7 @@ char fundo_branco[8] = "\033[47m"; //Cor do fundo branca
 
 /* Definindo MACROS */
 #define CPUID_RTAI 0 // para o Kernel o primeiro processador é o zero.
-#define CPU_ALLOWED 1 // Processador 1
+#define CPU_ALLOWED (CPUID_RTAI+1) // Processador 1
 
 /* Definindo variaveis goblais*/
 #define TICK_PERIOD 50000000 //Tempo em nano segundos... a cada 0.05 segundos tem o tick
@@ -65,7 +68,10 @@ RTIME timerTerminoExperimento = 0;
 RTIME tempoTotalExperimento = 0;
 #define TEMPO_AMOSTRAGEM_ESTATISTICA_PARCIAL_CPU 30 // segundos
 
-#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (180) // segundos -> 3 minutos
+//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (180) // segundos -> 3 minutos
+#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (300) // segundos -> 5 minutos
+//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (1 * 3600) // segundos -> 1 horas
+//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (2 * 3600) // segundos -> 2 horas
 //#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (3 * 3600) // segundos -> 3 horas
 
 // variaveis globais do sistema de estatistica...
@@ -229,7 +235,8 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 			if (beforeStats && afterStats)
 				printf("\n");
 		}
-		printf("\n");
+		printf("\n\n");
+		printf("Tempo Total: (%llu) usertime units -> (USERTIME_UNIT * 10ms = X ms)\n", total_time);
 
 		if (total_trans)
 			printf("Num. Total de Transições: (%lu)\n", total_trans);
@@ -463,14 +470,14 @@ int RandomIntegerMatMult(void)
 }
 
 // Intializes the given array with random integers.
-void InitializeMatMult(matrixMatMult Array)
+void InitializeMatMult(matrixMatMult Array, int flagPermitirSecs)
 {
 	int OuterIndex = 0, InnerIndex = 0;
 	int flagInsertSecs = 0;
 	int porcentagemProcessamento = 0;
 #if FLAG_HABILITAR_SECS == 1
 	int limitInferiorSecs = 0; // %
-	int limitSuperiorSecs = 50; // %
+	int limitSuperiorSecs = 52; // %
 #endif
 
 //	printf("Valores da Matriz: \n\n");
@@ -480,7 +487,7 @@ void InitializeMatMult(matrixMatMult Array)
 		porcentagemProcessamento = (int) ((OuterIndex*UPPERLIMIT + InnerIndex)*100)/(UPPERLIMIT*UPPERLIMIT);
 		flagInsertSecs = 0;
 #if FLAG_HABILITAR_SECS == 1
-		if(porcentagemProcessamento >= limitInferiorSecs && porcentagemProcessamento <= limitSuperiorSecs)
+		if(flagPermitirSecs && porcentagemProcessamento >= limitInferiorSecs && porcentagemProcessamento <= limitSuperiorSecs)
 		{
 			flagInsertSecs = 1;
 		}
@@ -524,26 +531,23 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 #if FLAG_HABILITAR_SECS == 1
 		somaColunas = 0;
 		for (Inner = 0; Inner < UPPERLIMIT; Inner++)
-			somaColunas += Res[Outer][Inner];
+			somaColunas += A[Outer][Inner];
 #else
 		somaColunas = 1;
 #endif
 
-		if(somaColunas > 0)
+		for (Inner = 0; Inner < UPPERLIMIT; Inner++)
 		{
-			for (Inner = 0; Inner < UPPERLIMIT; Inner++)
+			Res[Outer][Inner] = 0;
+			if(somaColunas > 0)
 			{
-				Res[Outer][Inner] = 0;
 				for (Index = 0; Index < UPPERLIMIT; Index++)
 					Res[Outer][Inner] += A[Outer][Index] * B[Index][Inner];
 			}
-		}
-		else // se for igual a zero... significa q a linha esta toda zerada...
-		{
-			for (Inner = 0; Inner < UPPERLIMIT; Inner++)
-				Res[Outer][Inner] = 0;
-
-			SEC_Matmult = SEC_Matmult + 68776400; // cycles
+			else // se for igual a zero... significa q a linha esta toda zerada...
+			{
+				SEC_Matmult = SEC_Matmult + 68776400; // cycles
+			}
 		}
 
 		if(RWCEC_Matmult > 0)
@@ -557,7 +561,7 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 #endif
 			// PONTOS DE CONTROLE DO MATMULT
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 90)
+			if(porcentagemProcessamento == 60 || porcentagemProcessamento == 90)
 			{
 #if FLAG_HABILITAR_PONTOS_CONTROLE == 1
 				cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
@@ -586,8 +590,8 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
  */
 void TestMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 {
-	InitializeMatMult(A);
-	InitializeMatMult(B);
+	InitializeMatMult(A, VALOR_HABILITAR_SECS);
+	InitializeMatMult(B, VALOR_DESABILITAR_SECS);
 
 	MultiplyMatMult(A, B, Res);
 }
