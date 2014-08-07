@@ -85,8 +85,7 @@ unsigned long before_total_trans;
 unsigned long after_total_trans;
 
 // DEFINICAO DAS TASKS...
-//#define WCEC_CNT 8281406000 // cycles -> frequencia ideal => 1.8 Ghz
-#define WCEC_CNT 2205098000 // cycles -> frequencia ideal => 1.8 Ghz
+#define WCEC_CNT 1421126000 // cycles -> frequencia ideal => 800 Mhz
 int idTaskCnt = 0;
 int qtdPeriodosCnt = 1;
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * 8;
@@ -102,7 +101,7 @@ unsigned int cpuFrequencyInicial_Cnt = 1800000; // KHz
 unsigned int cpuVoltageInicial_Cnt = 5; // V
 //---------------
 
-#define WCEC_MATMULT 53062233163 // cycles -> frequencia ideal => 3.0 Ghz
+#define WCEC_MATMULT 0 // cycles -> frequencia ideal => 3.0 Ghz
 int idTaskMatmult = 1;
 int qtdPeriodosMatmult = 1;
 int qtdMaxPeriodosMatmult = QTD_CICLOS_EXPERIMENTOS * 9;
@@ -272,12 +271,11 @@ int InitializeCnt(matrixCnt Array)
 {
 	register int OuterIndex, InnerIndex;
 
-	for (OuterIndex = 0; OuterIndex < MAXSIZE; OuterIndex++)
-		for (InnerIndex = 0; InnerIndex < MAXSIZE; InnerIndex++)
-			Array[OuterIndex][InnerIndex] = RandomIntegerCnt();
+	for (OuterIndex = 0; OuterIndex < MAXSIZE; OuterIndex++) // xorl + addl + addq + cmpl + jne = 8 cycles
+		for (InnerIndex = 0; InnerIndex < MAXSIZE; InnerIndex++) // cmpq + jne = 5 cycles
+			Array[OuterIndex][InnerIndex] = RandomIntegerCnt(); // call + movl + addq = 7 cycles
 
-	if(RWCEC_Cnt > 0)
-		RWCEC_Cnt = RWCEC_Cnt - 735049000; // Quantidade de ciclos da inicializacao do array.
+	RWCEC_Cnt = RWCEC_Cnt - 588056000; // Quantidade de ciclos da inicializacao do array.
 
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 	rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
@@ -298,26 +296,21 @@ void SumCnt(matrixCnt Array)
 	int porcentagemProcessamento = 0;
 	int porcentagemProcessamentoAnterior = -1;
 
-	for (Outer = 0; Outer < MAXSIZE; Outer++)
+	for (Outer = 0; Outer < MAXSIZE; Outer++) // xorl + jmp + cmpl + jne = 10 cycles
 	{
-		for (Inner = 0; Inner < MAXSIZE; Inner++)
+		for (Inner = 0; Inner < MAXSIZE; Inner++) // cmpq + je + cmpq + jne = 7 cycles
 		{
-#ifdef WORSTCASE_CNT
-			if (Array[Outer][Inner] >= 0) {
-#else
-			if (Array[Outer][Inner] < 0) {
-#endif
-				Ptotal += Array[Outer][Inner];
-				Pcnt++;
+			if (Array[Outer][Inner] >= 0) { // movl + testl + jns  = 8 cycles
+				Ptotal += Array[Outer][Inner]; // addl = 1 cycles
+				Pcnt++; // addl = 1 cycles
 			}
 			else {
-				Ntotal += Array[Outer][Inner];
-				Ncnt++;
+				Ntotal += Array[Outer][Inner]; // addl = 1 cycles
+				Ncnt++; // addl = 1 cycles
 			}
 		}
 
-		if(RWCEC_Cnt > 0)
-			RWCEC_Cnt = RWCEC_Cnt - 210007; // Quantidade de ciclos do loop interno.
+		RWCEC_Cnt = RWCEC_Cnt - 119010; // Quantidade de ciclos do loop interno.
 
 		porcentagemProcessamento = (int) ((Outer*MAXSIZE + Inner)*100)/(MAXSIZE*MAXSIZE);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
@@ -409,6 +402,7 @@ void *init_task_cnt(void *arg)
 		cpuFrequencyInicial_Cnt = abs((WCEC_Cnt / (count2nano(Tperiodo_Cnt)/1000000000.0))/1000.0); // KHz
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Cnt, WCEC_Cnt, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
+
 #else
 		rt_cfg_init_info(Task_Cnt, 0, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
 #endif
@@ -482,10 +476,10 @@ void InitializeMatMult(matrixMatMult Array, int flagPermitirSecs)
 #endif
 
 //	printf("Valores da Matriz: \n\n");
-	for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
+	for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)  // cmpl + jne = 1 cycles
 	{
 		//INSERINDO SECs na tarefa Matmult...
-		porcentagemProcessamento = (int) ((OuterIndex*UPPERLIMIT + InnerIndex)*100)/(UPPERLIMIT*UPPERLIMIT);
+		porcentagemProcessamento = (int) ((OuterIndex*UPPERLIMIT + InnerIndex)*100)/(UPPERLIMIT*UPPERLIMIT); //
 		flagInsertSecs = 0;
 #if FLAG_HABILITAR_SECS == 1
 		if(flagPermitirSecs && porcentagemProcessamento >= limitInferiorSecs && porcentagemProcessamento <= limitSuperiorSecs)
