@@ -85,7 +85,8 @@ unsigned long before_total_trans;
 unsigned long after_total_trans;
 
 // DEFINICAO DAS TASKS...
-#define WCEC_CNT 8281406000 // cycles -> frequencia ideal => 1.8 Ghz
+//#define WCEC_CNT 8281406000 // cycles -> frequencia ideal => 1.8 Ghz
+#define WCEC_CNT 2205098000 // cycles -> frequencia ideal => 1.8 Ghz
 int idTaskCnt = 0;
 int qtdPeriodosCnt = 1;
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * 8;
@@ -276,7 +277,7 @@ int InitializeCnt(matrixCnt Array)
 			Array[OuterIndex][InnerIndex] = RandomIntegerCnt();
 
 	if(RWCEC_Cnt > 0)
-		RWCEC_Cnt = RWCEC_Cnt - 2499203000; // Quantidade de ciclos da inicializacao do array.
+		RWCEC_Cnt = RWCEC_Cnt - 735049000; // Quantidade de ciclos da inicializacao do array.
 
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 	rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
@@ -316,7 +317,7 @@ void SumCnt(matrixCnt Array)
 		}
 
 		if(RWCEC_Cnt > 0)
-			RWCEC_Cnt = RWCEC_Cnt - 826029; // Quantidade de ciclos do loop interno.
+			RWCEC_Cnt = RWCEC_Cnt - 210007; // Quantidade de ciclos do loop interno.
 
 		porcentagemProcessamento = (int) ((Outer*MAXSIZE + Inner)*100)/(MAXSIZE*MAXSIZE);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
