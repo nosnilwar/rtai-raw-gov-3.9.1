@@ -577,7 +577,7 @@ int preemption_monitor(void)
 	// Verifica se a tarefa em execucao retornou de uma preempcao...
 	current_task_linux = get_current_task(CPUID_RTAI);
 	rt_task = pid2rttask(current_task_linux->pid);
-	if(rt_task && current_task_linux && current_task_linux->flagReturnPreemption && current_task_linux->pid > 0 && current_task_linux->state == TASK_RUNNING)
+	if(rt_task && current_task_linux && current_task_linux->flagReturnPreemption && current_task_linux->pid > 0 && current_task_linux->state == TASK_RUNNING && current_task_linux->state_task_period == TASK_PERIOD_RUNNING)
 	{
 		printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ RETORNANDO DE PREEMPCAO @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 		printk("[RAWLINSON_SCHEDULE - TASK_TO_SCHEDULE]: C_PID(%d) C_STATE(%ld) C_FRP(%d)\n", current_task_linux->pid, current_task_linux->state, current_task_linux->flagReturnPreemption);
@@ -2189,6 +2189,13 @@ RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned lon
 	}
 	flags = rt_global_save_flags_and_cli();
 	task->lnxtsk->flagReturnPreemption = 0;
+	if(tsk_wcec < 0)
+	{
+		tsk_wcec = 0;
+		rt_printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+		rt_printk("@ PID(%d) - WCEC DEVE SER MAIOR IGUAL A ZERO!\n", task->lnxtsk->pid);
+		rt_printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	}
 	task->lnxtsk->tsk_wcec = tsk_wcec;
 	task->lnxtsk->rwcec = tsk_wcec;
 	task->lnxtsk->state_task_period = TASK_PERIOD_RUNNING;
@@ -2246,6 +2253,13 @@ RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned lon
 		return -EINVAL;
 	}
 	flags = rt_global_save_flags_and_cli();
+	if(rwcec < 0)
+	{
+		rwcec = 0;
+		rt_printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+		rt_printk("@ PID(%d) - RWCEC NEGATIVO!\n", task->lnxtsk->pid);
+		rt_printk("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	}
 	task->lnxtsk->rwcec = rwcec;
 	if(task->lnxtsk->rwcec <= 0)
 	{
