@@ -27,6 +27,7 @@ Nanosegundos 1 -> Microsegundos 10^3
 #define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 0 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
 
 #define VALOR_HABILITAR_SECS 1
 #define VALOR_DESABILITAR_SECS 0
@@ -69,8 +70,8 @@ RTIME tempoTotalExperimento = 0;
 #define TEMPO_AMOSTRAGEM_ESTATISTICA_PARCIAL_CPU 30 // segundos
 
 //#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (180) // segundos -> 3 minutos
-#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (300) // segundos -> 5 minutos
-//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (1 * 3600) // segundos -> 1 horas
+//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (300) // segundos -> 5 minutos
+#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (1 * 3600) // segundos -> 1 horas
 //#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (2 * 3600) // segundos -> 2 horas
 //#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (3 * 3600) // segundos -> 3 horas
 
@@ -87,7 +88,8 @@ unsigned long after_total_trans;
 // DEFINICAO DAS TASKS...
 #define WCEC_CNT 1421126000 // cycles -> frequencia ideal => 800 Mhz
 int idTaskCnt = 0;
-int qtdPeriodosCnt = 1;
+unsigned long qtdPeriodosCnt = 1;
+unsigned long qtdDeadlinesVioladosCnt = 0;
 #define QTD_EXEC_POR_CICLOS_CNT 8
 int qtdMaxPeriodosCnt = QTD_CICLOS_EXPERIMENTOS * QTD_EXEC_POR_CICLOS_CNT;
 RT_TASK *Task_Cnt;
@@ -104,7 +106,8 @@ unsigned int cpuVoltageInicial_Cnt = 5; // V
 
 #define WCEC_MATMULT 6910262639 // cycles -> frequencia ideal => 1.8 Ghz
 int idTaskMatmult = 1;
-int qtdPeriodosMatmult = 1;
+unsigned long qtdPeriodosMatmult = 1;
+unsigned long qtdDeadlinesVioladosMatmult = 0;
 #define QTD_EXEC_POR_CICLOS_MATMULT 9
 int qtdMaxPeriodosMatmult = QTD_CICLOS_EXPERIMENTOS * QTD_EXEC_POR_CICLOS_MATMULT;
 RT_TASK *Task_Matmult;
@@ -121,7 +124,8 @@ unsigned int cpuVoltageInicial_Matmult = 5; // V
 
 #define WCEC_BSORT 3000210009 // cycles -> frequencia ideal => 800 Mhz
 int idTaskBsort = 2;
-int qtdPeriodosBsort = 1;
+unsigned long qtdPeriodosBsort = 1;
+unsigned long qtdDeadlinesVioladosBsort = 0;
 #define QTD_EXEC_POR_CICLOS_BSORT 8
 int qtdMaxPeriodosBsort = QTD_CICLOS_EXPERIMENTOS * QTD_EXEC_POR_CICLOS_BSORT;
 RT_TASK *Task_Bsort;
@@ -138,7 +142,8 @@ unsigned int cpuVoltageInicial_Bsort = 5; // V
 
 #define WCEC_CPUSTATS 0 // OBS.: SENDO ZERO O RAW MONITOR NAO INFLUENCIA NA EXECUTACAO DA TAREFA.
 int idTaskCpuStats = 3;
-int qtdPeriodosCpuStats = 1;
+unsigned long qtdPeriodosCpuStats = 1;
+unsigned long qtdDeadlinesVioladosCpuStats = 0;
 RT_TASK *Task_CpuStats;
 pthread_t Thread_CpuStats;
 long int WCEC_CpuStats = WCEC_CPUSTATS;
@@ -156,8 +161,24 @@ RTIME tick_period;
 RTIME start_timeline;
 RTIME delay_start_timeline;
 
+RTIME getTempoProcessamento(int idTask, RT_TASK *task, unsigned long qtdPeriodosExecutados)
+{//CYCLES: pushq+movq+subq = 10 cycles
+	RTIME tempoProcessamento = 0; // Conterah o tempo restante que a tarefa tem para concluir sua execucao.
+	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
+	RTIME periodBase = 0;
+	RTIME periodic_resume_time = 0;
+
+	tick_timer_atual = rt_get_time();
+	periodBase = rt_cfg_get_period(task) * qtdPeriodosExecutados;
+	//TODO: comparar o periodBase com o periodic_resume_time...
+	periodic_resume_time = rt_cfg_get_periodic_resume_time(task);
+
+	tempoProcessamento = (count2nano(tick_timer_atual - periodic_resume_time)); // nanosegundo(s)
+	return(tempoProcessamento);
+}//CYCLES: movq+addq+popq+popq+ret = 15 cycles
+
 RTIME getTempoRestanteProcessamento(int idTask, RT_TASK *task)
-{
+{//CYCLES: pushq+pushq+pushq+addq = 10 cycles
 	RTIME tempoRestanteProcessamento = 0; // Conterah o tempo restante que a tarefa tem para concluir sua execucao.
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
 	RTIME period = 0;
@@ -168,14 +189,14 @@ RTIME getTempoRestanteProcessamento(int idTask, RT_TASK *task)
 	periodic_resume_time = rt_cfg_get_periodic_resume_time(task);
 
 	tempoRestanteProcessamento = (count2nano(periodic_resume_time + period - tick_timer_atual)); // nanosegundo(s)
-	if(tempoRestanteProcessamento <= 0)
+	if(tempoRestanteProcessamento <= 0)//CYCLES: movl+testq+cmovle = 11 cycles
 		tempoRestanteProcessamento = 1;
 
 	return(tempoRestanteProcessamento);
-}
+}//CYCLES: subq+popq+popq+popq+ret = 21 cycles
 
 unsigned int reajustarCpuFreq(int idTask, RT_TASK *task, long int RWCEC)
-{
+{//CYCLES: pushq+movq+pushq+movq+pushq+movl+subq = 22 cycles
 	double cpu_frequency_target = 0.0; // Conterah a frequencia que o processador terah que assumir para que a tarefa conclua seu processamento dentro do seu deadline.
 	double tempoRestanteProcessamento = 0.0; // Conterah o tempo restante que a tarefa tem para concluir sua execucao.
 	RTIME tempoRestanteProcessamento_ns = 0;
@@ -183,22 +204,22 @@ unsigned int reajustarCpuFreq(int idTask, RT_TASK *task, long int RWCEC)
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
 #endif
 
-	tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, task);
-	tempoRestanteProcessamento = tempoRestanteProcessamento_ns / 1000000000.0; // Transformando de nanosegundo(s) para segundo(s) (10^9).
-	if(tempoRestanteProcessamento <= 0)
+	tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, task); //CYCLES: call+getTempoRestanteProcessamento() = 45 cycles
+	tempoRestanteProcessamento = tempoRestanteProcessamento_ns / 1000000000.0; // Transformando de nanosegundo(s) para segundo(s) (10^9). //CYCLES: divsd = 16 cycles
+	if(tempoRestanteProcessamento <= 0)//CYCLES: movapd+movapd+movsd+andpd+andnpd+movapd+orpd = 20 cycles
 		tempoRestanteProcessamento = 1;
 
 #if DEBUG == 1
 	tick_timer_atual = rt_get_time();
-	printf("%s[TASK %d] - cpu_frequency_target = RWCEC(%ld) / TRP(%f) ===> TIMER(%llu)\n", arrayTextoCorIdTask[idTask], idTask, RWCEC, tempoRestanteProcessamento, count2nano(tick_timer_atual));
+	printf("%s[TASK %d] - cpu_frequency_target = RWCEC(%ld) / TRP(%f) ===> TIMER(%llu)\n", arrayTextoCorIdTask[idTask], idTask, RWCEC, tempoRestanteProcessamento, count2nano(tick_timer_atual));//CYCLES: movsd+movslq+movq+leaq+movq+movapd+movl+movl+movl+call = 31 cycles
 #endif
 
-	cpu_frequency_target = (RWCEC / tempoRestanteProcessamento) ; // Unidade: Ciclos/segundo (a conversao para segundos foi feita acima 10^9)
-	cpu_frequency_target = cpu_frequency_target / 1000.0; // Unidade: Khz (convertendo para de Hz para KHz)
+	cpu_frequency_target = (RWCEC / tempoRestanteProcessamento) ; // Unidade: Ciclos/segundo (a conversao para segundos foi feita acima 10^9) //CYCLES: divsd+movsd+divsd = 37 cycles
+	cpu_frequency_target = cpu_frequency_target / 1000.0; // Unidade: Khz (convertendo para de Hz para KHz) //CYCLES: divsd = 16 cycles
 	rt_cfg_set_cpu_frequency(task, (int) cpu_frequency_target);
 
 	return(cpu_frequency_target);
-}
+}//CYCLES: addq+popq+popq+popq+ret = 18 cycles
 
 //TODO: copiado do cpufrequtils-8
 static void print_speed(unsigned long speed)
@@ -329,16 +350,16 @@ void SumCnt(matrixCnt Array)
 			}
 		}
 
-		RWCEC_Cnt = RWCEC_Cnt - 119010; // Quantidade de ciclos do loop interno.
+		RWCEC_Cnt = RWCEC_Cnt - 119010; // Quantidade de ciclos do loop interno. //CYCLES: subq = 4 cycles
 
 		porcentagemProcessamento = (int) ((Outer*MAXSIZE + Inner)*100)/(MAXSIZE*MAXSIZE);
 		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
 		{
 			cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
-			cpuFrequencyAtual_Cnt = rt_cfg_get_cpu_frequency(Task_Cnt);
+			cpuFrequencyAtual_Cnt = rt_cfg_get_cpu_frequency(Task_Cnt);//CYCLES: movl = 3 cycles
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 #if DEBUG == 1
-			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual_Cnt, cpuFrequencyAtual);
+			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, porcentagemProcessamento, cpuFrequencyAtual_Cnt, cpuFrequencyAtual); //CYCLES: movl+movl+movq+movl+movslq+leaq+xorl+call = 21 cycles
 #endif
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt);
@@ -369,19 +390,12 @@ int InitSeedCnt(void)
 
 void *init_task_cnt(void *arg)
 {
-#if DEBUG == 1
-	// Variaveis para realizar os calculos de tempo...
-	struct tm *newtime;
-	time_t aclock;
-	float periodo_tarefa;
-	float tempo_processamento_tarefa;
-	RTIME terminoExecucao = 0;
-	RTIME terminoPeriodo = 0;
-	RTIME inicioExecucao = 0;
-#endif
-
+	RTIME tempoProcessamento_ns = 0;
+	double tempoProcessamento_s;
 	RTIME tempoRestanteProcessamento_ns = 0;
+
 	RTIME Tinicio;
+	double Tperiodo_s = 0.0;
 	int prioridade = idTaskCnt + 1;
 
 	if(!(Task_Cnt = rt_thread_init(nam2num("TSKCNT"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
@@ -393,12 +407,13 @@ void *init_task_cnt(void *arg)
 	Tinicio = start_timeline;
 	Tperiodo_Cnt = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
 	//Tperiodo_Cnt = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo_s = count2nano(Tperiodo_Cnt)/1000000000.0;
 
 	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_Cnt, Tinicio, Tperiodo_Cnt);
 	rt_change_prio(Task_Cnt, prioridade);
 
-	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo_Cnt);
+	printf("%s[TASK %d] Criada com Sucesso  ================> %llu count => %.10f segundos \n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, Tperiodo_Cnt, Tperiodo_s);
 
 	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
 	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
@@ -411,7 +426,7 @@ void *init_task_cnt(void *arg)
 #endif
 	{
 #if DEBUG == 1
-		inicioExecucao = rt_get_time(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
+		printf("%s[TASK %d] ################### NOVA EXECUCAO (%lu) ################### \n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, qtdPeriodosCnt);
 #endif
 		// Inicializando WCEC e RWCEC...
 		WCEC_Cnt = WCEC_CNT;
@@ -419,11 +434,14 @@ void *init_task_cnt(void *arg)
 		SEC_Cnt = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskCnt, Task_Cnt);
-		cpuFrequencyInicial_Cnt = abs((WCEC_Cnt / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
+		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskCnt, Task_Cnt); //CYCLES = 42 cycles
+#else
+		tempoRestanteProcessamento_ns = count2nano(Tperiodo_Cnt);
+#endif
+		cpuFrequencyInicial_Cnt = abs((WCEC_Cnt / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Cnt, WCEC_Cnt, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
-
 #else
 		rt_cfg_init_info(Task_Cnt, 0, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
 #endif
@@ -433,29 +451,25 @@ void *init_task_cnt(void *arg)
 		TestCnt(Array);
 		/** FIM: PROCESSANDO A TAREFA... **/
 
-#if DEBUG == 1
 		/** CALCULANDO TEMPO DE PROCESSAMENTO DA TAREFA... **/
-		time(&aclock); // Pega tempo em segundos.
-		newtime = localtime(&aclock);
-		terminoExecucao = rt_get_time(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
-		tempo_processamento_tarefa = count2nano(terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
-		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, tempo_processamento_tarefa, asctime(newtime));
-#endif
-		rt_task_wait_period(); // **** WAIT
-
+		tempoProcessamento_ns = getTempoProcessamento(idTaskCnt, Task_Cnt, qtdPeriodosCnt);
+		tempoProcessamento_s = tempoProcessamento_ns / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 #if DEBUG == 1
-		/** CALCULANDO TEMPO DE DURACAO DO PERIODO DA TAREFA... **/
-		time(&aclock); // Pega tempo em segundos.
-		newtime = localtime(&aclock);
-		terminoPeriodo = rt_get_time();
-		periodo_tarefa = count2nano(terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
-		printf("%s[TASK %d] ##### Duracao do Periodo   ===========================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, periodo_tarefa, asctime(newtime));
-		printf("%s", texto_branco);
+		printf("%s[TASK %d] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, tempoProcessamento_s);
 #endif
+
+		if(tempoProcessamento_s > Tperiodo_s)
+		{
+			qtdDeadlinesVioladosCnt++;
+#if DEBUG == 1
+			printf("%s[TASK %d] ##### DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, qtdPeriodosCnt, qtdDeadlinesVioladosCnt);
+#endif
+		}
+		rt_task_wait_period(); // **** WAIT
 		qtdPeriodosCnt++;
 	}
 
-	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %d\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, qtdPeriodosCnt);
+	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %lu -> Total Deadlines Violados: %lu\n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, qtdPeriodosCnt, qtdDeadlinesVioladosCnt);
 
 	return 0;
 }
@@ -524,7 +538,7 @@ void InitializeMatMult(matrixMatMult Array, int flagPermitirSecs)
 		}
 	}
 
-	RWCEC_Matmult = RWCEC_Matmult - 19569558; // Quantidade de ciclos da inicializacao do array.
+	RWCEC_Matmult = RWCEC_Matmult - 19569558; // Quantidade de ciclos da inicializacao do array. //CYCLES: movq+subq+movq = 10 cycles
 
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 	rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult);
@@ -566,33 +580,33 @@ void MultiplyMatMult(matrixMatMult A, matrixMatMult B, matrixMatMult Res)
 			}
 		}
 
-		RWCEC_Matmult = RWCEC_Matmult - 8923537; // cycles
+		RWCEC_Matmult = RWCEC_Matmult - 8923537; // cycles //CYCLES: movq+subq+movq = 10 cycles
 
-		porcentagemProcessamento = (int) ((Outer*UPPERLIMIT*UPPERLIMIT + Inner*UPPERLIMIT + Index)*100)/(UPPERLIMIT*UPPERLIMIT*UPPERLIMIT);
-		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
+		porcentagemProcessamento = (int) ((Outer*UPPERLIMIT*UPPERLIMIT + Inner*UPPERLIMIT + Index)*100)/(UPPERLIMIT*UPPERLIMIT*UPPERLIMIT); //CYCLES: movl+movl+movl+sarl+idivl+movl = 35 cycles
+		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+sarl+idivl+testl+je+cmpl+je = 39 cycles
 		{
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult);
 #endif
 			// PONTOS DE CONTROLE DO MATMULT
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 60 || porcentagemProcessamento == 90)
+			if(porcentagemProcessamento == 30 || porcentagemProcessamento == 60)// || porcentagemProcessamento == 90) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
 			{
 #if FLAG_HABILITAR_PONTOS_CONTROLE == 1
-				cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult);
+				cpu_frequency_target = reajustarCpuFreq(idTaskMatmult, Task_Matmult, RWCEC_Matmult); //CYCLES: movq+movq+movl+call+movl = 15+reajustarCpuFreq() = 15 + 205 = 220 cycles
 #endif
 #if DEBUG == 1
 				cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
-				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
-				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpuFrequencyAtual, cpu_frequency_target);
+				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult); //CYCLES: movl = 3 cycles
+				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz ==============> Freq CALCULADA: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpuFrequencyAtual, cpu_frequency_target); //CYCLES: movl+movl+movl+movl+movslq+movl+movl+leaq+xorl+call+movl+jmp = 35 cycles
 #endif
 			}
 			else
 			{
 #if DEBUG == 1
 				cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
-				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult);
-				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpuFrequencyAtual);
+				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult); //CYCLES: movl = 3 cycles
+				printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, porcentagemProcessamento, cpuFrequencyAtual_Matmult, cpuFrequencyAtual); //CYCLES: addl+addq+movl+movl+movq+movl+movslq+leaq+xorl+call+movl+jmp = 31 cycles
 #endif
 			}
 		}
@@ -623,19 +637,12 @@ void InitSeedMatMult(void)
 
 void *init_task_matmult(void *arg)
 {
-#if DEBUG == 1
-	// Variaveis para realizar os calculos de tempo...
-	struct tm *newtime;
-	time_t aclock;
-	float periodo_tarefa;
-	float tempo_processamento_tarefa;
-	RTIME terminoExecucao = 0;
-	RTIME terminoPeriodo = 0;
-	RTIME inicioExecucao = 0;
-#endif
-
+	RTIME tempoProcessamento_ns = 0;
+	double tempoProcessamento_s;
 	RTIME tempoRestanteProcessamento_ns = 0;
+
 	RTIME Tinicio;
+	double Tperiodo_s = 0.0;;
 	int prioridade = idTaskMatmult + 1;
 
 	if(!(Task_Matmult = rt_thread_init(nam2num("TSKMAT"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
@@ -646,13 +653,14 @@ void *init_task_matmult(void *arg)
 
 	Tinicio = start_timeline;
 	//Tperiodo_Matmult = tick_period * 160; // ~= 8 segundos (PERIODO == DEADLINE)
-	Tperiodo_Matmult = tick_period * 161; // ~= 8 segundos (PERIODO == DEADLINE)
+	Tperiodo_Matmult = tick_period * 160; // ~= 8 segundos (PERIODO == DEADLINE)
+	Tperiodo_s = count2nano(Tperiodo_Matmult)/1000000000.0;
 
 	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_Matmult, Tinicio, Tperiodo_Matmult);
 	rt_change_prio(Task_Matmult, prioridade);
 
-	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, Tperiodo_Matmult);
+	printf("%s[TASK %d] Criada com Sucesso  ================> %llu count => %.10f segundos\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, Tperiodo_Matmult, Tperiodo_s);
 
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(qtdPeriodosMatmult <= qtdMaxPeriodosMatmult)
@@ -661,7 +669,7 @@ void *init_task_matmult(void *arg)
 #endif
 	{
 #if DEBUG == 1
-		inicioExecucao = rt_get_time(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
+		printf("%s[TASK %d] ################### NOVA EXECUCAO (%lu) ################### \n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, qtdPeriodosMatmult);
 #endif
 		// Inicializando WCEC e RWCEC...
 		WCEC_Matmult = WCEC_MATMULT;
@@ -669,8 +677,12 @@ void *init_task_matmult(void *arg)
 		SEC_Matmult = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskMatmult, Task_Matmult);
-		cpuFrequencyInicial_Matmult = abs((WCEC_Matmult / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
+		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskMatmult, Task_Matmult); //CYCLES = 42 cycles
+#else
+		tempoRestanteProcessamento_ns = count2nano(Tperiodo_Matmult);
+#endif
+		cpuFrequencyInicial_Matmult = abs((WCEC_Matmult / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Matmult, WCEC_Matmult, cpuFrequencyMin_Matmult, cpuFrequencyInicial_Matmult, cpuVoltageInicial_Matmult);
 #else
@@ -682,29 +694,26 @@ void *init_task_matmult(void *arg)
 		TestMatMult(ArrayA, ArrayB, ResultArray);
 		/** FIM: PROCESSANDO A TAREFA... **/
 
-#if DEBUG == 1
 		/** CALCULANDO TEMPO DE PROCESSAMENTO DA TAREFA... **/
-		time(&aclock); // Pega tempo em segundos.
-		newtime = localtime(&aclock);
-		terminoExecucao = rt_get_time(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
-		tempo_processamento_tarefa = count2nano(terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
-		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, tempo_processamento_tarefa, asctime(newtime));
+		tempoProcessamento_ns = getTempoProcessamento(idTaskMatmult, Task_Matmult, qtdPeriodosMatmult);
+		tempoProcessamento_s = tempoProcessamento_ns / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+#if DEBUG == 1
+		printf("%s[TASK %d] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, tempoProcessamento_s);
 #endif
+
+		if(tempoProcessamento_s > Tperiodo_s)
+		{
+			qtdDeadlinesVioladosMatmult++;
+#if DEBUG == 1
+			printf("%s[TASK %d] @@@@@@@@@@@@@@@ ==> DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, qtdPeriodosMatmult, qtdDeadlinesVioladosMatmult);
+#endif
+		}
 
 		rt_task_wait_period(); // **** WAIT
-
-#if DEBUG == 1
-		/** CALCULANDO TEMPO DE DURACAO DO PERIODO DA TAREFA... **/
-		terminoPeriodo = rt_get_time();
-		periodo_tarefa = count2nano(terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
-		printf("%s[TASK %d] ##### Duracao do Periodo   ===========================================================> Duracao: %.10f\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, periodo_tarefa);
-		printf("%s", texto_branco);
-#endif
-
 		qtdPeriodosMatmult++;
 	}
 
-	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %d\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, qtdPeriodosMatmult);
+	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %lu -> Total Deadlines Violados: %lu\n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, qtdPeriodosMatmult, qtdDeadlinesVioladosMatmult);
 
 	return 0;
 }
@@ -773,14 +782,14 @@ void BubbleSort(int Array[MAXDIM])
 
 		RWCEC_Bsort = RWCEC_Bsort - 300025; //CYCLES: subq+movq = 7 cycles
 
-		porcentagemProcessamento = (int) ((i*NUMELEMS + Index)*100)/(NUMELEMS*NUMELEMS);
-		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
+		porcentagemProcessamento = (int) ((i*NUMELEMS + Index)*100)/(NUMELEMS*NUMELEMS); //CYCLES: movl+movl+imull+movl+sarl+movl+sarl+subl = 25 cycles
+		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+imull+movl+sarl+sarl+subl+leal+leal+cmpl+je+cmpl+je = 36 cycles
 		{
 			cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
-			cpuFrequencyAtual_Bsort = rt_cfg_get_cpu_frequency(Task_Bsort);
+			cpuFrequencyAtual_Bsort = rt_cfg_get_cpu_frequency(Task_Bsort); //CYCLES: movl = 3 cycles
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
 #if DEBUG == 1
-			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual_Bsort, cpuFrequencyAtual);
+			printf("%s[TASK %d] Processando... %3d%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, porcentagemProcessamento, cpuFrequencyAtual_Bsort, cpuFrequencyAtual); //CYCLES: movl+movl+movl+movl+movslq+leaq+xorl+call = 22 cycles
 #endif
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 			rt_cfg_set_rwcec(Task_Bsort, RWCEC_Bsort);
@@ -790,29 +799,16 @@ void BubbleSort(int Array[MAXDIM])
 		if (Sorted)
 			break;
 	}
-
-#if DEBUG == 1
-	cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
-	cpuFrequencyAtual_Bsort = rt_cfg_get_cpu_frequency(Task_Bsort);
-	printf("%s[TASK %d] Processando... 100%% ==============> Freq: %8d Khz ==============> Curr Freq: %8d Khz\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, cpuFrequencyAtual_Bsort, cpuFrequencyAtual);
-#endif
 }
 
 void *init_task_bsort(void *arg)
 {
-#if DEBUG == 1
-	// Variaveis para realizar os calculos de tempo...
-	struct tm *newtime;
-	time_t aclock;
-	float periodo_tarefa;
-	float tempo_processamento_tarefa;
-	RTIME terminoExecucao = 0;
-	RTIME terminoPeriodo = 0;
-	RTIME inicioExecucao = 0;
-#endif
-
+	RTIME tempoProcessamento_ns = 0;
+	double tempoProcessamento_s;
 	RTIME tempoRestanteProcessamento_ns = 0;
+
 	RTIME Tinicio;
+	double Tperiodo_s = 0.0;
 	int prioridade = idTaskBsort + 1;
 
 	if(!(Task_Bsort = rt_thread_init(nam2num("TSKBSO"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
@@ -824,12 +820,13 @@ void *init_task_bsort(void *arg)
 	Tinicio = start_timeline;
 	Tperiodo_Bsort = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
 	//Tperiodo_Bsort = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo_s = count2nano(Tperiodo_Bsort)/1000000000.0;
 
 	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_Bsort, Tinicio, Tperiodo_Bsort);
 	rt_change_prio(Task_Bsort, prioridade);
 
-	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, Tperiodo_Bsort);
+	printf("%s[TASK %d] Criada com Sucesso  ================> %llu count => %.10f segundos\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, Tperiodo_Bsort, Tperiodo_s);
 
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(qtdPeriodosBsort <= qtdMaxPeriodosBsort)
@@ -838,7 +835,7 @@ void *init_task_bsort(void *arg)
 #endif
 	{
 #if DEBUG == 1
-		inicioExecucao = rt_get_time(); //** PEGA O TEMPO DE INICIO DA EXECUCAO.
+		printf("%s[TASK %d] ################### NOVA EXECUCAO (%lu) ################### \n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, qtdPeriodosBsort);
 #endif
 		// Inicializando WCEC e RWCEC...
 		WCEC_Bsort = WCEC_BSORT;
@@ -846,8 +843,12 @@ void *init_task_bsort(void *arg)
 		SEC_Bsort = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskBsort, Task_Bsort);
-		cpuFrequencyInicial_Bsort = abs((WCEC_Bsort / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
+		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskBsort, Task_Bsort); //CYCLES = 42 cycles
+#else
+		tempoRestanteProcessamento_ns = count2nano(Tperiodo_Bsort);
+#endif
+		cpuFrequencyInicial_Bsort = abs((WCEC_Bsort / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Bsort, WCEC_Bsort, cpuFrequencyMin_Bsort, cpuFrequencyInicial_Bsort, cpuVoltageInicial_Bsort);
 #else
@@ -859,31 +860,26 @@ void *init_task_bsort(void *arg)
 		BubbleSort(ArrayBsort);
 		/** FIM: PROCESSANDO A TAREFA... **/
 
-#if DEBUG == 1
 		/** CALCULANDO TEMPO DE PROCESSAMENTO DA TAREFA... **/
-		time(&aclock); // Pega tempo em segundos.
-		newtime = localtime(&aclock);
-		terminoExecucao = rt_get_time(); //** PEGA O TEMPO DE FIM DA EXECUCAO.
-		tempo_processamento_tarefa = count2nano(terminoExecucao - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
-		printf("%s[TASK %d] ##### Tempo processamento: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, tempo_processamento_tarefa, asctime(newtime));
+		tempoProcessamento_ns = getTempoProcessamento(idTaskBsort, Task_Bsort, qtdPeriodosBsort);
+		tempoProcessamento_s = tempoProcessamento_ns / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+#if DEBUG == 1
+		printf("%s[TASK %d] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, tempoProcessamento_s);
 #endif
+
+		if(tempoProcessamento_s > Tperiodo_s)
+		{
+			qtdDeadlinesVioladosBsort++;
+#if DEBUG == 1
+			printf("%s[TASK %d] ##### DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, qtdPeriodosBsort, qtdDeadlinesVioladosBsort);
+#endif
+		}
 
 		rt_task_wait_period(); // **** WAIT
-
-#if DEBUG == 1
-		/** CALCULANDO TEMPO DE DURACAO DO PERIODO DA TAREFA... **/
-		time(&aclock); // Pega tempo em segundos.
-		newtime = localtime(&aclock);
-		terminoPeriodo = rt_get_time();
-		periodo_tarefa = count2nano(terminoPeriodo - inicioExecucao) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
-		printf("%s[TASK %d] ##### Duracao do Periodo   ===========================================================> Duracao: %.10f => %s", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, periodo_tarefa, asctime(newtime));
-		printf("%s", texto_branco);
-#endif
-
 		qtdPeriodosBsort++;
 	}
 
-	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %d\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, qtdPeriodosBsort);
+	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %lu -> Total Deadlines Violados: %lu\n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, qtdPeriodosBsort, qtdDeadlinesVioladosBsort);
 
 	return 0;
 }
@@ -902,8 +898,12 @@ void *init_task_cpustats(void *arg)
 	unsigned int cpuFrequencyAtual = 0; // KHz
 	int multiplicadorEstatisticasParciais = 1;
 
+	RTIME tempoProcessamento_ns = 0;
+	double tempoProcessamento_s;
 	RTIME tempoRestanteProcessamento_ns = 0;
+
 	RTIME Tinicio;
+	double Tperiodo_s = 0.0;
 	int prioridade = idTaskCpuStats + 1;
 
 	if(!(Task_CpuStats = rt_thread_init(nam2num("TSKCPU"), prioridade, 0, SCHED_FIFO, CPU_ALLOWED)))
@@ -915,23 +915,31 @@ void *init_task_cpustats(void *arg)
 	Tinicio = start_timeline;
 	Tperiodo_CpuStats = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
 	//Tperiodo_CpuStats = tick_period * 201; // ~= 10 segundos (PERIODO == DEADLINE)
+	Tperiodo_s = count2nano(Tperiodo_CpuStats)/1000000000.0;
 
 	rt_allow_nonroot_hrt();
 	rt_task_make_periodic(Task_CpuStats, Tinicio, Tperiodo_CpuStats);
 	rt_change_prio(Task_CpuStats, prioridade);
 
-	printf("%s[TASK %d] Criada com Sucesso  ================> %llu\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, Tperiodo_CpuStats);
+	printf("%s[TASK %d] Criada com Sucesso  ================> %llu count => %.10f segundos\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, Tperiodo_CpuStats, Tperiodo_s);
 
 	while(!flagFimExecucao)
 	{
+#if DEBUG == 1
+		printf("%s[TASK %d] ################### NOVA EXECUCAO (%lu) ################### \n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, qtdPeriodosCpuStats);
+#endif
 		// Inicializando WCEC e RWCEC...
 		WCEC_CpuStats = WCEC_CPUSTATS;
 		RWCEC_CpuStats = WCEC_CPUSTATS;
 		SEC_CpuStats = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskCpuStats, Task_CpuStats);
-		cpuFrequencyInicial_CpuStats = abs((WCEC_CpuStats / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
+		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTaskCpuStats, Task_CpuStats); //CYCLES = 42 cycles
+#else
+		tempoRestanteProcessamento_ns = count2nano(Tperiodo_CpuStats);
+#endif
+		cpuFrequencyInicial_CpuStats = abs((WCEC_CpuStats / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
 #else
@@ -974,12 +982,26 @@ void *init_task_cpustats(void *arg)
 		}
 		/** FIM: PROCESSANDO A TAREFA... **/
 
-		rt_task_wait_period(); // **** WAIT
+		/** CALCULANDO TEMPO DE PROCESSAMENTO DA TAREFA... **/
+		tempoProcessamento_ns = getTempoProcessamento(idTaskCpuStats, Task_CpuStats, qtdPeriodosCpuStats);
+		tempoProcessamento_s = tempoProcessamento_ns / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
+#if DEBUG == 1
+		printf("%s[TASK %d] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, tempoProcessamento_s);
+#endif
 
+		if(tempoProcessamento_s > Tperiodo_s)
+		{
+			qtdDeadlinesVioladosCpuStats++;
+#if DEBUG == 1
+			printf("%s[TASK %d] ##### DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, qtdPeriodosCpuStats, qtdDeadlinesVioladosCpuStats);
+#endif
+		}
+
+		rt_task_wait_period(); // **** WAIT
 		qtdPeriodosCpuStats++;
 	}
 
-	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %d\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, qtdPeriodosCpuStats);
+	printf("%s[TASK %d] ##### FIM EXECUCAO -> Total Periodos Executados: %lu -> Total Deadlines Violados: %lu\n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, qtdPeriodosCpuStats, qtdDeadlinesVioladosCpuStats);
 
 	printf("************** ESTATISTICAS FINAL **************\n");
 
@@ -1019,6 +1041,11 @@ int manager_tasks(void)
 	printf("=> [SIM] SEC's\n");
 #else
 	printf("=> [NAO] SEC's\n");
+#endif
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
+	printf("=> [SIM] CALCULAR FREQUENCIA INICIAL IDEAL (COM BASE NO TEMPO RESTANTE DE PROCESSAMENTO DENTRO DO PERIODO)\n");
+#else
+	printf("=> [NAO] CALCULAR FREQUENCIA INICIAL IDEAL (COM BASE NO TEMPO RESTANTE DE PROCESSAMENTO DENTRO DO PERIODO)\n");
 #endif
 
 	//rt_set_oneshot_mode();
