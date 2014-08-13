@@ -24,10 +24,10 @@ Nanosegundos 1 -> Microsegundos 10^3
 /* Definindo CONSTANTES... */
 #define DEBUG 1
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 1 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
-#define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_RAW_MONITOR 0 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 0 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
+#define FLAG_HABILITAR_SECS 1 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 1 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
 
 #define VALOR_HABILITAR_SECS 1
 #define VALOR_DESABILITAR_SECS 0
@@ -70,8 +70,8 @@ RTIME tempoTotalExperimento = 0;
 #define TEMPO_AMOSTRAGEM_ESTATISTICA_PARCIAL_CPU 30 // segundos
 
 //#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (180) // segundos -> 3 minutos
-//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (300) // segundos -> 5 minutos
-#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (1 * 3600) // segundos -> 1 horas
+#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (300) // segundos -> 5 minutos
+//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (1 * 3600) // segundos -> 1 horas
 //#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (2 * 3600) // segundos -> 2 horas
 //#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (3 * 3600) // segundos -> 3 horas
 
@@ -506,8 +506,8 @@ void InitializeMatMult(matrixMatMult Array, int flagPermitirSecs)
 	int flagInsertSecs = 0;
 	int porcentagemProcessamento = 0;
 #if FLAG_HABILITAR_SECS == 1
-	int limitInferiorSecs = 0; // %
-	int limitSuperiorSecs = 52; // %
+	int limitInferiorSecs = 30; // %
+	int limitSuperiorSecs = 40; // %
 #endif
 	//CYCLES: cmpl + jne = 5 cycles
 

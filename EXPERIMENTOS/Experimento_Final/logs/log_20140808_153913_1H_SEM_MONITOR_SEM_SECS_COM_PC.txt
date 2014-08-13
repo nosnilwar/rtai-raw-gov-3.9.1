@@ -1,0 +1,600 @@
+*
+*
+* Control+C para cancelar a execucao! ;)
+*
+*
+
+
+Iniciando o escalonamento das tarefas...
+
+************** Iniciando escalonamento **************
+=> [SIM] DEBUG
+=> [NAO] RAW MONITOR
+=> [SIM] PONTOS DE CONTROLE
+=> [NAO] SEC's
+TICK_PERIOD ================> 150704900
+[31m[TASK 0] Criada com Sucesso  ================> 27126882000
+[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.4289206266 => Fri Aug  8 15:53:20 2014
+[32m[TASK 1] Criada com Sucesso  ================> 24263488900
+[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(4.198992) ===> TIMER(4961015477932)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   654549 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(2.100004) ===> TIMER(4963114465603)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   327195 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 5.2206034660 => Fri Aug  8 15:53:26 2014
+[37m[TASK 2] Criada com Sucesso  ================> 27126882000
+[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5623265505 => Fri Aug  8 15:53:26 2014
+[36m[TASK 3] Criada com Sucesso  ================> 27126882000
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 6.6208314896
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9997997284 => Fri Aug  8 15:53:28 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.5956850052 => Fri Aug  8 15:53:30 2014
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(2.939063) ===> TIMER(4970325406811)
+[32m[TASK 1] Processando...  60% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz ==============> Freq CALCULADA:   935144 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(1.733460) ===> TIMER(4971531009827)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   396381 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 7.0171532631 => Fri Aug  8 15:53:34 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 8.4174032211 => Fri Aug  8 15:53:34 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5623711944 => Fri Aug  8 15:53:35 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499820709
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999876022 => Fri Aug  8 15:53:37 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.6043288708 => Fri Aug  8 15:53:39 2014
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(3.634235) ===> TIMER(4977680234944)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   756266 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(1.534240) ===> TIMER(4979780230338)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   447852 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 7.2154159546 => Fri Aug  8 15:53:42 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 8.2482585907 => Fri Aug  8 15:53:42 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5622382164 => Fri Aug  8 15:53:43 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499725342
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(5.626111) ===> TIMER(4983738358938)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   488516 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 9.0000181198 => Fri Aug  8 15:53:46 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.4292572737 => Fri Aug  8 15:53:47 2014
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(2.096714) ===> TIMER(4987267755911)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   327709 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 6.6531515121 => Fri Aug  8 15:53:50 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 7.4877200127 => Fri Aug  8 15:53:50 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5622183681 => Fri Aug  8 15:53:50 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+************** ESTATISTICAS PARCIAIS **************
+
+
+Estatísticas do Processador...
+
+** cpufreq stats: **
+->       3.00 GHz: 0.0000%
+->       2.30 GHz: 0.0000%
+->       1.80 GHz: 28.3711%
+->        800 MHz: 71.6289%
+
+Tempo Total: (3137) usertime units -> (USERTIME_UNIT * 10ms = X ms)
+Num. Total de Transições: (10)
+
+
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499725342
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(5.627498) ===> TIMER(4991786971596)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   488396 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999790192 => Fri Aug  8 15:53:55 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.6033309698 => Fri Aug  8 15:53:57 2014
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(1.923760) ===> TIMER(4995490710295)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   357171 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 6.8261904716 => Fri Aug  8 15:53:58 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 8.2230234146 => Fri Aug  8 15:53:58 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5623450279 => Fri Aug  8 15:53:59 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499715805
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(5.626769) ===> TIMER(4999837700724)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   488459 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(3.526565) ===> TIMER(5001937905074)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   194838 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999799728 => Fri Aug  8 15:54:04 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.6040076017 => Fri Aug  8 15:54:06 2014
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 6.8281183243 => Fri Aug  8 15:54:06 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0519104004 => Fri Aug  8 15:54:06 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5623838305 => Fri Aug  8 15:54:07 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499753952
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(5.627438) ===> TIMER(5007887031665)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   488401 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(3.527151) ===> TIMER(5009987319172)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   194806 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 5.2226772308 => Fri Aug  8 15:54:13 2014
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999980927 => Fri Aug  8 15:54:13 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.4288130999 => Fri Aug  8 15:54:14 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 8.3507394791 => Fri Aug  8 15:54:14 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5623880029 => Fri Aug  8 15:54:15 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499773026
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(5.627823) ===> TIMER(5015936647161)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   488368 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(3.527376) ===> TIMER(5018037093450)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   194794 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 5.2227764130 => Fri Aug  8 15:54:21 2014
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999723434 => Fri Aug  8 15:54:22 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.4289158583 => Fri Aug  8 15:54:23 2014
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0789957047
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(5.598330) ===> TIMER(5024016140050)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   490940 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(3.498514) ===> TIMER(5026115955536)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   196401 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 5.2228665352 => Fri Aug  8 15:54:29 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 14.2229938507 => Fri Aug  8 15:54:29 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5623889565 => Fri Aug  8 15:54:29 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+************** ESTATISTICAS PARCIAIS **************
+
+
+Estatísticas do Processador...
+
+** cpufreq stats: **
+->       3.00 GHz: 0.0000%
+->       2.30 GHz: 0.0000%
+->       1.80 GHz: 29.9203%
+->        800 MHz: 70.0797%
+
+Tempo Total: (7022) usertime units -> (USERTIME_UNIT * 10ms = X ms)
+Num. Total de Transições: (20)
+
+
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999752045 => Fri Aug  8 15:54:31 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.6037882566 => Fri Aug  8 15:54:33 2014
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 9.1748638153
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(4.472996) ===> TIMER(5033191473516)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   614453 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(2.372087) ===> TIMER(5035292382471)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   289665 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 5.2232103348 => Fri Aug  8 15:54:38 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 9.1752052307 => Fri Aug  8 15:54:38 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5624657273 => Fri Aug  8 15:54:38 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 6.8960981369
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999303818 => Fri Aug  8 15:54:40 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.6044768095 => Fri Aug  8 15:54:42 2014
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(2.595520) ===> TIMER(5043118950055)
+[32m[TASK 1] Processando...  60% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz ==============> Freq CALCULADA:  1058920 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(1.389825) ===> TIMER(5044324644452)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   494387 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 7.3600807190 => Fri Aug  8 15:54:47 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 9.0329790115 => Fri Aug  8 15:54:47 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5625228286 => Fri Aug  8 15:54:47 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499897003
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999914169 => Fri Aug  8 15:54:49 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.4288508892 => Fri Aug  8 15:54:50 2014
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(3.477185) ===> TIMER(5050287284810)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   790423 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(1.377237) ===> TIMER(5052387232478)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   498906 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 7.3733973503 => Fri Aug  8 15:54:55 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0633182526 => Fri Aug  8 15:54:55 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5623118281 => Fri Aug  8 15:54:56 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+************** ESTATISTICAS PARCIAIS **************
+
+
+Estatísticas do Processador...
+
+** cpufreq stats: **
+->       3.00 GHz: 0.0000%
+->       2.30 GHz: 0.0000%
+->       1.80 GHz: 27.5544%
+->        800 MHz: 72.4456%
+
+Tempo Total: (9650) usertime units -> (USERTIME_UNIT * 10ms = X ms)
+Num. Total de Transições: (28)
+
+
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499734879
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  40% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  50% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[31m[TASK 0] ##### Duracao do Periodo   ===========================================================> Duracao: 8.9999866486 => Fri Aug  8 15:54:58 2014
+[37m[31m[TASK 0] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[31m[TASK 0] ##### Tempo processamento: 1.6033773422 => Fri Aug  8 15:55:00 2014
+[32m[TASK 1] - cpu_frequency_target = RWCEC(2748449396) / TRP(4.005604) ===> TIMER(5057808865860)
+[32m[TASK 1] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   686151 Khz
+[32m[TASK 1] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] - cpu_frequency_target = RWCEC(687112349) / TRP(1.904862) ===> TIMER(5059909608398)
+[32m[TASK 1] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz ==============> Freq CALCULADA:   360715 Khz
+[32m[TASK 1] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Tempo processamento: 6.8448925018 => Fri Aug  8 15:55:03 2014
+[37m[TASK 2] ##### Duracao do Periodo   ===========================================================> Duracao: 7.5214791298 => Fri Aug  8 15:55:03 2014
+[37m[37m[TASK 2] Processando...   0% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  10% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  20% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  30% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  40% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  50% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  60% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  70% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  80% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando...  90% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[37m[TASK 2] ##### Tempo processamento: 0.5622044802 => Fri Aug  8 15:55:03 2014
+[36m[TASK 3] Processando... 100% ==============> Freq:   800000 Khz ==============> Curr Freq:   800000 Khz
+[32m[TASK 1] ##### Duracao do Periodo   ===========================================================> Duracao: 8.0499801636
+[37m[32m[TASK 1] Processando...   0% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  10% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  20% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+[32m[TASK 1] Processando...  30% ==============> Freq:  1800000 Khz ==============> Curr Freq:  1800000 Khz
+
+
+Fim do Escalonamento [37m
