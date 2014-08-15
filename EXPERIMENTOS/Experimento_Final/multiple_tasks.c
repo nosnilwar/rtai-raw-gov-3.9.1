@@ -26,8 +26,8 @@ Nanosegundos 1 -> Microsegundos 10^3
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 1 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
 #define FLAG_HABILITAR_RAW_MONITOR 0 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_HABILITAR_SECS 1 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 1 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
+#define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 0 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
 
 #define VALOR_HABILITAR_SECS 1
 #define VALOR_DESABILITAR_SECS 0
@@ -84,6 +84,17 @@ struct cpufreq_sysfs_stats *beforeStats;
 struct cpufreq_sysfs_stats *afterStats;
 unsigned long before_total_trans;
 unsigned long after_total_trans;
+
+// ESTRUTURA UTILIZADA PARA DEFINIR O MAIOR E O MENOR INTERVALO DOS DEADLINES PERDIDOS.
+struct estatistica_deadlines_perdidos {
+	int idTask; // Codigo da tarefa.
+	unsigned long codPeriodo; // Numero da periodo da tarefa que ocorreu a perda de deadline.
+	double tempoProcessamento_s; // tempo de processamento em segundos.
+	double tempoUltrapassadoProcessamento_s; // tempo de processamento em segundos.
+	int flagDeadlineSetado;
+};
+struct estatistica_deadlines_perdidos menorDeadlinePerdido;
+struct estatistica_deadlines_perdidos maiorDeadlinePerdido;
 
 // DEFINICAO DAS TASKS...
 #define WCEC_CNT 1421126000 // cycles -> frequencia ideal => 800 Mhz
@@ -160,6 +171,32 @@ int flagFimExecucao = 0;
 RTIME tick_period;
 RTIME start_timeline;
 RTIME delay_start_timeline;
+
+void verificarEstatisticaDeadline(int idTask, double periodo_s, unsigned long codPeriodo, double tempoProcessamento_s)
+{
+	double tempoUltrapassadoProcessamento_s = tempoProcessamento_s - periodo_s; // tempo de processamento ultrapassado em segundos.
+
+	if(tempoUltrapassadoProcessamento_s > 0)
+	{
+		if(tempoUltrapassadoProcessamento_s >= maiorDeadlinePerdido.tempoUltrapassadoProcessamento_s || maiorDeadlinePerdido.flagDeadlineSetado == 0)
+		{
+			maiorDeadlinePerdido.idTask = idTask;
+			maiorDeadlinePerdido.codPeriodo = codPeriodo;
+			maiorDeadlinePerdido.tempoProcessamento_s = tempoProcessamento_s;
+			maiorDeadlinePerdido.tempoUltrapassadoProcessamento_s = tempoUltrapassadoProcessamento_s;
+			maiorDeadlinePerdido.flagDeadlineSetado = 1;
+		}
+
+		if(tempoUltrapassadoProcessamento_s <= menorDeadlinePerdido.tempoUltrapassadoProcessamento_s || menorDeadlinePerdido.flagDeadlineSetado == 0)
+		{
+			menorDeadlinePerdido.idTask = idTask;
+			menorDeadlinePerdido.codPeriodo = codPeriodo;
+			menorDeadlinePerdido.tempoProcessamento_s = tempoProcessamento_s;
+			menorDeadlinePerdido.tempoUltrapassadoProcessamento_s = tempoUltrapassadoProcessamento_s;
+			menorDeadlinePerdido.flagDeadlineSetado = 1;
+		}
+	}
+}
 
 RTIME getTempoProcessamento(int idTask, RT_TASK *task, unsigned long qtdPeriodosExecutados)
 {//CYCLES: pushq+movq+subq = 10 cycles
@@ -464,6 +501,7 @@ void *init_task_cnt(void *arg)
 #if DEBUG == 1
 			printf("%s[TASK %d] ##### DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskCnt], idTaskCnt, qtdPeriodosCnt, qtdDeadlinesVioladosCnt);
 #endif
+			verificarEstatisticaDeadline(idTaskCnt, Tperiodo_s, qtdPeriodosCnt, tempoProcessamento_s);
 		}
 		rt_task_wait_period(); // **** WAIT
 		qtdPeriodosCnt++;
@@ -707,6 +745,7 @@ void *init_task_matmult(void *arg)
 #if DEBUG == 1
 			printf("%s[TASK %d] @@@@@@@@@@@@@@@ ==> DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskMatmult], idTaskMatmult, qtdPeriodosMatmult, qtdDeadlinesVioladosMatmult);
 #endif
+			verificarEstatisticaDeadline(idTaskMatmult, Tperiodo_s, qtdPeriodosMatmult, tempoProcessamento_s);
 		}
 
 		rt_task_wait_period(); // **** WAIT
@@ -873,6 +912,7 @@ void *init_task_bsort(void *arg)
 #if DEBUG == 1
 			printf("%s[TASK %d] ##### DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskBsort], idTaskBsort, qtdPeriodosBsort, qtdDeadlinesVioladosBsort);
 #endif
+			verificarEstatisticaDeadline(idTaskBsort, Tperiodo_s, qtdPeriodosBsort, tempoProcessamento_s);
 		}
 
 		rt_task_wait_period(); // **** WAIT
@@ -995,6 +1035,7 @@ void *init_task_cpustats(void *arg)
 #if DEBUG == 1
 			printf("%s[TASK %d] ##### DEADLINE VIOLADO!!!!!!!!!!!!! Periodo(%lu) Deadlines_Violados(%lu) \n", arrayTextoCorIdTask[idTaskCpuStats], idTaskCpuStats, qtdPeriodosCpuStats, qtdDeadlinesVioladosCpuStats);
 #endif
+			verificarEstatisticaDeadline(idTaskCpuStats, Tperiodo_s, qtdPeriodosCpuStats, tempoProcessamento_s);
 		}
 
 		rt_task_wait_period(); // **** WAIT
@@ -1009,6 +1050,13 @@ void *init_task_cpustats(void *arg)
 	total_time = after_total_time - before_total_time;
 	print_cpu_stats(beforeStats, afterStats, before_total_trans, after_total_trans, total_time);
 
+	printf("***************** DETALHAMENTO *****************\n");
+	printf("-> Maior Deadline Ultrapassado:\n");
+	printf("[TASK %d] Nr Periodo(%lu) Tempo de Processamento(%.10f) Tempo Excedido(%.10f) \n\n", maiorDeadlinePerdido.idTask, maiorDeadlinePerdido.codPeriodo, maiorDeadlinePerdido.tempoProcessamento_s, maiorDeadlinePerdido.tempoUltrapassadoProcessamento_s);
+
+	printf("-> Menor Deadline Ultrapassado:\n");
+	printf("[TASK %d] Nr Periodo(%lu) Tempo de Processamento(%.10f) Tempo Excedido(%.10f) \n\n", menorDeadlinePerdido.idTask, menorDeadlinePerdido.codPeriodo, menorDeadlinePerdido.tempoProcessamento_s, menorDeadlinePerdido.tempoUltrapassadoProcessamento_s);
+
 	return 0;
 }
 /**************************************************
@@ -1019,6 +1067,17 @@ int manager_tasks(void)
 {
 	rt_set_periodic_mode();
 	rt_make_hard_real_time();
+
+	// Inicializando variaveis globais...
+	menorDeadlinePerdido.codPeriodo = 0;
+	menorDeadlinePerdido.tempoProcessamento_s = 0.0;
+	menorDeadlinePerdido.tempoUltrapassadoProcessamento_s = 0.0;
+	menorDeadlinePerdido.flagDeadlineSetado = 0;
+
+	maiorDeadlinePerdido.codPeriodo = 0;
+	maiorDeadlinePerdido.tempoProcessamento_s = 0.0;
+	maiorDeadlinePerdido.tempoUltrapassadoProcessamento_s = 0.0;
+	maiorDeadlinePerdido.flagDeadlineSetado = 0;
 
 	printf("************** Iniciando escalonamento **************\n");
 
