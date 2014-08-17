@@ -59,6 +59,7 @@ Nanosegundos 1 -> Microsegundos 10^3
 
 /* Definindo variaveis goblais*/
 #define TICK_PERIOD 50000000 //Tempo em nano segundos... a cada 0.05 segundos tem o tick
+#define FREQUENCIA_MAXIMA_PROCESSADOR 3000000 //kHz
 
 #define STACK_SIZE 2000
 
@@ -143,8 +144,8 @@ long int RWCEC_Cnt[NTASKS_CNT] = {WCEC_CNT, WCEC_CNT, WCEC_CNT, WCEC_CNT, WCEC_C
 long int SEC_Cnt[NTASKS_CNT] = {0, 0, 0, 0, 0}; // cycles
 RTIME Tperiodo_Cnt = 0; // unidade -> counts
 unsigned int cpuFrequencyAtual_Cnt = 0; // KHz
-unsigned int cpuFrequencyMin_Cnt = 1800000; // KHz
-unsigned int cpuFrequencyInicial_Cnt = 1800000; // KHz
+unsigned int cpuFrequencyMin_Cnt = 800000; // KHz
+unsigned int cpuFrequencyInicial_Cnt = 800000; // KHz
 unsigned int cpuVoltageInicial_Cnt = 5; // V
 //---------------
 
@@ -167,7 +168,7 @@ long int SEC_Matmult[NTASKS_MATMULT] = {0, 0, 0, 0, 0}; // cycles
 RTIME Tperiodo_Matmult = 0; // unidade -> counts
 unsigned int cpuFrequencyAtual_Matmult = 0; // KHz
 unsigned int cpuFrequencyMin_Matmult = 800000; // KHz
-unsigned int cpuFrequencyInicial_Matmult = 3000000; // KHz
+unsigned int cpuFrequencyInicial_Matmult = 1800000; // KHz
 unsigned int cpuVoltageInicial_Matmult = 5; // V
 //---------------
 
@@ -189,8 +190,8 @@ long int RWCEC_Bsort[NTASKS_BSORT] = {WCEC_BSORT, WCEC_BSORT, WCEC_BSORT, WCEC_B
 long int SEC_Bsort[NTASKS_BSORT] = {0, 0, 0, 0, 0}; // cycles
 RTIME Tperiodo_Bsort = 0; // unidade -> counts
 unsigned int cpuFrequencyAtual_Bsort = 0; // KHz
-unsigned int cpuFrequencyMin_Bsort = 1800000; // KHz
-unsigned int cpuFrequencyInicial_Bsort = 1800000; // KHz
+unsigned int cpuFrequencyMin_Bsort = 800000; // KHz
+unsigned int cpuFrequencyInicial_Bsort = 800000; // KHz
 unsigned int cpuVoltageInicial_Bsort = 5; // V
 //---------------
 
@@ -269,9 +270,6 @@ RTIME getTempoRestanteProcessamento(int idTask, RT_TASK *task)
 	periodic_resume_time = rt_cfg_get_periodic_resume_time(task);
 
 	tempoRestanteProcessamento = (count2nano(periodic_resume_time + period - tick_timer_atual)); // nanosegundo(s)
-	if(tempoRestanteProcessamento <= 0)//CYCLES: movl+testq+cmovle = 11 cycles
-		tempoRestanteProcessamento = 1;
-
 	return(tempoRestanteProcessamento);
 }//CYCLES: subq+popq+popq+popq+ret = 21 cycles
 
@@ -287,18 +285,26 @@ unsigned int reajustarCpuFreq(int idTask, RT_TASK *task, long int RWCEC)
 
 	tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, task); //CYCLES: call+getTempoRestanteProcessamento() = 45 cycles
 	tempoRestanteProcessamento = tempoRestanteProcessamento_ns / 1000000000.0; // Transformando de nanosegundo(s) para segundo(s) (10^9). //CYCLES: divsd = 16 cycles
-	if(tempoRestanteProcessamento <= 0)//CYCLES: movapd+movapd+movsd+andpd+andnpd+movapd+orpd = 20 cycles
+	if(tempoRestanteProcessamento > 0)//CYCLES: movapd+movapd+movsd+andpd+andnpd+movapd+orpd = 20 cycles
+	{
 		tempoRestanteProcessamento = 1;
-
 #if DEBUG == 1
-	tick_timer_atual = rt_get_time();
-	printf("%s[TASK %d] [%lu] - cpu_frequency_target = RWCEC(%ld) / TRP(%f) ===> TIMER(%llu)\n", arrayTextoCorIdTask[idTask], idTask, pidTask, RWCEC, tempoRestanteProcessamento, count2nano(tick_timer_atual));//CYCLES: movsd+movslq+movq+leaq+movq+movapd+movl+movl+movl+call = 31 cycles
+		tick_timer_atual = rt_get_time();
+		printf("%s[TASK %d] [%lu] - cpu_frequency_target = RWCEC(%ld) / TRP(%f) ===> TIMER(%llu)\n", arrayTextoCorIdTask[idTask], idTask, pidTask, RWCEC, tempoRestanteProcessamento, count2nano(tick_timer_atual));//CYCLES: movsd+movslq+movq+leaq+movq+movapd+movl+movl+movl+call = 31 cycles
 #endif
+		cpu_frequency_target = (RWCEC / tempoRestanteProcessamento) ; // Unidade: Ciclos/segundo (a conversao para segundos foi feita acima 10^9) //CYCLES: divsd+movsd+divsd = 37 cycles
+		cpu_frequency_target = cpu_frequency_target / 1000.0; // Unidade: Khz (convertendo para de Hz para KHz) //CYCLES: divsd = 16 cycles
+	}
+	else /* QUER DIZER QUE A TAREFA ESTA COM O DEADLINE VIOLADO... :( -> ATRIBUI A MAIOR FREQUENCIA... */
+	{
+		cpu_frequency_target = FREQUENCIA_MAXIMA_PROCESSADOR;
+#if DEBUG == 1
+		tick_timer_atual = rt_get_time();
+		printf("%s[TASK %d] [%lu] - cpu_frequency_target = RWCEC(%ld) / TRP(%f) ===> TIMER(%llu)\n", arrayTextoCorIdTask[idTask], idTask, pidTask, RWCEC, tempoRestanteProcessamento, count2nano(tick_timer_atual));//CYCLES: movsd+movslq+movq+leaq+movq+movapd+movl+movl+movl+call = 31 cycles
+#endif
+	}
 
-	cpu_frequency_target = (RWCEC / tempoRestanteProcessamento) ; // Unidade: Ciclos/segundo (a conversao para segundos foi feita acima 10^9) //CYCLES: divsd+movsd+divsd = 37 cycles
-	cpu_frequency_target = cpu_frequency_target / 1000.0; // Unidade: Khz (convertendo para de Hz para KHz) //CYCLES: divsd = 16 cycles
 	rt_cfg_set_cpu_frequency(task, (int) cpu_frequency_target);
-
 	return(cpu_frequency_target);
 }//CYCLES: addq+popq+popq+popq+ret = 18 cycles
 
@@ -532,10 +538,20 @@ void *init_task_cnt(void *arg)
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 #if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Cnt); //CYCLES = 42 cycles
-#else
-		tempoRestanteProcessamento_ns = count2nano(Tperiodo_Cnt);
+		if(tempoRestanteProcessamento_ns > 0)
+		{
+			cpuFrequencyInicial_Cnt = abs((WCEC_Cnt[idTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+		}
+		else
+		{
+			/* OBS.:
+			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+			 **/
+			cpuFrequencyInicial_Cnt = FREQUENCIA_MAXIMA_PROCESSADOR;
+		}
 #endif
-		cpuFrequencyInicial_Cnt = abs((WCEC_Cnt[idTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Cnt, WCEC_Cnt[idTask], cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
 #else
@@ -792,10 +808,20 @@ void *init_task_matmult(void *arg)
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 #if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Matmult); //CYCLES = 42 cycles
-#else
-		tempoRestanteProcessamento_ns = count2nano(Tperiodo_Matmult);
+		if(tempoRestanteProcessamento_ns > 0)
+		{
+			cpuFrequencyInicial_Matmult = abs((WCEC_Matmult[idTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+		}
+		else
+		{
+			/* OBS.:
+			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+			 **/
+			cpuFrequencyInicial_Matmult = FREQUENCIA_MAXIMA_PROCESSADOR;
+		}
 #endif
-		cpuFrequencyInicial_Matmult = abs((WCEC_Matmult[idTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Matmult, WCEC_Matmult[idTask], cpuFrequencyMin_Matmult, cpuFrequencyInicial_Matmult, cpuVoltageInicial_Matmult);
 #else
@@ -975,10 +1001,20 @@ void *init_task_bsort(void *arg)
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 #if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Bsort); //CYCLES = 42 cycles
-#else
-		tempoRestanteProcessamento_ns = count2nano(Tperiodo_Bsort);
+		if(tempoRestanteProcessamento_ns > 0)
+		{
+			cpuFrequencyInicial_Bsort = abs((WCEC_Bsort[idTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+		}
+		else
+		{
+			/* OBS.:
+			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+			 **/
+			cpuFrequencyInicial_Bsort = FREQUENCIA_MAXIMA_PROCESSADOR;
+		}
 #endif
-		cpuFrequencyInicial_Bsort = abs((WCEC_Bsort[idTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_Bsort, WCEC_Bsort[idTask], cpuFrequencyMin_Bsort, cpuFrequencyInicial_Bsort, cpuVoltageInicial_Bsort);
 #else
@@ -1079,10 +1115,20 @@ void *init_task_cpustats(void *arg)
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
 #if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_CpuStats); //CYCLES = 42 cycles
-#else
-		tempoRestanteProcessamento_ns = count2nano(Tperiodo_CpuStats);
+		if(tempoRestanteProcessamento_ns > 0)
+		{
+			cpuFrequencyInicial_CpuStats = abs((WCEC_CpuStats / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+		}
+		else
+		{
+			/* OBS.:
+			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+			 **/
+			cpuFrequencyInicial_CpuStats = FREQUENCIA_MAXIMA_PROCESSADOR;
+		}
 #endif
-		cpuFrequencyInicial_CpuStats = abs((WCEC_CpuStats / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+
 #if FLAG_HABILITAR_RAW_MONITOR == 1
 		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
 #else
