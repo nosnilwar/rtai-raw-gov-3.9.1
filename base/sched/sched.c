@@ -2447,6 +2447,11 @@ RTAI_SYSCALL_MODE unsigned int rt_cfg_cpufreq_get(unsigned int cpu)
 {
 	return cpufreq_get(cpu);
 }
+
+RTAI_SYSCALL_MODE unsigned long rt_cfg_get_pid(RT_TASK *rt_task)
+{
+	return rt_task->lnxtsk ? rt_task->lnxtsk->pid : (long)rt_task;
+}
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #define WAKE_UP_TASKs(klist) \
@@ -3178,6 +3183,7 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 0, rt_cfg_get_return_preemption },		CFG_GET_RETURN_PREEMPTION },
 	{ { 0, rt_cfg_get_period },					CFG_GET_PERIOD },
 	{ { 0, rt_cfg_cpufreq_get },				CFG_CPUFREQ_GET },
+	{ { 0, rt_cfg_get_pid },					CFG_GET_PID },
 	//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 	{ { 0, 0 },			            000 }

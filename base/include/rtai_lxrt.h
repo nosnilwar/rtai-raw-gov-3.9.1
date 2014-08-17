@@ -351,9 +351,10 @@
 #define CFG_GET_RETURN_PREEMPTION  		243
 #define CFG_GET_PERIOD					244
 #define CFG_CPUFREQ_GET					245
+#define CFG_GET_PID						246
 //TODO: RAWLINSON - FIM DAS DEFINICOES...
 
-#define MAX_LXRT_FUN		       		246
+#define MAX_LXRT_FUN		       		247
 
 // not recovered yet 
 // Qblk's 
@@ -1738,6 +1739,12 @@ RTAI_PROTO(unsigned int, rt_cfg_cpufreq_get, (unsigned int cpu))
 {
 	struct { unsigned int cpu; } arg = { cpu };
 	return rtai_lxrt(BIDX, SIZARG, CFG_CPUFREQ_GET, &arg).i[LOW];
+}
+
+RTAI_PROTO(unsigned long, rt_cfg_get_pid, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, CFG_GET_PID, &arg).i[LOW];
 }
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
