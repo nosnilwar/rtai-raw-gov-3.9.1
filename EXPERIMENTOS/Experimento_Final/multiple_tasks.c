@@ -388,7 +388,7 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 			if(beforeStats->frequency == afterStats->frequency)
 			{
 				print_speed(beforeStats->frequency);
-				printf(": %.4f%%", (100.0 * (afterStats->time_in_state - beforeStats->time_in_state)) / total_time);
+				printf(": %.10f%%", (100.0 * (afterStats->time_in_state - beforeStats->time_in_state)) / total_time);
 			}
 			else
 			{
@@ -552,10 +552,6 @@ void *init_task_cnt(void *arg)
 
 	pidTask = rt_cfg_get_pid(Task_Cnt);
 	printf("%s[TASK %d] [%lu] Criada com Sucesso  =============== PERIODO => %llu count => %.10f segundos \n", arrayTextoCorIdTask[idTask], idTask, pidTask, Tperiodo_Cnt, Tperiodo_s);
-
-	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
-	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
-	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(qtdPeriodosCnt[idSubTask] <= qtdMaxPeriodosCnt)
@@ -1287,12 +1283,14 @@ void *init_task_cpustats(void *arg)
 
 void exibirEstatisticaFinalExperimento(void)
 {
+	printf("%s", TEXTO_VERDE);
+
 	printConfiguracoes();
 
 	printf("************** ESTATISTICAS FINAL **************\n");
 
 	// Obtendo as estatisticas do processador depois...
-	if(after_total_time == 0)
+	if(!flagFimExecucao)
 	{
 		// Obtendo as estatisticas do processador depois...
 		afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
@@ -1306,13 +1304,13 @@ void exibirEstatisticaFinalExperimento(void)
 	if(maiorDeadlinePerdido.idTask > 0)
 		printf("[TASK %d] Nr Periodo(%lu) Tempo de Processamento(%.10f) Tempo Excedido(%.10f) \n\n", maiorDeadlinePerdido.idTask, maiorDeadlinePerdido.codPeriodo, maiorDeadlinePerdido.tempoProcessamento_s, maiorDeadlinePerdido.tempoUltrapassadoProcessamento_s);
 	else
-		printf("Nenhuma tarefa violou seu deadline! \n\n");
+		printf("* Nenhuma tarefa violou seu deadline! \n\n");
 
 	printf("-> Menor Deadline Ultrapassado:\n");
 	if(menorDeadlinePerdido.idTask > 0)
 		printf("[TASK %d] Nr Periodo(%lu) Tempo de Processamento(%.10f) Tempo Excedido(%.10f) \n\n", menorDeadlinePerdido.idTask, menorDeadlinePerdido.codPeriodo, menorDeadlinePerdido.tempoProcessamento_s, menorDeadlinePerdido.tempoUltrapassadoProcessamento_s);
 	else
-		printf("Nenhuma tarefa violou seu deadline! \n\n");
+		printf("* Nenhuma tarefa violou seu deadline! \n\n");
 }
 
 int manager_tasks(void)
@@ -1348,6 +1346,10 @@ int manager_tasks(void)
 
 	printf("TICK_PERIOD ================> %llu\n", tick_period);
 
+	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
+	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
+	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
+
 	contTask = 0;
 	arrayThreadParams[contTask].idTask = 0;
 	arrayThreadParams[contTask].idSubTask = 0;
@@ -1378,6 +1380,9 @@ int manager_tasks(void)
 
 	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
 	while(!getchar());
+
+	exibirEstatisticaFinalExperimento();
+
 	flagFimExecucao = 1;
 
 	stop_rt_timer();
@@ -1396,8 +1401,6 @@ int main(void)
 	manager_tasks();
 
 	delete_tasks();
-
-	exibirEstatisticaFinalExperimento();
 
 	printf("\n\nFim do Escalonamento %s\n", TEXTO_BRANCO);
 
