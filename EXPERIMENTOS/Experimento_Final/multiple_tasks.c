@@ -58,6 +58,15 @@ Nanosegundos 1 -> Microsegundos 10^3
 #define TICK_PERIOD 50000000 //Tempo em nano segundos... a cada 0.05 segundos tem o tick
 #define FREQUENCIA_MAXIMA_PROCESSADOR 3000000 //kHz
 
+/* Definicao da capacitancia do processador AMD Athlon II x2 250 */
+#define AMD_ATHLON_II_X2_250_CAPACITANCIA 2.5 // COULOMB/VOLT = 1 FARAD (F)
+
+/* Definicao das tensoes por frequencia do processador AMD Athlon II x2 250 */
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ 1.5 // VOLTS (V)
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ 1.35 // VOLTS (V)
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ 1.25 // VOLTS (V)
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ  1.20 // VOLTS (V)
+
 #define STACK_SIZE 2000
 
 RTIME timerInicioExperimento = 0;
@@ -376,6 +385,11 @@ static void print_speed(unsigned long speed)
 //TODO: copiado do cpufrequtils-8
 void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sysfs_stats *afterStats, unsigned long before_total_trans, unsigned long after_total_trans, unsigned long long total_time)
 {
+	double energiaTotalConsumida_nj = 0; // Nano Joules (nJ)
+	double energiaTotalConsumida_j = 0; // Joules (J)
+	unsigned long qtdTotalCiclosFrequencia = 0; // segundos -> (USERTIME_UNIT * 10ms)
+	unsigned long tempoUtilizacaoFrequencia_usertime = 0; // usertime units
+	unsigned long tempoUtilizacaoFrequencia_s = 0; // segundos -> (USERTIME_UNIT * 10ms)
 	unsigned long total_trans;
 
 	total_trans = after_total_trans - before_total_trans;
@@ -387,8 +401,31 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 			printf("-> ");
 			if(beforeStats->frequency == afterStats->frequency)
 			{
-				print_speed(beforeStats->frequency);
-				printf(": %.10f%%", (100.0 * (afterStats->time_in_state - beforeStats->time_in_state)) / total_time);
+				print_speed(beforeStats->frequency); //KHz
+				tempoUtilizacaoFrequencia_usertime = afterStats->time_in_state - beforeStats->time_in_state;
+				printf(": %.10f%%", (100.0 * tempoUtilizacaoFrequencia_usertime) / total_time);
+
+				// Calculando consumo de energia do experimento...
+				tempoUtilizacaoFrequencia_s = tempoUtilizacaoFrequencia_usertime * 10; // segundos
+				qtdTotalCiclosFrequencia = (beforeStats->frequency * 1000) * tempoUtilizacaoFrequencia_s; // (Hz) * tempo em segundos
+				switch(beforeStats->frequency)
+				{
+					case 3000000: // 3.0 GHz
+						energiaTotalConsumida_nj += AMD_ATHLON_II_X2_250_CAPACITANCIA * qtdTotalCiclosFrequencia * (AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ * AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ);
+					break;
+					case 2300000: // 2.3 GHz
+						energiaTotalConsumida_nj += AMD_ATHLON_II_X2_250_CAPACITANCIA * qtdTotalCiclosFrequencia * (AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ * AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ);
+					break;
+					case 1800000: // 1.8 GHz
+						energiaTotalConsumida_nj += AMD_ATHLON_II_X2_250_CAPACITANCIA * qtdTotalCiclosFrequencia * (AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ * AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ);
+					break;
+					case 800000: // 800 MHz
+						energiaTotalConsumida_nj += AMD_ATHLON_II_X2_250_CAPACITANCIA * qtdTotalCiclosFrequencia * (AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ * AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ);
+					break;
+					default:
+						printf(" -> ERROR: frequências inválidas no calculo da energia consumida! :(");
+					break;
+				}
 			}
 			else
 			{
@@ -407,6 +444,9 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 			printf("Num. Total de Transições: (%lu)\n", total_trans);
 		else
 			printf("\n");
+
+		energiaTotalConsumida_j = energiaTotalConsumida_nj / 1000000000.0;
+		printf("\nCONSUMO TOTAL DE ENERGIA: %.5f J (joules) \n", energiaTotalConsumida_j);
 
 		printf("\n\n");
 	}
@@ -1346,10 +1386,6 @@ int manager_tasks(void)
 
 	printf("TICK_PERIOD ================> %llu\n", tick_period);
 
-	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
-	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
-	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
-
 	contTask = 0;
 	arrayThreadParams[contTask].idTask = 0;
 	arrayThreadParams[contTask].idSubTask = 0;
@@ -1370,13 +1406,17 @@ int manager_tasks(void)
 	arrayThreadParams[contTask].idSubTask = 0;
 	Thread_CpuStats = rt_thread_create(init_task_cpustats, &arrayThreadParams[contTask], 0);
 
-	contTask++;
-	arrayThreadParams[contTask].idTask = 4;
-	arrayThreadParams[contTask].idSubTask = 1;
-	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contTask], 0);
+//	contTask++;
+//	arrayThreadParams[contTask].idTask = 4;
+//	arrayThreadParams[contTask].idSubTask = 1;
+//	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contTask], 0);
 
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
 	timerInicioExperimento = rt_get_time();
+
+	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
+	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
+	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
 	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
 	while(!getchar());
