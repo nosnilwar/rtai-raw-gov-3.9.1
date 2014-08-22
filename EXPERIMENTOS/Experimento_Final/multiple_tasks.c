@@ -27,7 +27,7 @@ Nanosegundos 1 -> Microsegundos 10^3
 #define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 1 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
+#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 0 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
 
 #define VALOR_HABILITAR_SECS 1
 #define VALOR_DESABILITAR_SECS 0
@@ -59,13 +59,13 @@ Nanosegundos 1 -> Microsegundos 10^3
 #define FREQUENCIA_MAXIMA_PROCESSADOR 3000000 //kHz
 
 /* Definicao da capacitancia do processador AMD Athlon II x2 250 */
-#define AMD_ATHLON_II_X2_250_CAPACITANCIA 2.5 // COULOMB/VOLT = 1 FARAD (F)
+#define AMD_ATHLON_II_X2_250_CAPACITANCIA 5 // pF (pico Farad) COULOMB/VOLT = 1 FARAD (F)
 
 /* Definicao das tensoes por frequencia do processador AMD Athlon II x2 250 */
-#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ 1.5 // VOLTS (V)
-#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ 1.35 // VOLTS (V)
-#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ 1.25 // VOLTS (V)
-#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ  1.20 // VOLTS (V)
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ 1.3500 // VOLTS (V)
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ 1.2500 // VOLTS (V)
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ 1.1500 // VOLTS (V)
+#define AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ  1.1250 // VOLTS (V)
 
 #define STACK_SIZE 2000
 
@@ -565,7 +565,9 @@ void *init_task_cnt(void *arg)
 
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
+#endif
 
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
 	RTIME periodic_resume_time = 0;
@@ -696,7 +698,7 @@ void InitializeMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixM
 	int porcentagemProcessamento = 0;
 #if FLAG_HABILITAR_SECS == 1
 	int limitInferiorSecs = 30; // %
-	int limitSuperiorSecs = 40; // %
+	int limitSuperiorSecs = 50; // %
 #endif
 	//CYCLES: cmpl + jne = 5 cycles
 
@@ -836,7 +838,9 @@ void *init_task_matmult(void *arg)
 
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
+#endif
 
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
 	RTIME periodic_resume_time = 0;
@@ -1030,7 +1034,9 @@ void *init_task_bsort(void *arg)
 
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
+#endif
 
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
 	RTIME periodic_resume_time = 0;
@@ -1155,7 +1161,9 @@ void *init_task_cpustats(void *arg)
 
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
+#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
+#endif
 
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
 	RTIME periodic_resume_time = 0;
