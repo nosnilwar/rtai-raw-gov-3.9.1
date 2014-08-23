@@ -127,6 +127,9 @@ char arrayTextoCorIdTask[NTASKS][8] = {
 struct thread_param {
     int idTask; // Indica o ID da tarefa geral e sua prioridade sobre as outras. Quanto menor -> maior a prioridade.
     int idSubTask; // Indica o ID da tarefa replicada dentro do sistema.
+    unsigned int cpuFrequencyMin;
+    unsigned int cpuFrequencyInicial;
+    unsigned int cpuVoltageInicial;
 };
 
 /**************************************************************
@@ -559,8 +562,9 @@ int InitSeedCnt(void)
 void *init_task_cnt(void *arg)
 {
 	RT_TASK *Task_Cnt;
-	int idTask = ((struct thread_param*) arg)->idTask;
-	int idSubTask = ((struct thread_param*) arg)->idSubTask;
+	struct thread_param *config = (struct thread_param*) arg;
+	int idTask = config->idTask;
+	int idSubTask = config->idSubTask;
 	unsigned long pidTask = 0;
 
 	RTIME tempoProcessamento_ns = 0;
@@ -629,7 +633,7 @@ void *init_task_cnt(void *arg)
 #endif
 
 #if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_Cnt, WCEC_Cnt[idSubTask], cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
+		rt_cfg_init_info(Task_Cnt, WCEC_Cnt[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 #else
 		rt_cfg_init_info(Task_Cnt, 0, cpuFrequencyMin_Cnt, cpuFrequencyInicial_Cnt, cpuVoltageInicial_Cnt);
 #endif
@@ -832,8 +836,9 @@ void InitSeedMatMult(int idTask, int idSubTask)
 void *init_task_matmult(void *arg)
 {
 	RT_TASK *Task_Matmult;
-	int idTask = ((struct thread_param*) arg)->idTask;
-	int idSubTask = ((struct thread_param*) arg)->idSubTask;
+	struct thread_param *config = (struct thread_param*) arg;
+	int idTask = config->idTask;
+	int idSubTask = config->idSubTask;
 	unsigned long pidTask = 0;
 
 	RTIME tempoProcessamento_ns = 0;
@@ -902,7 +907,7 @@ void *init_task_matmult(void *arg)
 #endif
 
 #if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_Matmult, WCEC_Matmult[idSubTask], cpuFrequencyMin_Matmult, cpuFrequencyInicial_Matmult, cpuVoltageInicial_Matmult);
+		rt_cfg_init_info(Task_Matmult, WCEC_Matmult[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 #else
 		rt_cfg_init_info(Task_Matmult, 0, cpuFrequencyMin_Matmult, cpuFrequencyInicial_Matmult, cpuVoltageInicial_Matmult);
 #endif
@@ -1028,8 +1033,9 @@ void BubbleSort(RT_TASK *Task_Bsort, int idTask, int idSubTask, int Array[MAXDIM
 void *init_task_bsort(void *arg)
 {
 	RT_TASK *Task_Bsort;
-	int idTask = ((struct thread_param*) arg)->idTask;
-	int idSubTask = ((struct thread_param*) arg)->idSubTask;
+	struct thread_param *config = (struct thread_param*) arg;
+	int idTask = config->idTask;
+	int idSubTask = config->idSubTask;
 	unsigned long pidTask = 0;
 
 	RTIME tempoProcessamento_ns = 0;
@@ -1098,7 +1104,7 @@ void *init_task_bsort(void *arg)
 #endif
 
 #if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_Bsort, WCEC_Bsort[idSubTask], cpuFrequencyMin_Bsort, cpuFrequencyInicial_Bsort, cpuVoltageInicial_Bsort);
+		rt_cfg_init_info(Task_Bsort, WCEC_Bsort[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 #else
 		rt_cfg_init_info(Task_Bsort, 0, cpuFrequencyMin_Bsort, cpuFrequencyInicial_Bsort, cpuVoltageInicial_Bsort);
 #endif
@@ -1147,8 +1153,9 @@ void *init_task_bsort(void *arg)
 void *init_task_cpustats(void *arg)
 {
 	RT_TASK *Task_CpuStats;
-	int idTask = ((struct thread_param*) arg)->idTask;
-	//int idSubTask = ((struct thread_param*) arg)->idSubTask; // OBS.: ESTA TAREFA NAO PODE SER REPLICADA!!!!! 	X(
+	struct thread_param *config = (struct thread_param*) arg;
+	int idTask = config->idTask;
+	//int idSubTask = config->idSubTask;
 	unsigned long pidTask = 0;
 
 #if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
@@ -1220,7 +1227,7 @@ void *init_task_cpustats(void *arg)
 #endif
 
 #if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
+		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 #else
 		rt_cfg_init_info(Task_CpuStats, 0, cpuFrequencyMin_CpuStats, cpuFrequencyInicial_CpuStats, cpuVoltageInicial_CpuStats);
 #endif
@@ -1397,26 +1404,41 @@ int manager_tasks(void)
 	contTask = 0;
 	arrayThreadParams[contTask].idTask = 0;
 	arrayThreadParams[contTask].idSubTask = 0;
+	arrayThreadParams[contTask].cpuFrequencyMin = cpuFrequencyMin_Cnt;
+	arrayThreadParams[contTask].cpuFrequencyInicial = cpuFrequencyInicial_Cnt;
+	arrayThreadParams[contTask].cpuVoltageInicial = cpuVoltageInicial_Cnt;
 	Thread_Cnt_0 = rt_thread_create(init_task_cnt, &arrayThreadParams[contTask], 0);
 
 	contTask++;
 	arrayThreadParams[contTask].idTask = 1;
 	arrayThreadParams[contTask].idSubTask = 0;
+	arrayThreadParams[contTask].cpuFrequencyMin = cpuFrequencyMin_Matmult;
+	arrayThreadParams[contTask].cpuFrequencyInicial = cpuFrequencyInicial_Matmult;
+	arrayThreadParams[contTask].cpuVoltageInicial = cpuVoltageInicial_Matmult;
 	Thread_Matmult_0 = rt_thread_create(init_task_matmult, &arrayThreadParams[contTask], 0);
 
 	contTask++;
 	arrayThreadParams[contTask].idTask = 2;
 	arrayThreadParams[contTask].idSubTask = 0;
+	arrayThreadParams[contTask].cpuFrequencyMin = cpuFrequencyMin_Bsort;
+	arrayThreadParams[contTask].cpuFrequencyInicial = cpuFrequencyInicial_Bsort;
+	arrayThreadParams[contTask].cpuVoltageInicial = cpuVoltageInicial_Bsort;
 	Thread_Bsort_0 = rt_thread_create(init_task_bsort, &arrayThreadParams[contTask], 0);
 
 	contTask++;
 	arrayThreadParams[contTask].idTask = 3;
 	arrayThreadParams[contTask].idSubTask = 0;
+	arrayThreadParams[contTask].cpuFrequencyMin = cpuFrequencyMin_CpuStats;
+	arrayThreadParams[contTask].cpuFrequencyInicial = cpuFrequencyInicial_CpuStats;
+	arrayThreadParams[contTask].cpuVoltageInicial = cpuVoltageInicial_CpuStats;
 	Thread_CpuStats = rt_thread_create(init_task_cpustats, &arrayThreadParams[contTask], 0);
 
 //	contTask++;
 //	arrayThreadParams[contTask].idTask = 4;
 //	arrayThreadParams[contTask].idSubTask = 1;
+//	arrayThreadParams[contTask].cpuFrequencyMin = cpuFrequencyMin_Cnt;
+//	arrayThreadParams[contTask].cpuFrequencyInicial = cpuFrequencyInicial_Cnt;
+//	arrayThreadParams[contTask].cpuVoltageInicial = cpuVoltageInicial_Cnt;
 //	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contTask], 0);
 
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
