@@ -24,10 +24,10 @@ Nanosegundos 1 -> Microsegundos 10^3
 /* Definindo CONSTANTES... */
 #define DEBUG 1
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 1 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
-#define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_RAW_MONITOR 0 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_PONTOS_CONTROLE 0 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 1 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
+#define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 0 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
 
 #define VALOR_HABILITAR_SECS 1
 #define VALOR_DESABILITAR_SECS 0
@@ -102,7 +102,7 @@ struct estatistica_deadlines_perdidos menorDeadlinePerdido;
 struct estatistica_deadlines_perdidos maiorDeadlinePerdido;
 
 /**********************************************/
-#define QTD_TOTAL_TAREFAS 4
+#define QTD_TOTAL_TAREFAS 15
 /**********************************************/
 
 struct thread_param {
@@ -117,27 +117,26 @@ struct thread_param {
 };
 
 struct thread_param arrayThreadParams[QTD_TOTAL_TAREFAS];
-unsigned int arrayFlagFimExecucaoTarefa[QTD_TOTAL_TAREFAS] = {0, 0, 0, 0};
-unsigned long arrayQtdPeriodosExecutados[QTD_TOTAL_TAREFAS] = {1, 1, 1, 1};
-unsigned long arrayQtdDeadlinesViolados[QTD_TOTAL_TAREFAS] = {0, 0, 0, 0};
+unsigned int arrayFlagFimExecucaoTarefa[QTD_TOTAL_TAREFAS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+unsigned long arrayQtdPeriodosExecutados[QTD_TOTAL_TAREFAS] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+unsigned long arrayQtdDeadlinesViolados[QTD_TOTAL_TAREFAS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 char arrayTextoCorIdTask[QTD_TOTAL_TAREFAS][8] = {
-	TEXTO_VERMELHO,
-	TEXTO_VERDE,
-	TEXTO_CIANO,
-	TEXTO_BRANCO
-//	TEXTO_VERMELHO,
-//	TEXTO_VERDE,
-//	TEXTO_CIANO,
-//	TEXTO_BRANCO,
-//	TEXTO_VERMELHO,
-//	TEXTO_VERDE,
-//	TEXTO_CIANO,
-//	TEXTO_BRANCO,
-//	TEXTO_VERMELHO,
-//	TEXTO_VERDE,
-//	TEXTO_CIANO,
-//	TEXTO_BRANCO
+	TEXTO_VERMELHO, // CNT
+	TEXTO_VERMELHO, // CNT
+	TEXTO_VERMELHO, // CNT
+	TEXTO_VERMELHO, // CNT
+	TEXTO_VERMELHO, // CNT
+	TEXTO_VERDE, // MATMULT
+	TEXTO_VERDE, // MATMULT
+	TEXTO_VERDE, // MATMULT
+	TEXTO_VERDE, // MATMULT
+	TEXTO_CIANO, // BSORT
+	TEXTO_CIANO, // BSORT
+	TEXTO_CIANO, // BSORT
+	TEXTO_CIANO, // BSORT
+	TEXTO_CIANO, // BSORT
+	TEXTO_BRANCO // CPUSTATS
 }; // O texto no qual as tarefas serao imprimidas na tela.
 
 /**************************************************************
@@ -158,7 +157,7 @@ long int SEC_Cnt[QTD_SUB_TASKS_CNT] = {0, 0, 0, 0, 0}; // cycles
 //---------------
 
 /** Matmult **/
-#define QTD_SUB_TASKS_MATMULT 5
+#define QTD_SUB_TASKS_MATMULT 4
 pthread_t Thread_Matmult_0;
 pthread_t Thread_Matmult_1;
 pthread_t Thread_Matmult_2;
@@ -1316,9 +1315,6 @@ void *init_task_cpustats(void *arg)
 
 void exibirEstatisticaFinalExperimento(void)
 {
-	int idTask = 0;
-	int contIdTask = 0;
-
 	printf("%s", TEXTO_VERDE);
 
 	printConfiguracoes();
@@ -1387,57 +1383,176 @@ int manager_tasks(void)
 	contIdTask = 0;
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
-	arrayThreadParams[contIdTask].periodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
-	arrayThreadParams[contIdTask].prioridade = 1;
+	arrayThreadParams[contIdTask].periodo = tick_period * 500; // ~= 25 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 11;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
 	Thread_Cnt_0 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;
+	contIdTask++;//1
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 1;
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 8;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//2
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 2;
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 7;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Cnt_2 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//3
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 3;
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 6;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 3000000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Cnt_3 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//4
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 4;
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 9;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Cnt_4 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
+
+	/**
+	 * MATMULT TASKS
+	 */
+	contIdTask++;//5
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
-	arrayThreadParams[contIdTask].periodo = tick_period * 160; // ~= 8 segundos (PERIODO == DEADLINE)
-	arrayThreadParams[contIdTask].prioridade = 2;
+	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 15;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 2; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
 	Thread_Matmult_0 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;
+	contIdTask++;//6
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 1;
+	arrayThreadParams[contIdTask].periodo = tick_period * 500; // ~= 25 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 14;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Matmult_1 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//7
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 2;
+	arrayThreadParams[contIdTask].periodo = tick_period * 500; // ~= 25 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 12;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Matmult_2 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//8
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 3;
+	arrayThreadParams[contIdTask].periodo = tick_period * 500; // ~= 25 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 13;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Matmult_3 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
+
+	/**
+	 * BSORT TASKS
+	 */
+	contIdTask++;//9
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
-	arrayThreadParams[contIdTask].periodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
 	arrayThreadParams[contIdTask].prioridade = 3;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 3; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
 	Thread_Bsort_0 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;
+	contIdTask++;//10
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 1;
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 5;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Bsort_1 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//11
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 2;
+	arrayThreadParams[contIdTask].periodo = tick_period * 220; // ~= 11 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 2;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Bsort_2 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//12
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 3;
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 10;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 3000000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Bsort_3 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
+
+	contIdTask++;//13
+	arrayThreadParams[contIdTask].idTask = contIdTask;
+	arrayThreadParams[contIdTask].idSubTask = 4;
+	arrayThreadParams[contIdTask].periodo = tick_period * 440; // ~= 22 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 4;
+	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
+	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	Thread_Bsort_4 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
+
+	/**
+	 * CPUSTAT TASK
+	 */
+	contIdTask++;//14
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
-	arrayThreadParams[contIdTask].periodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
-	arrayThreadParams[contIdTask].prioridade = 4;
+	arrayThreadParams[contIdTask].periodo = tick_period * 200; // ~= 10 segundos (PERIODO == DEADLINE)
+	arrayThreadParams[contIdTask].prioridade = 1;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 4; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = -1; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
 	Thread_CpuStats = rt_thread_create(init_task_cpustats, &arrayThreadParams[contIdTask], 0);
-
-//	contIdTask++;
-//	arrayThreadParams[contIdTask].idTask = contIdTask;
-//	arrayThreadParams[contIdTask].idSubTask = 1;
-//	arrayThreadParams[contIdTask].periodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
-//	arrayThreadParams[contIdTask].prioridade = 5;
-//	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
-//	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
-//	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
-//	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 5; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
-//	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
 	timerInicioExperimento = rt_get_time();

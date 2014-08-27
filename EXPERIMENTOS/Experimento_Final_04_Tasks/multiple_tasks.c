@@ -1428,17 +1428,6 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 4; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
 	Thread_CpuStats = rt_thread_create(init_task_cpustats, &arrayThreadParams[contIdTask], 0);
 
-//	contIdTask++;
-//	arrayThreadParams[contIdTask].idTask = contIdTask;
-//	arrayThreadParams[contIdTask].idSubTask = 1;
-//	arrayThreadParams[contIdTask].periodo = tick_period * 180; // ~= 9 segundos (PERIODO == DEADLINE)
-//	arrayThreadParams[contIdTask].prioridade = 5;
-//	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
-//	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
-//	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
-//	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 5; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
-//	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
-
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
 	timerInicioExperimento = rt_get_time();
 
