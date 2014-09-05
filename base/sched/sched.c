@@ -265,6 +265,8 @@ int set_rtext(RT_TASK *task, int priority, int uses_fpu, void(*signal)(void), un
 	task->owndres = 0;
 	task->running = 0;
 	task->prio_passed_to = 0;
+	//TODO:RAWLINSON...
+	task->deadline = 0;
 	task->period = 0;
 	task->resume_time = RT_TIME_END;
 	task->periodic_resume_time = RT_TIME_END;
@@ -392,6 +394,8 @@ int rt_task_init_cpuid(RT_TASK *task, void (*rt_thread)(long), long data, int st
 	task->lnxtsk = 0;
 	task->priority = task->base_priority = priority;
 	task->prio_passed_to = 0;
+	//TODO:RAWLINSON...
+	task->deadline = 0;
 	task->period = 0;
 	task->resume_time = RT_TIME_END;
 	task->periodic_resume_time = RT_TIME_END;
@@ -586,7 +590,13 @@ int preemption_monitor(void)
 		if(policy && policy->governor && policy->governor->wake_up_kworker)
 		{
 			tick_timer_atual_ns = rt_get_cpu_time_ns();
-			deadline_ns = count2nano(rt_task->periodic_resume_time + rt_task->period);
+
+			// Verifica se o deadline foi informado pelo usuario...
+			if(rt_task->deadline > 0 && rt_task->deadline != rt_task->period) // Deve ser utilizado o deadline, pois ele foi especificado pelo usuario.
+				deadline_ns = count2nano(rt_task->periodic_resume_time + rt_task->deadline);
+			else // Significa que o deadline nao foi informado pelo usuario ou que o deadline eh igual ao periodo.
+				deadline_ns = count2nano(rt_task->periodic_resume_time + rt_task->period);
+
 			policy->governor->wake_up_kworker(policy, current_task_linux, tick_timer_atual_ns, deadline_ns);
 		}
 		//TODO:RAWLINSON - FIM
@@ -2272,7 +2282,7 @@ RTAI_SYSCALL_MODE int rt_cfg_set_rwcec(struct rt_task_struct *task, unsigned lon
 	rt_global_restore_flags(flags);
 
 	rt_printk("DEBUG:RAWLINSON - [TASK %d] Processando...  %ld cycle(s) - Freq(%8d Khz) - StateP(%d) - FRP(%d)\n", task->lnxtsk->pid, rwcec, task->lnxtsk->cpu_frequency, task->lnxtsk->state_task_period, task->lnxtsk->flagReturnPreemption);
-	//rt_printk("DEBUG:RAWLINSON - [TASK %d] PERIOD(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->period, task->resume_time, task->periodic_resume_time);
+	//rt_printk("DEBUG:RAWLINSON - [TASK %d] PERIOD(%llu) DEADLINE(%llu) RT(%llu) PRT(%llu)\n", task->lnxtsk->pid, task->period, task->deadline, task->resume_time, task->periodic_resume_time);
 	return 0;
 }
 
@@ -3184,6 +3194,9 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 0, rt_cfg_get_period },					CFG_GET_PERIOD },
 	{ { 0, rt_cfg_cpufreq_get },				CFG_CPUFREQ_GET },
 	{ { 0, rt_cfg_get_pid },					CFG_GET_PID },
+	{ { 0, rt_get_period },			    		GET_PERIOD },
+	{ { 0, rt_set_deadline },			    	SET_DEADLINE },
+	{ { 0, rt_get_deadline },			    	GET_DEADLINE },
 	//TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 	{ { 0, 0 },			            000 }

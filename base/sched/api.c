@@ -918,6 +918,50 @@ RTAI_SYSCALL_MODE int rt_set_period(RT_TASK *task, RTIME new_period)
 	return 0;
 }
 
+RTAI_SYSCALL_MODE int rt_get_period(RT_TASK *rt_task)
+{
+	unsigned long flags;
+	RTIME period;
+
+	if (rt_task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	period = rt_task->period;
+	rt_global_restore_flags(flags);
+
+	return period;
+}
+
+RTAI_SYSCALL_MODE int rt_set_deadline(RT_TASK *rt_task, RTIME new_deadline)
+{
+	unsigned long flags;
+
+	if (rt_task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	rt_task->deadline = new_deadline;
+
+	rt_global_restore_flags(flags);
+	return 0;
+}
+
+RTAI_SYSCALL_MODE int rt_get_deadline(RT_TASK *rt_task)
+{
+	unsigned long flags;
+	RTIME deadline;
+
+	if (rt_task->magic != RT_TASK_MAGIC) {
+		return -EINVAL;
+	}
+	flags = rt_global_save_flags_and_cli();
+	deadline = rt_task->deadline;
+	rt_global_restore_flags(flags);
+
+	return deadline;
+}
+
 /**
  * @anchor next_period
  * @brief Get the time a periodic task will be resumed after calling
@@ -2249,6 +2293,9 @@ EXPORT_SYMBOL(reset_rt_fun_ext_index);
 EXPORT_SYMBOL(max_slots);
 
 //TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+EXPORT_SYMBOL(rt_get_period);
+EXPORT_SYMBOL(rt_set_deadline);
+EXPORT_SYMBOL(rt_get_deadline);
 EXPORT_SYMBOL(rt_cfg_init_info);
 EXPORT_SYMBOL(rt_cfg_set_tsk_wcec);
 EXPORT_SYMBOL(rt_cfg_get_tsk_wcec);

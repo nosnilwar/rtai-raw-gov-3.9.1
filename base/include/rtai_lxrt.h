@@ -352,9 +352,12 @@
 #define CFG_GET_PERIOD					244
 #define CFG_CPUFREQ_GET					245
 #define CFG_GET_PID						246
+#define GET_PERIOD     		   			247
+#define SET_DEADLINE     		   		248
+#define GET_DEADLINE     		   		249
 //TODO: RAWLINSON - FIM DAS DEFINICOES...
 
-#define MAX_LXRT_FUN		       		247
+#define MAX_LXRT_FUN		       		250
 
 // not recovered yet 
 // Qblk's 
@@ -1485,6 +1488,25 @@ RTAI_PROTO(int, rt_set_period, (RT_TASK *rt_task, RTIME new_period))
 {
 	struct { RT_TASK *rt_task; RTIME new_period; } arg = { rt_task, new_period };
 	return rtai_lxrt(BIDX, SIZARG, SET_PERIOD, &arg).i[LOW];
+}
+
+//TODO:RAWLINSON...
+RTAI_PROTO(int, rt_get_period, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, GET_PERIOD, &arg).i[LOW];
+}
+
+RTAI_PROTO(int, rt_set_deadline, (RT_TASK *rt_task, RTIME new_deadline))
+{
+	struct { RT_TASK *rt_task; RTIME new_deadline; } arg = { rt_task, new_deadline };
+	return rtai_lxrt(BIDX, SIZARG, SET_DEADLINE, &arg).i[LOW];
+}
+
+RTAI_PROTO(int, rt_get_deadline, (RT_TASK *rt_task))
+{
+	struct { RT_TASK *rt_task; } arg = { rt_task };
+	return rtai_lxrt(BIDX, SIZARG, GET_DEADLINE, &arg).i[LOW];
 }
 
 //TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.

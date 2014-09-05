@@ -175,6 +175,8 @@ typedef struct rt_task_struct {
 	int policy;
 	int sched_lock_priority;
 	struct rt_task_struct *prio_passed_to;
+	//TODO:RAWLINSON - O deadline sera utilizado quando o "period" nao foi igual ao deadline.
+	RTIME deadline; // Utilizado pelo RAW Monitor para calcular a frequencia que a tarefa deverah utilizar nos retornos de preempcao.
 	RTIME period;
 	RTIME resume_time;
 	RTIME periodic_resume_time;
@@ -419,6 +421,12 @@ RTAI_SYSCALL_MODE int rt_set_period(struct rt_task_struct *task,
 int rt_task_wait_period(void);
 
 //TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+RTAI_SYSCALL_MODE int rt_get_period(struct rt_task_struct *task);
+
+RTAI_SYSCALL_MODE int rt_set_deadline(struct rt_task_struct *task, RTIME new_deadline);
+
+RTAI_SYSCALL_MODE int rt_get_deadline(struct rt_task_struct *task);
+
 RTAI_SYSCALL_MODE int rt_cfg_init_info(struct rt_task_struct *task, unsigned long tsk_wcec, unsigned int cpu_frequency_min, unsigned int cpu_frequency, unsigned int cpu_voltage);
 
 RTAI_SYSCALL_MODE int rt_cfg_set_tsk_wcec(struct rt_task_struct *task, unsigned long tsk_wcec);
