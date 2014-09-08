@@ -1,0 +1,65 @@
+[10538.011583] INFO: task se:3093 blocked for more than 120 seconds.
+[10538.011771] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+[10657.735678] INFO: task se:3093 blocked for more than 120 seconds.
+[10657.735882] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+^C
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# cat ../../modelo_final_tarefas.txt |se -s
+^C
+(reverse-i-search)`': make clean && make && rtai-load > logs/log_COM_MONITOR_SEM_SECS_SEM_PC_^CM_CALC_FREQ_INI_5.txt
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# service cgconfig stop
+[ ok ing cgconfig service: .
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# service cgred stop
+Stopping CGroup Rules Engine Daemon...
+. ok
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# echo 0-1 > /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus
+-bash: /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus: Arquivo ou diretorio nao encontrado
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# echo 0-1 > /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus
+-bash: /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus: Arquivo ou diretorio nao encontrado
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# echo 0-1 > /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus
+-bash: /mnt/cgroups/sistema_operacional/os_default/cpuset.cpus: Arquivo ou diretorio nao encontrado
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# cpufreq-set -c 1 -g performance && cpufreq-set -c 0 -g performance
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src#
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# cat ../../modelo_final_tarefas.txt |se -s
+Sumario
+Numero de Configuracoes: 1073741824
+Configuracoes Avaliadas: 1073741824
+Configuracoes Viaveis: 24811432
+Tempo de processamento: 13575s and 227598 us
+Melhor espalhamento 129.85 com as seguintes frequencias
+(800000000.00; 1.12)
+(1800000000.00; 1.15)
+(800000000.00; 1.12)
+(1800000000.00; 1.15)
+(2300000000.00; 1.25)
+(1800000000.00; 1.15)
+(2300000000.00; 1.25)
+(2300000000.00; 1.25)
+(2300000000.00; 1.25)
+(2300000000.00; 1.25)
+(3000000000.00; 1.35)
+(3000000000.00; 1.35)
+(3000000000.00; 1.35)
+(3000000000.00; 1.35)
+(800000000.00; 1.12)
+Utilizacao total do sistema eh 120.09%
+Energia gasta pelo sistema eh 78508331976.93 x C
+Energia gasta pelo sistema eh 90665240842.82 x C se usar apenas a maior frequencia
+Reducao de energia:  13.41%
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# cat /dev/vcs
+vcs    vcs1   vcs2   vcs3   vcs4   vcs5   vcs6   vcs7   vcsa   vcsa1  vcsa2  vcsa3  vcsa4  vcsa5  vcsa6  vcsa7
+root@PROTEUS:/usr/src/rtai-raw-gov-3.9.1/TOOLS/Smartenum/smartenum/src# cat /dev/vcs1 > logs/log_resultado_modelo_final_tarefas_20140908_0842.txt
