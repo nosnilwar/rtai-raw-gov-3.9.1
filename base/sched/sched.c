@@ -2462,6 +2462,23 @@ RTAI_SYSCALL_MODE unsigned long rt_cfg_get_pid(RT_TASK *rt_task)
 {
 	return rt_task->lnxtsk ? rt_task->lnxtsk->pid : (long)rt_task;
 }
+
+RTAI_SYSCALL_MODE unsigned long rt_get_cpu_idle_time(void)
+{
+	unsigned long cur_idle_time_us = 0;
+	struct cpufreq_policy *policy;
+
+	policy = cpufreq_cpu_get(CPUID_RTAI);
+	if(policy)
+	{
+		if(policy->governor && policy->governor->set_frequency)
+		{
+			cur_idle_time_us = policy->governor->get_cpu_idle_time(policy);
+		}
+	}
+
+	return cur_idle_time_us;
+}
 //TODO:RAWLINSON - FIM DAS DEFINICOES...
 
 #define WAKE_UP_TASKs(klist) \
@@ -3195,6 +3212,7 @@ static struct rt_native_fun_entry rt_sched_entries[] = {
 	{ { 0, rt_cfg_cpufreq_get },				CFG_CPUFREQ_GET },
 	{ { 0, rt_cfg_get_pid },					CFG_GET_PID },
 	{ { 0, rt_get_period },			    		GET_PERIOD },
+	{ { 0, rt_get_cpu_idle_time },			    GET_CPU_IDLE_TIME },
 	{ { 0, rt_set_deadline },			    	SET_DEADLINE },
 	{ { 0, rt_get_deadline },			    	GET_DEADLINE },
 	//TODO:RAWLINSON - FIM DAS DEFINICOES...

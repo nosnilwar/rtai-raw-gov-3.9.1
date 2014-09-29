@@ -25,7 +25,7 @@ Nanosegundos 1 -> Microsegundos 10^3
 #define DEBUG 1
 #define FLAG_HABILITAR_TIMER_EXPERIMENTO 0 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
 #define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
-#define FLAG_HABILITAR_PONTOS_CONTROLE 0 // 0 - DESABILITADO e 1 - HABILITADO
+#define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 0 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
 
@@ -86,7 +86,9 @@ RTIME tempoTotalExperimento = 0;
 int cpuid_stats = 0;
 unsigned long long total_time;
 unsigned long long before_total_time;
+unsigned long long before_total_cpu_idle_time;
 unsigned long long after_total_time;
+unsigned long long after_total_cpu_idle_time;
 struct cpufreq_sysfs_stats *beforeStats;
 struct cpufreq_sysfs_stats *afterStats;
 unsigned long before_total_trans;
@@ -363,6 +365,8 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 	int idTask = 0;
 	int contIdTask = 0;
 
+	unsigned long cur_idle_time_us = 0; // Contem o CPU idle time corrente do CPU_RTAI.
+
 	double energiaTotalConsumida_nj = 0; // Nano Joules (nJ)
 	double energiaTotalConsumida_j = 0; // Joules (J)
 	unsigned long qtdTotalCiclosFrequencia = 0; // segundos -> (USERTIME_UNIT * 10ms)
@@ -415,8 +419,11 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 			if (beforeStats && afterStats)
 				printf("\n");
 		}
+
 		printf("\n\n");
-		printf("Tempo Total: (%llu) usertime units -> (USERTIME_UNIT * 10ms = X ms)\n", total_time);
+		cur_idle_time_us = after_total_cpu_idle_time - before_total_cpu_idle_time;
+		printf("Tempo Total CPU IDLE: (%lu) microsegundos -> em segundos: (%.2f) \n", cur_idle_time_us, (cur_idle_time_us/1000000.0));
+		printf("Tempo Total Experimento: (%llu) usertime units -> (USERTIME_UNIT * 10 = %llu ms) -> em segundos: (%.2f) \n", total_time, total_time * 10, ((total_time/1000.0)*10));
 
 		if (total_trans)
 			printf("Num. Total de Transições: (%lu)\n", total_trans);
@@ -513,7 +520,7 @@ void SumCnt(RT_TASK *Task_Cnt, int idTask, int idSubTask, matrixCnt Array)
 			rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt[idSubTask]);
 #endif
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 50 && porcentagemProcessamento == 80) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
+			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 70 || porcentagemProcessamento == 80 || porcentagemProcessamento == 90) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
 			{
 #if FLAG_HABILITAR_PONTOS_CONTROLE == 1
 				cpu_frequency_target = reajustarCpuFreq(idTask, Task_Cnt, RWCEC_Cnt[idSubTask]); //CYCLES: movq+movq+movl+call+movl = 15+reajustarCpuFreq() = 15 + 205 = 220 cycles
@@ -651,7 +658,7 @@ void *init_task_cnt(void *arg)
 		printf("%s[TASK %2d] [%lu] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTask], idTask, pidTask, tempoProcessamento_s);
 #endif
 
-		if(tempoProcessamento_s > Tperiodo_s)
+		if(tempoProcessamento_s > config->deadline)
 		{
 			arrayQtdDeadlinesViolados[idTask]++;
 #if DEBUG == 1
@@ -706,7 +713,7 @@ void InitializeMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixM
 	int porcentagemProcessamento = 0;
 #if FLAG_HABILITAR_SECS == 1
 	int limitInferiorSecs = 30; // %
-	int limitSuperiorSecs = 50; // %
+	int limitSuperiorSecs = 60; // %
 #endif
 	//CYCLES: cmpl + jne = 5 cycles
 
@@ -793,7 +800,7 @@ void MultiplyMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixMat
 #endif
 			// PONTOS DE CONTROLE DO MATMULT
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 70) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
+			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 70 || porcentagemProcessamento == 80 || porcentagemProcessamento == 90) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
 			{
 #if FLAG_HABILITAR_PONTOS_CONTROLE == 1
 				cpu_frequency_target = reajustarCpuFreq(idTask, Task_Matmult, RWCEC_Matmult[idSubTask]); //CYCLES: movq+movq+movl+call+movl = 15+reajustarCpuFreq() = 15 + 205 = 220 cycles
@@ -933,7 +940,7 @@ void *init_task_matmult(void *arg)
 		printf("%s[TASK %2d] [%lu] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTask], idTask, pidTask, tempoProcessamento_s);
 #endif
 
-		if(tempoProcessamento_s > Tperiodo_s)
+		if(tempoProcessamento_s > config->deadline)
 		{
 			arrayQtdDeadlinesViolados[idTask]++;
 #if DEBUG == 1
@@ -1032,7 +1039,7 @@ void BubbleSort(RT_TASK *Task_Bsort, int idTask, int idSubTask, int Array[MAXDIM
 			rt_cfg_set_rwcec(Task_Bsort, RWCEC_Bsort[idSubTask]);
 #endif
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 50 && porcentagemProcessamento == 80) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
+			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 70 || porcentagemProcessamento == 80 || porcentagemProcessamento == 90) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
 			{
 #if FLAG_HABILITAR_PONTOS_CONTROLE == 1
 				cpu_frequency_target = reajustarCpuFreq(idTask, Task_Bsort, RWCEC_Bsort[idSubTask]); //CYCLES: movq+movq+movl+call+movl = 15+reajustarCpuFreq() = 15 + 205 = 220 cycles
@@ -1153,7 +1160,7 @@ void *init_task_bsort(void *arg)
 		printf("%s[TASK %2d] [%lu] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTask], idTask, pidTask, tempoProcessamento_s);
 #endif
 
-		if(tempoProcessamento_s > Tperiodo_s)
+		if(tempoProcessamento_s > config->deadline)
 		{
 			arrayQtdDeadlinesViolados[idTask]++;
 #if DEBUG == 1
@@ -1305,6 +1312,7 @@ void *init_task_cpustats(void *arg)
 			flagFimExecucao = 1; // FLAG QUE INDICA AS TAREFAS QUE O EXPERIMENTO TERMINOU...
 
 			// Obtendo as estatisticas do processador depois...
+			after_total_cpu_idle_time = rt_get_cpu_idle_time();
 			afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
 			after_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 		}
@@ -1314,6 +1322,7 @@ void *init_task_cpustats(void *arg)
 			multiplicadorEstatisticasParciais = multiplicadorEstatisticasParciais + 1;
 
 			// Obtendo as estatisticas do processador depois...
+			after_total_cpu_idle_time = rt_get_cpu_idle_time();
 			afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
 			after_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
@@ -1329,7 +1338,7 @@ void *init_task_cpustats(void *arg)
 		printf("%s[TASK %2d] [%lu] ##### Tempo Processamento: %.10f \n", arrayTextoCorIdTask[idTask], idTask, pidTask, tempoProcessamento_s);
 #endif
 
-		if(tempoProcessamento_s > Tperiodo_s)
+		if(tempoProcessamento_s > config->deadline)
 		{
 			arrayQtdDeadlinesViolados[idTask]++;
 #if DEBUG == 1
@@ -1367,6 +1376,7 @@ void exibirEstatisticaFinalExperimento(void)
 	if(!flagFimExecucao) // Nao terminou a execucao ou o experimento for baseado em ciclos de execucao.
 	{
 		// Obtendo as estatisticas do processador depois...
+		after_total_cpu_idle_time = rt_get_cpu_idle_time();
 		afterStats = rt_cfg_get_cpu_stats(cpuid_stats, &after_total_time);
 		after_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 	}
@@ -1426,9 +1436,10 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos
+//	arrayThreadParams[contIdTask].deadline = 0.0013;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 4;
-	//arrayThreadParams[contIdTask].cpuFrequencyMin = VALOR_DEFAULT_FREQ_MIN_DESABILITADA; // KHz
+//	arrayThreadParams[contIdTask].cpuFrequencyMin = VALOR_DEFAULT_FREQ_MIN_DESABILITADA; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
@@ -1439,6 +1450,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 1;
 	arrayThreadParams[contIdTask].periodo = tick_period * 400; // ~= 20 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 0.6514;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 6;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
@@ -1451,6 +1463,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 2;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 0.8843;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 12;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
@@ -1463,6 +1476,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 3;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 1.2879;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 2;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
@@ -1475,6 +1489,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 4;
 	arrayThreadParams[contIdTask].periodo = tick_period * 400; // ~= 20 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 1.4275;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 8;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
@@ -1490,6 +1505,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 1.8311;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 9;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
@@ -1502,6 +1518,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 1;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 1.9707;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 11;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
@@ -1514,6 +1531,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 2;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 2.3743;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 13;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
@@ -1526,6 +1544,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 3;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 9.4470;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 15;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
@@ -1541,6 +1560,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 9.6279;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 3;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
@@ -1553,6 +1573,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 1;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 13.2457;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 5;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
@@ -1565,6 +1586,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 2;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 13.6493;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 10;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
@@ -1577,6 +1599,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 3;
 	arrayThreadParams[contIdTask].periodo = tick_period * 400; // ~= 20 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 18.6920;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 7;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
@@ -1589,6 +1612,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 4;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 18.8316;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 14;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
@@ -1604,6 +1628,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 200; // ~= 10 segundos (PERIODO == DEADLINE)
+//	arrayThreadParams[contIdTask].deadline = 23.7942;
 	arrayThreadParams[contIdTask].deadline = arrayThreadParams[contIdTask].periodo;
 	arrayThreadParams[contIdTask].prioridade = 1;
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
@@ -1617,6 +1642,7 @@ int manager_tasks(void)
 	timerInicioExperimento = rt_get_time();
 
 	//ESTATISTICAs: Obtendo as estatisticas do processador antes...
+	before_total_cpu_idle_time = rt_get_cpu_idle_time();
 	beforeStats = rt_cfg_get_cpu_stats(cpuid_stats, &before_total_time);
 	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
@@ -1648,3 +1674,24 @@ int main(void)
 
 	return 0 ;
 }
+
+/**
+ * Tempos de resposta do processamento das tarefas acima no pior caso.
+ *
+W1_1 = 0.0013
+W2_2 = 0.6514
+W3_3 = 0.8843
+W4_4 = 1.2879
+W5_5 = 1.4275
+W6_6 = 1.8311
+W7_7 = 1.9707
+W8_8 = 2.3743
+W9_9 = 9.4470
+W10_10 = 9.6279
+W11_11 = 13.2457
+W12_13 = 13.6493
+W13_17 = 18.6920
+W14_17 = 18.8316
+W15_25 = 23.7942
+>>
+ */

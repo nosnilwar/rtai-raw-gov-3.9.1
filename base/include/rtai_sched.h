@@ -421,6 +421,8 @@ RTAI_SYSCALL_MODE int rt_set_period(struct rt_task_struct *task,
 int rt_task_wait_period(void);
 
 //TODO:RAWLINSON - INICIALIZANDO OS DADOS DO GRAFICO DE FLUXO DE CONTROLE (CFG) DA APLICACAO E FUNCOES DE GERENCIAMENTO DO RAW GOVERNOR.
+RTAI_SYSCALL_MODE unsigned long rt_get_cpu_idle_time(void);
+
 RTAI_SYSCALL_MODE int rt_get_period(struct rt_task_struct *task);
 
 RTAI_SYSCALL_MODE int rt_set_deadline(struct rt_task_struct *task, RTIME new_deadline);

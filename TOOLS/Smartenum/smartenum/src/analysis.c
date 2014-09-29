@@ -326,7 +326,7 @@ static int start_drop(struct task_set tset, struct freq_set freqs,
 		if (runtime.list)
 			printf("%03d -", stat->total, m);
 
-		compute_sample_analysis(tset, res, runtime);
+		compute_sample_analysis(tset, res, runtime, 0);
 		pass = evaluate_sample_response(tset, runtime, &spread);
 
 		stat->success += pass;
@@ -393,13 +393,12 @@ exit:
  * @parameter runtime: determines if output will be verbose
  * @complexity: O(nresources x ntasks ^ 2)
  */
-void compute_sample_analysis(struct task_set tset, struct res_set *res,
-				struct run_info runtime)
+void compute_sample_analysis(struct task_set tset, struct res_set *res, struct run_info runtime, int flagViewFinalResult)
 {
 
 	/* O(ntasks x nresources) */
 	compute_resource_priorities(tset, res);
-	if (runtime.verbose)
+	if (runtime.verbose || flagViewFinalResult == 1)
 		/* O(ntasks) + 2xO(nresources) + O(ntasks x nresources) */
 		print_task_model(tset, *res);
 
@@ -408,7 +407,7 @@ void compute_sample_analysis(struct task_set tset, struct res_set *res,
 	/* O(ntasks ^ 2) */
 	compute_precedence_influency(tset);
 
-	if (runtime.verbose) {
+	if (runtime.verbose || flagViewFinalResult == 1) {
 		/* O(ntasks) */
 		print_task_influencies(tset);
 
@@ -478,7 +477,7 @@ int enumerate_samples(struct task_set tset, struct freq_set freqs,
 						freqs.frequencies[ind[i]];
 		}
 
-		compute_sample_analysis(tset, res, runtime);
+		compute_sample_analysis(tset, res, runtime, 0);
 		pass = evaluate_sample_response(tset, runtime, &spread);
 		stat->success += pass;
 
@@ -502,6 +501,8 @@ int enumerate_samples(struct task_set tset, struct freq_set freqs,
 		}
 		last = propagate(tset.ntasks - 1, ind, limits);
 	}
+
+	compute_sample_analysis(tset, res, runtime, 1);
 
 	return 0;
 }

@@ -355,9 +355,10 @@
 #define GET_PERIOD     		   			247
 #define SET_DEADLINE     		   		248
 #define GET_DEADLINE     		   		249
+#define GET_CPU_IDLE_TIME				250
 //TODO: RAWLINSON - FIM DAS DEFINICOES...
 
-#define MAX_LXRT_FUN		       		250
+#define MAX_LXRT_FUN		       		251
 
 // not recovered yet 
 // Qblk's 
@@ -1491,6 +1492,12 @@ RTAI_PROTO(int, rt_set_period, (RT_TASK *rt_task, RTIME new_period))
 }
 
 //TODO:RAWLINSON...
+RTAI_PROTO(unsigned long, rt_get_cpu_idle_time, (void))
+{
+	struct { unsigned long dummy; } arg;
+	return rtai_lxrt(BIDX, SIZARG, GET_CPU_IDLE_TIME, &arg).i[LOW];
+}
+
 RTAI_PROTO(int, rt_get_period, (RT_TASK *rt_task))
 {
 	struct { RT_TASK *rt_task; } arg = { rt_task };

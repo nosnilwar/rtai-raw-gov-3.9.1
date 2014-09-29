@@ -69,7 +69,7 @@ struct results {
 int compute_initial_limits(struct task_set tset, struct freq_set freqs,
 				struct run_info runtime, int **start_limits);
 void compute_sample_analysis(struct task_set tset, struct res_set *res,
-				struct run_info runtime);
+				struct run_info runtime, int flagViewFinalResult);
 int enumerate_samples(struct task_set tset, struct freq_set freqs,
 			struct res_set *res, int *limits,
 			struct run_info runtime, struct results *stat);
