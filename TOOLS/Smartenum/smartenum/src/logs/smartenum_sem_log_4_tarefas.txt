@@ -1,0 +1,50 @@
+
+*********************
+* Modelo de Tarefas *
+*********************
+04 tarefas, 01 recursos
+Tarefa        Prioridade        Computação        Meta
+T 1         0                00.00                10.00
+T 2         1                01.78                12.00
+T 3         2                03.75                16.00
+T 4         3                01.78                16.00
+
+**********************
+* Recursos do Modelo *
+**********************
+Task        R 1        
+T 1        00.00%        
+T 2        00.00%        
+T 3        00.00%        
+T 4        00.00%        
+Prioridades dos recursos
+C(R 1) =  -1        
+
+**************
+* Influência *
+**************
+Tarefa        Bi        Ji        Ii
+T 1        00.00        00.00        00.00
+T 2        00.00        00.00        01.78
+T 3        00.00        00.00        05.53
+T 4        00.00        00.00        07.30
+
+***********
+* Análise *
+***********
+Tarefa        Computação        Ii                Ri        Pi        (Pi - Ii)        (Pi - Ri)
+T01        00.00                00.00                00.00                10.00                10.00                10.00
+T02        01.78                01.78                01.78                12.00                10.22                10.22
+T03        03.75                05.53                05.53                16.00                10.47                10.47
+T04        01.78                07.30                07.30                16.00                08.70                08.70
+Sumário
+Número de Configurações:    256
+Configurações Avaliadas:    256
+Configurações Viáveis: 256
+Tempo de processamento: 0s and 1176 us
+Melhor espalhamento 39.39 com as seguintes frequências
+(800000000.00; 1.12) (800000000.00; 1.12) (800000000.00; 1.12) (800000000.00; 1.12) 
+Utilização total do sistema é  49.35%
+Energia gasta pelo sistema é 7394367245.77 x C
+Energia gasta pelo sistema é 10647888833.90 x C se usar apenas a maior frequência
+Redução de energia:  30.56%
