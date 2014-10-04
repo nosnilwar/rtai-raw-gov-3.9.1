@@ -21,13 +21,27 @@ Nanosegundos 1 -> Microsegundos 10^3
 #include <sched.h>
 #include <rtai_lxrt.h>
 
+struct config_geral {
+	int flagHabilitarRawMonitor;
+	int flagHabilitarPontosControle;
+	int flagHabilitarSecs;
+	int flagCalcularFrequenciaInicialIdeal;
+	int qtdPontosControle;
+};
+struct config_geral config_geral;
+
 /* Definindo CONSTANTES... */
 #define DEBUG 1
-#define FLAG_HABILITAR_TIMER_EXPERIMENTO 0 // 0 - Por ciclos de execucao e 1 - Por tempo de execucao
+#define QTD_MAX_ARGUMENTOS_INICIAIS 6
+
 #define FLAG_HABILITAR_RAW_MONITOR 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_PONTOS_CONTROLE 1 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_HABILITAR_SECS 0 // 0 - DESABILITADO e 1 - HABILITADO
 #define FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL 0 // 0 - PEGA A FREQUENCIA INICIAL DA TAREFA e 1 - CALCULA A FREQUENCIA IDEAL DA TAREFA COM BASE NO TEMPO RESTANTES DE PROCESSAMENTO.
+
+#define QTD_PONTOS_DE_CONTROLE 1
+
+#define QTD_TOTAL_LCMS 3 // QUANTIDADE TOTAL DE LCMs (least commom multiple) que serão executados durante o experimento.
 
 #define CONSTANTE_VALOR_NAO_SE_APLICA -1
 #define VALOR_HABILITAR_SECS 1
@@ -76,12 +90,6 @@ RTIME timerTerminoExperimento = 0;
 RTIME tempoTotalExperimento = 0;
 #define TEMPO_AMOSTRAGEM_ESTATISTICA_PARCIAL_CPU 30 // segundos
 
-//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (180) // segundos -> 3 minutos
-#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (300) // segundos -> 5 minutos
-//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (1 * 3600) // segundos -> 1 horas
-//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (2 * 3600) // segundos -> 2 horas
-//#define TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO (3 * 3600) // segundos -> 3 horas
-
 // variaveis globais do sistema de estatistica...
 int cpuid_stats = 0;
 unsigned long long total_time;
@@ -118,7 +126,7 @@ struct thread_param {
 	int prioridade;
     RTIME deadline; // unidade -> counts
     RTIME periodo; // unidade -> counts
-    int qtdMaxPeriodosExecutados; // Quantidade de periodos que a tarefa deverá ser executada. OBS.: a flag FLAG_HABILITAR_TIMER_EXPERIMENTO deve ser igual a 0
+    int qtdMaxPeriodosExecutados; // Quantidade de periodos que a tarefa deverá ser executada.
 };
 
 struct thread_param arrayThreadParams[QTD_TOTAL_TAREFAS];
@@ -202,41 +210,83 @@ RTIME delay_start_timeline;
 /***************************************
  * Principais funcoes e metodos...
  ***************************************/
+int verificarPontoControle(int porcentagemProcessamento)
+{
+	if(config_geral.flagHabilitarPontosControle == 0)
+		return(0);
+
+	if(config_geral.qtdPontosControle == 1)
+		return(porcentagemProcessamento == 50);
+	if(config_geral.qtdPontosControle == 2)
+		return(porcentagemProcessamento == 33 || porcentagemProcessamento == 67);
+	if(config_geral.qtdPontosControle == 3)
+		return(porcentagemProcessamento == 25 || porcentagemProcessamento == 50 || porcentagemProcessamento == 75);
+	if(config_geral.qtdPontosControle == 4)
+		return(porcentagemProcessamento == 20 || porcentagemProcessamento == 40 || porcentagemProcessamento == 60 || porcentagemProcessamento == 80);
+	if(config_geral.qtdPontosControle == 5)
+		return(porcentagemProcessamento == 17 || porcentagemProcessamento == 33 || porcentagemProcessamento == 50 || porcentagemProcessamento == 67 || porcentagemProcessamento == 83);
+	if(config_geral.qtdPontosControle == 6)
+		return(porcentagemProcessamento == 14 || porcentagemProcessamento == 29 || porcentagemProcessamento == 43 || porcentagemProcessamento == 57 || porcentagemProcessamento == 71 || porcentagemProcessamento == 86);
+	if(config_geral.qtdPontosControle == 7)
+		return(porcentagemProcessamento == 13 || porcentagemProcessamento == 25 || porcentagemProcessamento == 38 || porcentagemProcessamento == 50 || porcentagemProcessamento == 63 || porcentagemProcessamento == 75 || porcentagemProcessamento == 88);
+	if(config_geral.qtdPontosControle == 8)
+		return(porcentagemProcessamento == 11 || porcentagemProcessamento == 22 || porcentagemProcessamento == 33 || porcentagemProcessamento == 44 || porcentagemProcessamento == 56 || porcentagemProcessamento == 67 || porcentagemProcessamento == 78 || porcentagemProcessamento == 89);
+	if(config_geral.qtdPontosControle == 9)
+		return(porcentagemProcessamento == 10 || porcentagemProcessamento == 20 || porcentagemProcessamento == 30 || porcentagemProcessamento == 40 || porcentagemProcessamento == 50 || porcentagemProcessamento == 60 || porcentagemProcessamento == 70 || porcentagemProcessamento == 80 || porcentagemProcessamento == 90);
+	if(config_geral.qtdPontosControle == 10)
+		return(porcentagemProcessamento == 9 || porcentagemProcessamento == 18 || porcentagemProcessamento == 27 || porcentagemProcessamento == 36 || porcentagemProcessamento == 45 || porcentagemProcessamento == 55 || porcentagemProcessamento == 64 || porcentagemProcessamento == 73 || porcentagemProcessamento == 82 || porcentagemProcessamento == 91);
+	if(config_geral.qtdPontosControle == 11)
+		return(porcentagemProcessamento == 8 || porcentagemProcessamento == 17 || porcentagemProcessamento == 25 || porcentagemProcessamento == 33 || porcentagemProcessamento == 42 || porcentagemProcessamento == 50 || porcentagemProcessamento == 58 || porcentagemProcessamento == 67 || porcentagemProcessamento == 75 || porcentagemProcessamento == 83 || porcentagemProcessamento == 92);
+	if(config_geral.qtdPontosControle == 12)
+		return(porcentagemProcessamento == 8 || porcentagemProcessamento == 15 || porcentagemProcessamento == 23 || porcentagemProcessamento == 31 || porcentagemProcessamento == 38 || porcentagemProcessamento == 46 || porcentagemProcessamento == 54 || porcentagemProcessamento == 62 || porcentagemProcessamento == 69 || porcentagemProcessamento == 77 || porcentagemProcessamento == 85 || porcentagemProcessamento == 92);
+	if(config_geral.qtdPontosControle == 13)
+		return(porcentagemProcessamento == 7 || porcentagemProcessamento == 14 || porcentagemProcessamento == 21 || porcentagemProcessamento == 29 || porcentagemProcessamento == 36 || porcentagemProcessamento == 43 || porcentagemProcessamento == 50 || porcentagemProcessamento == 57 || porcentagemProcessamento == 64 || porcentagemProcessamento == 71 || porcentagemProcessamento == 79 || porcentagemProcessamento == 86 || porcentagemProcessamento == 93);
+	if(config_geral.qtdPontosControle == 14)
+		return(porcentagemProcessamento == 7 || porcentagemProcessamento == 13 || porcentagemProcessamento == 20 || porcentagemProcessamento == 27 || porcentagemProcessamento == 33 || porcentagemProcessamento == 40 || porcentagemProcessamento == 47 || porcentagemProcessamento == 53 || porcentagemProcessamento == 60 || porcentagemProcessamento == 67 || porcentagemProcessamento == 73 || porcentagemProcessamento == 80 || porcentagemProcessamento == 87 || porcentagemProcessamento == 93);
+	if(config_geral.qtdPontosControle == 15)
+		return(porcentagemProcessamento == 6 || porcentagemProcessamento == 13 || porcentagemProcessamento == 19 || porcentagemProcessamento == 25 || porcentagemProcessamento == 31 || porcentagemProcessamento == 38 || porcentagemProcessamento == 44 || porcentagemProcessamento == 50 || porcentagemProcessamento == 56 || porcentagemProcessamento == 63 || porcentagemProcessamento == 69 || porcentagemProcessamento == 75 || porcentagemProcessamento == 81 || porcentagemProcessamento == 88 || porcentagemProcessamento == 94);
+	if(config_geral.qtdPontosControle == 16)
+		return(porcentagemProcessamento == 6 || porcentagemProcessamento == 12 || porcentagemProcessamento == 18 || porcentagemProcessamento == 24 || porcentagemProcessamento == 29 || porcentagemProcessamento == 25 || porcentagemProcessamento == 41 || porcentagemProcessamento == 47 || porcentagemProcessamento == 53 || porcentagemProcessamento == 59 || porcentagemProcessamento == 65 || porcentagemProcessamento == 71 || porcentagemProcessamento == 76 || porcentagemProcessamento == 82 || porcentagemProcessamento == 88 || porcentagemProcessamento == 94);
+	if(config_geral.qtdPontosControle == 17)
+		return(porcentagemProcessamento == 6 || porcentagemProcessamento == 11 || porcentagemProcessamento == 17 || porcentagemProcessamento == 22 || porcentagemProcessamento == 28 || porcentagemProcessamento == 33 || porcentagemProcessamento == 39 || porcentagemProcessamento == 44 || porcentagemProcessamento == 50 || porcentagemProcessamento == 56 || porcentagemProcessamento == 61 || porcentagemProcessamento == 67 || porcentagemProcessamento == 72 || porcentagemProcessamento == 78 || porcentagemProcessamento == 83 || porcentagemProcessamento == 89 || porcentagemProcessamento == 94);
+	if(config_geral.qtdPontosControle == 18)
+		return(porcentagemProcessamento == 5 || porcentagemProcessamento == 11 || porcentagemProcessamento == 16 || porcentagemProcessamento == 21 || porcentagemProcessamento == 26 || porcentagemProcessamento == 32 || porcentagemProcessamento == 37 || porcentagemProcessamento == 42 || porcentagemProcessamento == 47 || porcentagemProcessamento == 53 || porcentagemProcessamento == 58 || porcentagemProcessamento == 63 || porcentagemProcessamento == 68 || porcentagemProcessamento == 74 || porcentagemProcessamento == 79 || porcentagemProcessamento == 84 || porcentagemProcessamento == 89 || porcentagemProcessamento == 95);
+	if(config_geral.qtdPontosControle == 19)
+		return(porcentagemProcessamento == 5 || porcentagemProcessamento == 10 || porcentagemProcessamento == 15 || porcentagemProcessamento == 20 || porcentagemProcessamento == 25 || porcentagemProcessamento == 30 || porcentagemProcessamento == 35 || porcentagemProcessamento == 40 || porcentagemProcessamento == 45 || porcentagemProcessamento == 50 || porcentagemProcessamento == 55 || porcentagemProcessamento == 60 || porcentagemProcessamento == 65 || porcentagemProcessamento == 70 || porcentagemProcessamento == 75 || porcentagemProcessamento == 80 || porcentagemProcessamento == 85 || porcentagemProcessamento == 90 || porcentagemProcessamento == 95);
+	if(config_geral.qtdPontosControle == 20)
+		return(porcentagemProcessamento == 5 || porcentagemProcessamento == 10 || porcentagemProcessamento == 14 || porcentagemProcessamento == 19 || porcentagemProcessamento == 24 || porcentagemProcessamento == 29 || porcentagemProcessamento == 33 || porcentagemProcessamento == 38 || porcentagemProcessamento == 43 || porcentagemProcessamento == 48 || porcentagemProcessamento == 52 || porcentagemProcessamento == 57 || porcentagemProcessamento == 62 || porcentagemProcessamento == 67 || porcentagemProcessamento == 71 || porcentagemProcessamento == 76 || porcentagemProcessamento == 81 || porcentagemProcessamento == 86 || porcentagemProcessamento == 90 || porcentagemProcessamento == 95);
+
+	return(0);
+}
+
 void printConfiguracoes(void)
 {
 	printf("\n************** CONFIGURACOES INICIAIS DO EXPERIMENTO **************\n");
-#if DEBUG == 1
-	printf("=> [SIM] DEBUG\n");
-#else
-	printf("=> [NAO] DEBUG\n");
-#endif
-#if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
-	printf("=> [SIM] EXPERIMENTACAO BASEADA EM CICLOS DE EXECUCAO\n");
-	printf("=> [NAO] EXPERIMENTACAO BASEADA EM TEMPO DE EXECUCAO\n");
-#else
-	printf("=> [NAO] EXPERIMENTACAO BASEADA EM CICLOS DE EXECUCAO\n");
-	printf("=> [SIM] EXPERIMENTACAO BASEADA EM TEMPO DE EXECUCAO\n");
-#endif
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-	printf("=> [SIM] RAW MONITOR\n");
-#else
-	printf("=> [NAO] RAW MONITOR\n");
-#endif
-#if FLAG_HABILITAR_PONTOS_CONTROLE == 1
-	printf("=> [SIM] PONTOS DE CONTROLE\n");
-#else
-	printf("=> [NAO] PONTOS DE CONTROLE\n");
-#endif
-#if FLAG_HABILITAR_SECS == 1
-	printf("=> [SIM] SEC's\n");
-#else
-	printf("=> [NAO] SEC's\n");
-#endif
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
-	printf("=> [SIM] CALCULAR FREQUENCIA INICIAL IDEAL (COM BASE NO TEMPO RESTANTE DE PROCESSAMENTO DENTRO DO PERIODO)\n");
-#else
-	printf("=> [NAO] CALCULAR FREQUENCIA INICIAL IDEAL (COM BASE NO TEMPO RESTANTE DE PROCESSAMENTO DENTRO DO PERIODO)\n");
-#endif
+	if(DEBUG == 1)
+		printf("=> [SIM] DEBUG\n");
+	else
+		printf("=> [NAO] DEBUG\n");
+
+	if(config_geral.flagHabilitarRawMonitor == 1)
+		printf("=> [SIM] RAW MONITOR\n");
+	else
+		printf("=> [NAO] RAW MONITOR\n");
+
+	if(config_geral.flagHabilitarPontosControle == 1)
+		printf("=> [SIM] PONTOS DE CONTROLE\n");
+	else
+		printf("=> [NAO] PONTOS DE CONTROLE\n");
+
+	if(config_geral.flagHabilitarSecs == 1)
+		printf("=> [SIM] SEC's\n");
+	else
+		printf("=> [NAO] SEC's\n");
+
+	if(config_geral.flagCalcularFrequenciaInicialIdeal == 1)
+		printf("=> [SIM] CALCULAR FREQUENCIA INICIAL IDEAL (COM BASE NO TEMPO RESTANTE DE PROCESSAMENTO DENTRO DO PERIODO)\n");
+	else
+		printf("=> [NAO] CALCULAR FREQUENCIA INICIAL IDEAL (COM BASE NO TEMPO RESTANTE DE PROCESSAMENTO DENTRO DO PERIODO)\n");
+
 	printf("\n");
 }
 
@@ -422,8 +472,8 @@ void print_cpu_stats(struct cpufreq_sysfs_stats *beforeStats, struct cpufreq_sys
 
 		printf("\n\n");
 		cur_idle_time_us = after_total_cpu_idle_time - before_total_cpu_idle_time;
-		printf("Tempo Total CPU IDLE: (%lu) microsegundos -> em segundos: (%.2f) \n", cur_idle_time_us, (cur_idle_time_us/1000000.0));
-		printf("Tempo Total Experimento: (%llu) usertime units -> (USERTIME_UNIT * 10 = %llu ms) -> em segundos: (%.2f) \n", total_time, total_time * 10, ((total_time/1000.0)*10));
+		printf("Tempo Total CPU IDLE: (%lu) microsegundos -> em segundos: (%.8f) \n", cur_idle_time_us, (cur_idle_time_us/1000000.0));
+		printf("Tempo Total Experimento: (%llu) usertime units -> (USERTIME_UNIT * 10 = %llu ms) -> em segundos: (%.8f) \n", total_time, total_time * 10, ((total_time/1000.0)*10));
 
 		if (total_trans)
 			printf("Num. Total de Transições: (%lu)\n", total_trans);
@@ -473,9 +523,11 @@ int InitializeCnt(RT_TASK *Task_Cnt, int idTask, int idSubTask, matrixCnt Array)
 
 	RWCEC_Cnt[idSubTask] = RWCEC_Cnt[idSubTask] - 588056000; // Quantidade de ciclos da inicializacao do array.
 
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-	rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt[idSubTask]);
-#endif
+	if(config_geral.flagHabilitarRawMonitor == 1)
+	{
+		rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt[idSubTask]);
+	}
+
 	return 0;
 }
 
@@ -494,6 +546,7 @@ void SumCnt(RT_TASK *Task_Cnt, int idTask, int idSubTask, matrixCnt Array)
 	int Pcnt = 0;
 	int Ncnt = 0;
 	unsigned int cpu_frequency_target = 0; // Conterah a frequencia que o processador terah que assumir para que a tarefa conclua seu processamento dentro do seu deadline.
+	int flagHabilitarPC = 0;
 	int porcentagemProcessamento = 0;
 	int porcentagemProcessamentoAnterior = -1;
 
@@ -514,17 +567,19 @@ void SumCnt(RT_TASK *Task_Cnt, int idTask, int idSubTask, matrixCnt Array)
 		RWCEC_Cnt[idSubTask] = RWCEC_Cnt[idSubTask] - 119010; // Quantidade de ciclos do loop interno. //CYCLES: subq = 4 cycles
 
 		porcentagemProcessamento = (int) ((Outer*MAXSIZE + Inner)*100)/(MAXSIZE*MAXSIZE);
-		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
+		//if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior)
+		if(porcentagemProcessamento != porcentagemProcessamentoAnterior)
 		{
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-			rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt[idSubTask]);
-#endif
-			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 70 || porcentagemProcessamento == 80 || porcentagemProcessamento == 90) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
+			if(config_geral.flagHabilitarRawMonitor == 1)
 			{
-#if FLAG_HABILITAR_PONTOS_CONTROLE == 1
+				rt_cfg_set_rwcec(Task_Cnt, RWCEC_Cnt[idSubTask]);
+			}
+
+			porcentagemProcessamentoAnterior = porcentagemProcessamento;
+			flagHabilitarPC = verificarPontoControle(porcentagemProcessamento);
+			if(flagHabilitarPC) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
+			{
 				cpu_frequency_target = reajustarCpuFreq(idTask, Task_Cnt, RWCEC_Cnt[idSubTask]); //CYCLES: movq+movq+movl+call+movl = 15+reajustarCpuFreq() = 15 + 205 = 220 cycles
-#endif
 #if DEBUG == 1
 				cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 				cpuFrequencyAtual_Cnt = rt_cfg_get_cpu_frequency(Task_Cnt); //CYCLES: movl = 3 cycles
@@ -573,9 +628,7 @@ void *init_task_cnt(void *arg)
 
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
-#endif
 
 #if DEBUG == 1
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
@@ -607,11 +660,7 @@ void *init_task_cnt(void *arg)
 	pidTask = rt_cfg_get_pid(Task_Cnt);
 	printf("%s[TASK %2d] [%lu] Criada com Sucesso  =============== PERIODO => %llu count => %.2f segundos \n", arrayTextoCorIdTask[idTask], idTask, pidTask, Tperiodo_Cnt, Tperiodo_s);
 
-#if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(arrayQtdPeriodosExecutados[idTask] <= config->qtdMaxPeriodosExecutados)
-#else // por tempo de execucao
-	while(!flagFimExecucao)
-#endif
 	{
 #if DEBUG == 1
 		tick_timer_atual = rt_get_time();
@@ -624,27 +673,27 @@ void *init_task_cnt(void *arg)
 		SEC_Cnt[idSubTask] = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Cnt); //CYCLES = 42 cycles
-		if(tempoRestanteProcessamento_ns > 0)
+		if(config_geral.flagCalcularFrequenciaInicialIdeal == 1)
 		{
-			config->cpuFrequencyInicial = abs((WCEC_Cnt[idSubTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Cnt); //CYCLES = 42 cycles
+			if(tempoRestanteProcessamento_ns > 0)
+			{
+				config->cpuFrequencyInicial = abs((WCEC_Cnt[idSubTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			}
+			else
+			{
+				/* OBS.:
+				 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+				 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+				 **/
+				config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
+			}
 		}
-		else
-		{
-			/* OBS.:
-			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
-			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
-			 **/
-			config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
-		}
-#endif
 
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_Cnt, WCEC_Cnt[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#else
-		rt_cfg_init_info(Task_Cnt, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#endif
+		if(config_geral.flagHabilitarRawMonitor == 1)
+			rt_cfg_init_info(Task_Cnt, WCEC_Cnt[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
+		else
+			rt_cfg_init_info(Task_Cnt, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedCnt();
@@ -711,10 +760,9 @@ void InitializeMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixM
 	int OuterIndex = 0, InnerIndex = 0;
 	int flagInsertSecs = 0;
 	int porcentagemProcessamento = 0;
-#if FLAG_HABILITAR_SECS == 1
+
 	int limitInferiorSecs = 30; // %
 	int limitSuperiorSecs = 60; // %
-#endif
 	//CYCLES: cmpl + jne = 5 cycles
 
 //	printf("Valores da Matriz: \n\n");
@@ -723,12 +771,14 @@ void InitializeMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixM
 		//INSERINDO SECs na tarefa Matmult...
 		porcentagemProcessamento = (int) ((OuterIndex*UPPERLIMIT + InnerIndex)*100)/(UPPERLIMIT*UPPERLIMIT);
 		flagInsertSecs = 0;
-#if FLAG_HABILITAR_SECS == 1
-		if(flagPermitirSecs && porcentagemProcessamento >= limitInferiorSecs && porcentagemProcessamento <= limitSuperiorSecs) //CYCLES: movl+xorl+testl+je+leal+movl+sarl+imull+sarl+subl+cmpl+setle+movzbl+movq+xorl+jmp = 41 cycles
+
+		if(config_geral.flagHabilitarPontosControle == 1)
 		{
-			flagInsertSecs = 1;
+			if(flagPermitirSecs && porcentagemProcessamento >= limitInferiorSecs && porcentagemProcessamento <= limitSuperiorSecs) //CYCLES: movl+xorl+testl+je+leal+movl+sarl+imull+sarl+subl+cmpl+setle+movzbl+movq+xorl+jmp = 41 cycles
+			{
+				flagInsertSecs = 1;
+			}
 		}
-#endif
 
 		for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++) //CYCLES: cmpq+je+addl+addq+movl = 10 cycles
 		{
@@ -746,9 +796,8 @@ void InitializeMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixM
 
 	RWCEC_Matmult[idSubTask] = RWCEC_Matmult[idSubTask] - 19569558; // Quantidade de ciclos da inicializacao do array. //CYCLES: movq+subq+movq = 10 cycles
 
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-	rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult[idSubTask]);
-#endif
+	if(config_geral.flagHabilitarRawMonitor == 1)
+		rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult[idSubTask]);
 }
 
 // Multiplies arrays A and B and stores the result in ResultArray.
@@ -761,6 +810,7 @@ void MultiplyMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixMat
 #endif
 
 	unsigned int cpu_frequency_target = 0; // Conterah a frequencia que o processador terah que assumir para que a tarefa conclua seu processamento dentro do seu deadline.
+	int flagHabilitarPC = 0;
 	int porcentagemProcessamento = 0;
 	int porcentagemProcessamentoAnterior = -1;
 	int somaColunas = 0;
@@ -768,13 +818,16 @@ void MultiplyMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixMat
 	register int Outer, Inner, Index;
 	for (Outer = 0; Outer < UPPERLIMIT; Outer++) //CYCLES: xorl+xorl+cmpl+jne = 7 cycles
 	{
-#if FLAG_HABILITAR_SECS == 1
-		somaColunas = 0;
-		for (Inner = 0; Inner < UPPERLIMIT; Inner++) //CYCLES: cmpq+jne+movq+movq+xorl = 12 cycles
-			somaColunas += A[Outer][Inner]; //CYCLES: addl+addq = 2 cycles
-#else
-		somaColunas = 1;
-#endif
+		if(config_geral.flagHabilitarPontosControle == 1)
+		{
+			somaColunas = 0;
+			for (Inner = 0; Inner < UPPERLIMIT; Inner++) //CYCLES: cmpq+jne+movq+movq+xorl = 12 cycles
+				somaColunas += A[Outer][Inner]; //CYCLES: addl+addq = 2 cycles
+		}
+		else
+		{
+			somaColunas = 1;
+		}
 
 		for (Inner = 0; Inner < UPPERLIMIT; Inner++) //CYCLES: addl+addq+cmpl+jne+movq = 10 cycles
 		{
@@ -793,18 +846,18 @@ void MultiplyMatMult(RT_TASK *Task_Matmult, int idTask, int idSubTask, matrixMat
 		RWCEC_Matmult[idSubTask] = RWCEC_Matmult[idSubTask] - 8923537; // cycles //CYCLES: movq+subq+movq = 10 cycles
 
 		porcentagemProcessamento = (int) ((Outer*UPPERLIMIT*UPPERLIMIT + Inner*UPPERLIMIT + Index)*100)/(UPPERLIMIT*UPPERLIMIT*UPPERLIMIT); //CYCLES: movl+movl+movl+sarl+idivl+movl = 35 cycles
-		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+sarl+idivl+testl+je+cmpl+je = 39 cycles
+		//if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+sarl+idivl+testl+je+cmpl+je = 39 cycles
+		if(porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+sarl+idivl+testl+je+cmpl+je = 39 cycles
 		{
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-			rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult[idSubTask]);
-#endif
+			if(config_geral.flagHabilitarRawMonitor == 1)
+				rt_cfg_set_rwcec(Task_Matmult, RWCEC_Matmult[idSubTask]);
+
 			// PONTOS DE CONTROLE DO MATMULT
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 70 || porcentagemProcessamento == 80 || porcentagemProcessamento == 90) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
+			flagHabilitarPC = verificarPontoControle(porcentagemProcessamento);
+			if(flagHabilitarPC) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
 			{
-#if FLAG_HABILITAR_PONTOS_CONTROLE == 1
 				cpu_frequency_target = reajustarCpuFreq(idTask, Task_Matmult, RWCEC_Matmult[idSubTask]); //CYCLES: movq+movq+movl+call+movl = 15+reajustarCpuFreq() = 15 + 205 = 220 cycles
-#endif
 #if DEBUG == 1
 				cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 				cpuFrequencyAtual_Matmult = rt_cfg_get_cpu_frequency(Task_Matmult); //CYCLES: movl = 3 cycles
@@ -855,9 +908,7 @@ void *init_task_matmult(void *arg)
 
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
-#endif
 
 #if DEBUG == 1
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
@@ -889,11 +940,7 @@ void *init_task_matmult(void *arg)
 	pidTask = rt_cfg_get_pid(Task_Matmult);
 	printf("%s[TASK %2d] [%lu] Criada com Sucesso  =============== PERIODO => %llu count => %.2f segundos\n", arrayTextoCorIdTask[idTask], idTask, pidTask, Tperiodo_Matmult, Tperiodo_s);
 
-#if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(arrayQtdPeriodosExecutados[idTask] <= config->qtdMaxPeriodosExecutados)
-#else // por tempo de execucao
-	while(!flagFimExecucao)
-#endif
 	{
 #if DEBUG == 1
 		tick_timer_atual = rt_get_time();
@@ -906,27 +953,27 @@ void *init_task_matmult(void *arg)
 		SEC_Matmult[idSubTask] = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Matmult); //CYCLES = 42 cycles
-		if(tempoRestanteProcessamento_ns > 0)
+		if(config_geral.flagCalcularFrequenciaInicialIdeal == 1)
 		{
-			config->cpuFrequencyInicial = abs((WCEC_Matmult[idSubTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Matmult); //CYCLES = 42 cycles
+			if(tempoRestanteProcessamento_ns > 0)
+			{
+				config->cpuFrequencyInicial = abs((WCEC_Matmult[idSubTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			}
+			else
+			{
+				/* OBS.:
+				 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+				 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+				 **/
+				config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
+			}
 		}
-		else
-		{
-			/* OBS.:
-			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
-			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
-			 **/
-			config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
-		}
-#endif
 
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_Matmult, WCEC_Matmult[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#else
-		rt_cfg_init_info(Task_Matmult, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#endif
+		if(config_geral.flagHabilitarRawMonitor == 1)
+			rt_cfg_init_info(Task_Matmult, WCEC_Matmult[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
+		else
+			rt_cfg_init_info(Task_Matmult, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitSeedMatMult(idTask, idSubTask);
@@ -1010,6 +1057,7 @@ void BubbleSort(RT_TASK *Task_Bsort, int idTask, int idSubTask, int Array[MAXDIM
 	int Temp, /** LastIndex,**/ Index, i;
 
 	unsigned int cpu_frequency_target = 0; // Conterah a frequencia que o processador terah que assumir para que a tarefa conclua seu processamento dentro do seu deadline.
+	int flagHabilitarPC = 0;
 	int porcentagemProcessamento = 0;
 	int porcentagemProcessamentoAnterior = -1;
 
@@ -1033,17 +1081,17 @@ void BubbleSort(RT_TASK *Task_Bsort, int idTask, int idSubTask, int Array[MAXDIM
 		RWCEC_Bsort[idSubTask] = RWCEC_Bsort[idSubTask] - 300025; //CYCLES: subq+movq = 7 cycles
 
 		porcentagemProcessamento = (int) ((i*NUMELEMS + Index)*100)/(NUMELEMS*NUMELEMS); //CYCLES: movl+movl+imull+movl+sarl+movl+sarl+subl = 25 cycles
-		if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+imull+movl+sarl+sarl+subl+leal+leal+cmpl+je+cmpl+je = 36 cycles
+		//if(porcentagemProcessamento % 10 == 0 && porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+imull+movl+sarl+sarl+subl+leal+leal+cmpl+je+cmpl+je = 36 cycles
+		if(porcentagemProcessamento != porcentagemProcessamentoAnterior) //CYCLES: movl+movl+imull+movl+sarl+sarl+subl+leal+leal+cmpl+je+cmpl+je = 36 cycles
 		{
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-			rt_cfg_set_rwcec(Task_Bsort, RWCEC_Bsort[idSubTask]);
-#endif
+			if(config_geral.flagHabilitarRawMonitor == 1)
+				rt_cfg_set_rwcec(Task_Bsort, RWCEC_Bsort[idSubTask]);
+
 			porcentagemProcessamentoAnterior = porcentagemProcessamento;
-			if(porcentagemProcessamento == 50 || porcentagemProcessamento == 70 || porcentagemProcessamento == 80 || porcentagemProcessamento == 90) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
+			flagHabilitarPC = verificarPontoControle(porcentagemProcessamento);
+			if(flagHabilitarPC) //CYCLES: cmpl+je+cmpl+jne = 10 cycles
 			{
-#if FLAG_HABILITAR_PONTOS_CONTROLE == 1
 				cpu_frequency_target = reajustarCpuFreq(idTask, Task_Bsort, RWCEC_Bsort[idSubTask]); //CYCLES: movq+movq+movl+call+movl = 15+reajustarCpuFreq() = 15 + 205 = 220 cycles
-#endif
 #if DEBUG == 1
 				cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
 				cpuFrequencyAtual_Bsort = rt_cfg_get_cpu_frequency(Task_Bsort); //CYCLES: movl = 3 cycles
@@ -1075,9 +1123,7 @@ void *init_task_bsort(void *arg)
 
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
-#endif
 
 #if DEBUG == 1
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
@@ -1109,11 +1155,7 @@ void *init_task_bsort(void *arg)
 	pidTask = rt_cfg_get_pid(Task_Bsort);
 	printf("%s[TASK %2d] [%lu] Criada com Sucesso  =============== PERIODO => %llu count => %.2f segundos\n", arrayTextoCorIdTask[idTask], idTask, pidTask, Tperiodo_Bsort, Tperiodo_s);
 
-#if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	while(arrayQtdPeriodosExecutados[idTask] <= config->qtdMaxPeriodosExecutados)
-#else // por tempo de execucao
-	while(!flagFimExecucao)
-#endif
 	{
 #if DEBUG == 1
 		tick_timer_atual = rt_get_time();
@@ -1126,27 +1168,27 @@ void *init_task_bsort(void *arg)
 		SEC_Bsort[idSubTask] = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Bsort); //CYCLES = 42 cycles
-		if(tempoRestanteProcessamento_ns > 0)
+		if(config_geral.flagCalcularFrequenciaInicialIdeal == 1)
 		{
-			config->cpuFrequencyInicial = abs((WCEC_Bsort[idSubTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_Bsort); //CYCLES = 42 cycles
+			if(tempoRestanteProcessamento_ns > 0)
+			{
+				config->cpuFrequencyInicial = abs((WCEC_Bsort[idSubTask] / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			}
+			else
+			{
+				/* OBS.:
+				 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+				 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+				 **/
+				config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
+			}
 		}
-		else
-		{
-			/* OBS.:
-			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
-			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
-			 **/
-			config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
-		}
-#endif
 
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_Bsort, WCEC_Bsort[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#else
-		rt_cfg_init_info(Task_Bsort, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#endif
+		if(config_geral.flagHabilitarRawMonitor == 1)
+			rt_cfg_init_info(Task_Bsort, WCEC_Bsort[idSubTask], config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
+		else
+			rt_cfg_init_info(Task_Bsort, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 
 		/** INICIO: PROCESSANDO A TAREFA... **/
 		InitializeBsort(idTask, idSubTask, ArrayBsort);
@@ -1200,10 +1242,8 @@ void *init_task_cpustats(void *arg)
 	//int idSubTask = config->idSubTask;
 	unsigned long pidTask = 0;
 
-#if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 	int contIdTask = 0;
 	int flagTerminoExperimentoGeral = 1;
-#endif
 
 #if DEBUG == 1
 	unsigned int cpuFrequencyAtual_CpuStats = 0; // KHz
@@ -1213,9 +1253,7 @@ void *init_task_cpustats(void *arg)
 	int multiplicadorEstatisticasParciais = 1;
 	RTIME tempoProcessamento_ns = 0;
 	double tempoProcessamento_s;
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
 	RTIME tempoRestanteProcessamento_ns = 0;
-#endif
 
 #if DEBUG == 1
 	RTIME tick_timer_atual; // possui o timer do processador RTAI atualizado...
@@ -1260,27 +1298,27 @@ void *init_task_cpustats(void *arg)
 		SEC_CpuStats = 0;
 
 		// Inicializando informacoes importantes para o gerenciamento do Governor.
-#if FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL == 1
-		tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_CpuStats); //CYCLES = 42 cycles
-		if(tempoRestanteProcessamento_ns > 0)
+		if(config_geral.flagCalcularFrequenciaInicialIdeal == 1)
 		{
-			config->cpuFrequencyInicial = abs((WCEC_CpuStats / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			tempoRestanteProcessamento_ns = getTempoRestanteProcessamento(idTask, Task_CpuStats); //CYCLES = 42 cycles
+			if(tempoRestanteProcessamento_ns > 0)
+			{
+				config->cpuFrequencyInicial = abs((WCEC_CpuStats / (tempoRestanteProcessamento_ns/1000000000.0))/1000.0); // KHz  //CYCLES: divsd+movq+divsd+divsd+movl+sarl+xorl+subl+movl = 66 cycles
+			}
+			else
+			{
+				/* OBS.:
+				 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
+				 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
+				 **/
+				config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
+			}
 		}
-		else
-		{
-			/* OBS.:
-			 * QUER DIZER QUE O DEADLINE DA TAREFA FOI VIOLADO... ENTAO EH APLICADO A MAIOR FREQUENCIA DO PROCESSADOR...
-			 * PARA NAO ATRASAR A EXECUCAO DAS DEMAIS TAREFAS.
-			 **/
-			config->cpuFrequencyInicial = FREQUENCIA_MAXIMA_PROCESSADOR;
-		}
-#endif
 
-#if FLAG_HABILITAR_RAW_MONITOR == 1
-		rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#else
-		rt_cfg_init_info(Task_CpuStats, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
-#endif
+		if(config_geral.flagHabilitarRawMonitor == 1)
+			rt_cfg_init_info(Task_CpuStats, WCEC_CpuStats, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
+		else
+			rt_cfg_init_info(Task_CpuStats, 0, config->cpuFrequencyMin, config->cpuFrequencyInicial, config->cpuVoltageInicial);
 
 #if DEBUG == 1
 		cpuFrequencyAtual = rt_cfg_cpufreq_get(CPUID_RTAI);
@@ -1292,7 +1330,6 @@ void *init_task_cpustats(void *arg)
 		timerTerminoExperimento = rt_get_time();
 		tempoTotalExperimento = count2nano(timerTerminoExperimento - timerInicioExperimento) / 1000000000.0; // Transformando de nanosegundo para segundo (10^9).
 
-#if FLAG_HABILITAR_TIMER_EXPERIMENTO == 0 // por ciclos de execucao
 		flagTerminoExperimentoGeral = 1;
 		for(contIdTask=0; contIdTask < QTD_TOTAL_TAREFAS; contIdTask++)
 		{
@@ -1305,9 +1342,6 @@ void *init_task_cpustats(void *arg)
 		}
 
 		if(flagTerminoExperimentoGeral == 1)
-#else
-		if(tempoTotalExperimento >= TEMPO_MAXIMO_EXECUCAO_EXPERIMENTO)
-#endif
 		{
 			flagFimExecucao = 1; // FLAG QUE INDICA AS TAREFAS QUE O EXPERIMENTO TERMINOU...
 
@@ -1355,6 +1389,9 @@ void *init_task_cpustats(void *arg)
 	arrayFlagFimExecucaoTarefa[idTask] = 1; // Indica o fim da execucao da subtask.
 
 	printf("%s[TASK %2d] [%lu] ##### FIM EXECUCAO -> Total Periodos Executados: %lu -> Total Deadlines Violados: %lu\n", arrayTextoCorIdTask[idTask], idTask, pidTask, arrayQtdPeriodosExecutados[idTask], arrayQtdDeadlinesViolados[idTask]);
+
+	// Emitindo beep de finalizacao do experimento...
+	system("beep -l 5000 -f 250;");
 
 	rt_task_delete(Task_CpuStats);
 
@@ -1443,7 +1480,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 15; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Cnt_0 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//1
@@ -1456,7 +1493,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 12; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 12; // periodos.
 	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//2
@@ -1469,7 +1506,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 30000000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 8; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Cnt_2 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//3
@@ -1482,7 +1519,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 1800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_1800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 15; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Cnt_3 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//4
@@ -1495,7 +1532,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 12; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 12; // periodos.
 	Thread_Cnt_4 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
 	/**
@@ -1511,7 +1548,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 8; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Matmult_0 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//6
@@ -1524,7 +1561,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 3000000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 8; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Matmult_1 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//7
@@ -1537,7 +1574,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 3000000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 8; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Matmult_2 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//8
@@ -1550,7 +1587,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 8; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Matmult_3 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
 	/**
@@ -1566,7 +1603,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 15; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Bsort_0 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//10
@@ -1579,7 +1616,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 15; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Bsort_1 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//11
@@ -1592,7 +1629,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 8; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Bsort_2 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//12
@@ -1605,7 +1642,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 2300000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_2300000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 12; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 12; // periodos.
 	Thread_Bsort_3 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
 	contIdTask++;//13
@@ -1618,7 +1655,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyMin = 3000000; // KHz
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 3000000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_3000000_KHZ; // Volts
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = 8; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Bsort_4 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
 	/**
@@ -1635,7 +1672,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].cpuFrequencyInicial = 800000; // KHz
 	arrayThreadParams[contIdTask].cpuVoltageInicial = AMD_ATHLON_II_X2_250_TENSAO_FREQ_800000_KHZ; // Volts
 	/* CPUSTAT TASK nao olha para o valor de qtdMaxPeriodosExecutados. Ela espera todas as tarefas concluirem seus trabalhos para ai sim ser finalizada automaticamente. */
-	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = CONSTANTE_VALOR_NAO_SE_APLICA; // periodos. Se FLAG_HABILITAR_TIMER_EXPERIMENTO == 0
+//	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = CONSTANTE_VALOR_NAO_SE_APLICA; // periodos.
 	Thread_CpuStats = rt_thread_create(init_task_cpustats, &arrayThreadParams[contIdTask], 0);
 
 	//** PEGA O TEMPO DE INICIO DA EXECUCAO.
@@ -1647,24 +1684,44 @@ int manager_tasks(void)
 	before_total_trans = rt_cfg_get_transitions(CPUID_RTAI);
 
 	// Aguarda interrupcao do usuario... ou a conclusao dos periodos de todas as tarefas criadas...
-	while(!getchar());
-
-	exibirEstatisticaFinalExperimento();
+	//while(!getchar());
+	while(!rt_thread_join(Thread_CpuStats)); // Aguarda o monitoramento do CPU acabar para encerrar o experimento.
 
 	flagFimExecucao = 1;
+
+	exibirEstatisticaFinalExperimento();
 
 	stop_rt_timer();
 	return 0;
 }
 
-void delete_tasks(void)
+void delete_tasks()
 {
 	rt_make_soft_real_time();
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
-	printf("\n\nIniciando o escalonamento das tarefas...\n\n");
+	if(argc == QTD_MAX_ARGUMENTOS_INICIAIS)
+	{
+		config_geral.flagHabilitarRawMonitor = atoi(argv[1]);
+		config_geral.flagHabilitarPontosControle = atoi(argv[2]);
+		config_geral.flagHabilitarSecs = atoi(argv[3]);
+		config_geral.flagCalcularFrequenciaInicialIdeal = atoi(argv[4]);
+		config_geral.qtdPontosControle = atoi(argv[5]);
+
+		printf("\n\nIniciando o escalonamento das tarefas... ARGUMENTOS LIDOS: RAW_MONITOR[%d] PC[%d] SEC[%d] FREQ_IDEAL_INICIAL[%d] QTD_PC[%d]\n\n", config_geral.flagHabilitarRawMonitor, config_geral.flagHabilitarPontosControle, config_geral.flagHabilitarSecs, config_geral.flagCalcularFrequenciaInicialIdeal, config_geral.qtdPontosControle);
+	}
+	else
+	{
+		config_geral.flagHabilitarRawMonitor = FLAG_HABILITAR_RAW_MONITOR;
+		config_geral.flagHabilitarPontosControle = FLAG_HABILITAR_PONTOS_CONTROLE;
+		config_geral.flagHabilitarSecs = FLAG_HABILITAR_SECS;
+		config_geral.flagCalcularFrequenciaInicialIdeal = FLAG_CALCULAR_FREQUENCIA_INICIAL_IDEAL;
+		config_geral.qtdPontosControle = QTD_PONTOS_DE_CONTROLE;
+
+		printf("\n\nIniciando o escalonamento das tarefas...\n\n");
+	}
 
 	manager_tasks();
 
@@ -1693,5 +1750,4 @@ W12_13 = 13.6493
 W13_17 = 18.6920
 W14_17 = 18.8316
 W15_25 = 23.7942
->>
- */
+**/
