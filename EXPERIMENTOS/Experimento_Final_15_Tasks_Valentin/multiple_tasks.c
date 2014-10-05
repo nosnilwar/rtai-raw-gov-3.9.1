@@ -1391,7 +1391,7 @@ void *init_task_cpustats(void *arg)
 	printf("%s[TASK %2d] [%lu] ##### FIM EXECUCAO -> Total Periodos Executados: %lu -> Total Deadlines Violados: %lu\n", arrayTextoCorIdTask[idTask], idTask, pidTask, arrayQtdPeriodosExecutados[idTask], arrayQtdDeadlinesViolados[idTask]);
 
 	// Emitindo beep de finalizacao do experimento...
-	system("beep -l 5000 -f 250;");
+	system("beep -l 1000 -f 250;");
 
 	rt_task_delete(Task_CpuStats);
 
