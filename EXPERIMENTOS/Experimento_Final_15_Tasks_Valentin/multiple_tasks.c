@@ -1469,7 +1469,7 @@ int manager_tasks(void)
 	/**
 	 * CNT TASKS
 	 */
-	contIdTask = 0;//TASK:1
+	contIdTask = 0;//TASK:0
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos
@@ -1483,7 +1483,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Cnt_0 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:2
+	contIdTask++;//TASK:1
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 1;
 	arrayThreadParams[contIdTask].periodo = tick_period * 400; // ~= 20 segundos (PERIODO == DEADLINE)
@@ -1496,7 +1496,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 12; // periodos.
 	Thread_Cnt_1 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:3
+	contIdTask++;//TASK:2
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 2;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
@@ -1509,7 +1509,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Cnt_2 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:4
+	contIdTask++;//TASK:3
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 3;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos (PERIODO == DEADLINE)
@@ -1522,7 +1522,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Cnt_3 = rt_thread_create(init_task_cnt, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:5
+	contIdTask++;//TASK:4
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 4;
 	arrayThreadParams[contIdTask].periodo = tick_period * 400; // ~= 20 segundos (PERIODO == DEADLINE)
@@ -1538,7 +1538,7 @@ int manager_tasks(void)
 	/**
 	 * MATMULT TASKS
 	 */
-	contIdTask++;//TASK:6
+	contIdTask++;//TASK:5
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
@@ -1551,7 +1551,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Matmult_0 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:7
+	contIdTask++;//TASK:6
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 1;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
@@ -1564,7 +1564,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Matmult_1 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:8
+	contIdTask++;//TASK:7
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 2;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
@@ -1577,7 +1577,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Matmult_2 = rt_thread_create(init_task_matmult, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:9
+	contIdTask++;//TASK:8
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 3;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
@@ -1593,7 +1593,7 @@ int manager_tasks(void)
 	/**
 	 * BSORT TASKS
 	 */
-	contIdTask++;//TASK:10
+	contIdTask++;//TASK:9
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos (PERIODO == DEADLINE)
@@ -1606,7 +1606,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Bsort_0 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:11
+	contIdTask++;//TASK:10
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 1;
 	arrayThreadParams[contIdTask].periodo = tick_period * 320; // ~= 16 segundos (PERIODO == DEADLINE)
@@ -1619,7 +1619,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 15; // periodos.
 	Thread_Bsort_1 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:12
+	contIdTask++;//TASK:11
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 2;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
@@ -1632,7 +1632,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 8; // periodos.
 	Thread_Bsort_2 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:13
+	contIdTask++;//TASK:12
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 3;
 	arrayThreadParams[contIdTask].periodo = tick_period * 400; // ~= 20 segundos (PERIODO == DEADLINE)
@@ -1645,7 +1645,7 @@ int manager_tasks(void)
 	arrayThreadParams[contIdTask].qtdMaxPeriodosExecutados = QTD_TOTAL_LCMS * 12; // periodos.
 	Thread_Bsort_3 = rt_thread_create(init_task_bsort, &arrayThreadParams[contIdTask], 0);
 
-	contIdTask++;//TASK:14
+	contIdTask++;//TASK:13
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 4;
 	arrayThreadParams[contIdTask].periodo = tick_period * 600; // ~= 30 segundos (PERIODO == DEADLINE)
@@ -1661,7 +1661,7 @@ int manager_tasks(void)
 	/**
 	 * CPUSTAT TASK
 	 */
-	contIdTask++;//TASK:15
+	contIdTask++;//TASK:14
 	arrayThreadParams[contIdTask].idTask = contIdTask;
 	arrayThreadParams[contIdTask].idSubTask = 0;
 	arrayThreadParams[contIdTask].periodo = tick_period * 200; // ~= 10 segundos (PERIODO == DEADLINE)
